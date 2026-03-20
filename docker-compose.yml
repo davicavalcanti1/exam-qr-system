@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - QR_SECRET=${QR_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - BUDGET_LIMIT=${BUDGET_LIMIT:-2000}
+      - DB_PATH=/app/data/exam-qr.db
+    volumes:
+      - exam_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/auth/verify"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  exam_data:
