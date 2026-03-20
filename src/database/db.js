@@ -58,6 +58,13 @@ export function initDB() {
       used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (qr_code_id) REFERENCES qr_codes(id)
     );
+
+    CREATE TABLE IF NOT EXISTS payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      amount REAL NOT NULL,
+      method TEXT NOT NULL,
+      paid_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `)
   console.log('Database initialized at', DB_PATH)
 }

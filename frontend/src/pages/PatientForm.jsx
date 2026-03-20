@@ -3,88 +3,58 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 
 const EXAM_OPTIONS = [
-  { name: 'Hemograma Completo', value: 35 },
-  { name: 'Glicose', value: 15 },
-  { name: 'Colesterol Total', value: 20 },
-  { name: 'Triglicerídeos', value: 20 },
-  { name: 'TSH', value: 45 },
-  { name: 'T4 Livre', value: 45 },
-  { name: 'Ureia e Creatinina', value: 30 },
-  { name: 'Ácido Úrico', value: 20 },
-  { name: 'TGO / TGP', value: 40 },
-  { name: 'Raio-X Tórax', value: 80 },
-  { name: 'Raio-X Coluna', value: 90 },
-  { name: 'Ultrassom Abdominal', value: 150 },
-  { name: 'Ultrassom Pélvico', value: 150 },
-  { name: 'Eletrocardiograma', value: 60 },
-  { name: 'Ecocardiograma', value: 200 },
-  { name: 'Tomografia Crânio', value: 350 },
-  { name: 'Tomografia Abdômen', value: 380 },
   { name: 'Ressonância Magnética', value: 500 },
-  { name: 'Endoscopia Digestiva', value: 250 },
-  { name: 'Colonoscopia', value: 300 },
+  { name: 'Tomografia', value: 350 },
   { name: 'Mamografia', value: 120 },
+  { name: 'Raio-X', value: 80 },
   { name: 'Densitometria Óssea', value: 100 },
-  { name: 'Exame de Urina EAS', value: 20 },
-  { name: 'Exame de Fezes', value: 25 },
-  { name: 'Outro', value: 0 },
-]
-
-const EXAM_TYPES = [
-  'Preventivo', 'Diagnóstico', 'Terapêutico', 'Controle', 'Urgência', 'Rotina'
+  { name: 'Ultrassom', value: 150 },
 ]
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 function ExamField({ index, exam, onChange }) {
-  function handleNameChange(e) {
-    const selected = EXAM_OPTIONS.find(o => o.name === e.target.value)
-    onChange({ ...exam, exam_name: e.target.value, value: selected ? selected.value : exam.value })
+  function handleSelect(e) {
+    const option = EXAM_OPTIONS.find(o => o.name === e.target.value)
+    onChange({ exam_name: option?.name || '', exam_type: '', value: option?.value || '' })
   }
 
   return (
     <div className="border border-gray-200 rounded-xl p-4 space-y-3">
       <h3 className="font-semibold text-gray-700 text-sm">Exame {index + 1}</h3>
       <div>
-        <label className="block text-xs text-gray-500 mb-1">Nome do Exame</label>
+        <label className="block text-xs text-gray-500 mb-1">Tipo de Exame</label>
         <select
           value={exam.exam_name}
-          onChange={handleNameChange}
+          onChange={handleSelect}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         >
           <option value="">Selecione um exame</option>
           {EXAM_OPTIONS.map(o => (
-            <option key={o.name} value={o.name}>{o.name}</option>
+            <option key={o.name} value={o.name}>
+              {o.name} — {fmt(o.value)}
+            </option>
           ))}
         </select>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Tipo</label>
+          <label className="block text-xs text-gray-500 mb-1">Indicação / Tipo</label>
           <input
-            list={`exam-types-${index}`}
+            type="text"
             value={exam.exam_type}
             onChange={(e) => onChange({ ...exam, exam_type: e.target.value })}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ex: Preventivo"
+            placeholder="Ex: Preventivo, Diagnóstico..."
             required
           />
-          <datalist id={`exam-types-${index}`}>
-            {EXAM_TYPES.map(t => <option key={t} value={t} />)}
-          </datalist>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Valor (R$)</label>
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={exam.value}
-            onChange={(e) => onChange({ ...exam, value: e.target.value })}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+          <label className="block text-xs text-gray-500 mb-1">Valor</label>
+          <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700 font-medium">
+            {exam.value ? fmt(exam.value) : '—'}
+          </div>
         </div>
       </div>
     </div>
@@ -94,9 +64,10 @@ function ExamField({ index, exam, onChange }) {
 export default function PatientForm() {
   const [name, setName] = useState('')
   const [cpf, setCpf] = useState('')
+  const [numExams, setNumExams] = useState(1)
   const [exams, setExams] = useState([
     { exam_name: '', exam_type: '', value: '' },
-    { exam_name: '', exam_type: '', value: '' }
+    { exam_name: '', exam_type: '', value: '' },
   ])
   const [budget, setBudget] = useState(null)
   const [error, setError] = useState('')
@@ -115,19 +86,20 @@ export default function PatientForm() {
       .replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4')
   }
 
-  const total = exams.reduce((s, e) => s + (parseFloat(e.value) || 0), 0)
-  const overBudget = budget && total > budget.available
+  const activeExams = exams.slice(0, numExams)
+  const total = activeExams.reduce((s, e) => s + (parseFloat(e.value) || 0), 0)
+  const overBudget = budget && budget.blocked
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     if (overBudget) {
-      setError(`Valor total dos exames (${fmt(total)}) ultrapassa o saldo disponível (${fmt(budget.available)})`)
+      setError('Emissão bloqueada. Realize o pagamento para prosseguir.')
       return
     }
     setLoading(true)
     try {
-      const { id } = await api.createPatient({ name, cpf, exams })
+      const { id } = await api.createPatient({ name, cpf, exams: activeExams })
       navigate(`/patients/${id}`)
     } catch (err) {
       setError(err.message)
@@ -144,8 +116,10 @@ export default function PatientForm() {
       </div>
 
       {budget && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5 text-sm text-blue-800">
-          Saldo disponível: <strong>{fmt(budget.available)}</strong> de {fmt(budget.limit)}
+        <div className={`rounded-xl px-4 py-3 mb-5 text-sm border ${budget.blocked ? 'bg-red-50 border-red-300 text-red-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
+          {budget.blocked
+            ? `⚠️ Emissão bloqueada — saldo devedor: ${fmt(budget.amountDue)}`
+            : `Saldo disponível: ${fmt(budget.available)} de ${fmt(budget.limit)}`}
         </div>
       )}
 
@@ -176,12 +150,30 @@ export default function PatientForm() {
           </div>
         </div>
 
+        {/* Número de exames */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Quantidade de Exames</label>
+          <div className="flex gap-3">
+            {[1, 2].map(n => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setNumExams(n)}
+                className={`px-5 py-2 rounded-lg text-sm font-medium border transition ${numExams === n ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+              >
+                {n} exame{n > 1 ? 's' : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Campos de exame */}
         <div className="space-y-3">
-          {exams.map((exam, i) => (
+          {Array.from({ length: numExams }).map((_, i) => (
             <ExamField
               key={i}
               index={i}
-              exam={exam}
+              exam={exams[i]}
               onChange={(updated) => {
                 const next = [...exams]
                 next[i] = updated
@@ -191,11 +183,10 @@ export default function PatientForm() {
           ))}
         </div>
 
-        <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${overBudget ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'}`}>
+        {/* Total */}
+        <div className="flex items-center justify-between rounded-xl px-4 py-3 bg-gray-50 border border-gray-200">
           <span className="text-sm text-gray-600">Total dos exames:</span>
-          <span className={`font-bold text-lg ${overBudget ? 'text-red-600' : 'text-gray-800'}`}>
-            {fmt(total)}
-          </span>
+          <span className="font-bold text-lg text-gray-800">{fmt(total)}</span>
         </div>
 
         {error && (

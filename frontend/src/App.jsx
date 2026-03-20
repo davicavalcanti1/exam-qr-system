@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import PatientForm from './pages/PatientForm'
 import PatientDetail from './pages/PatientDetail'
 import Scanner from './pages/Scanner'
+import Payment from './pages/Payment'
 import Navbar from './components/Navbar'
 
 function ProtectedLayout() {
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/patients/new" element={<PatientForm />} />
           <Route path="/patients/:id" element={<PatientDetail />} />
+          <Route path="/payment" element={<Payment />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

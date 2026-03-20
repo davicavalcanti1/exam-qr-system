@@ -32,5 +32,8 @@ export const api = {
   generateQR: (patientId) => request('POST', `/qrcodes/generate/${patientId}`),
   getQRImage: (patientId) => request('GET', `/qrcodes/image/${patientId}`),
 
-  validateQR: (token, useType) => request('POST', '/scanner/validate', { token, useType })
+  validateQR: (token, useType) => request('POST', '/scanner/validate', { token, useType }),
+
+  initiatePayment: (method) => request('POST', '/payments/initiate', { method }),
+  confirmPayment: (method) => request('POST', '/payments/confirm', { method })
 }

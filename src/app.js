@@ -7,6 +7,7 @@ import authRouter from './routes/auth.js'
 import patientsRouter from './routes/patients.js'
 import qrcodesRouter from './routes/qrcodes.js'
 import scannerRouter from './routes/scanner.js'
+import paymentsRouter from './routes/payments.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -20,6 +21,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/patients', patientsRouter)
 app.use('/api/qrcodes', qrcodesRouter)
 app.use('/api/scanner', scannerRouter)
+app.use('/api/payments', paymentsRouter)
 
 // Serve built frontend
 const frontendDist = path.join(__dirname, '../frontend/dist')

@@ -52,8 +52,8 @@ router.post('/', requireAuth, (req, res) => {
   if (cleanCpf.length !== 11) {
     return res.status(400).json({ error: 'CPF inválido' })
   }
-  if (!Array.isArray(exams) || exams.length !== 2) {
-    return res.status(400).json({ error: 'Exatamente 2 exames são necessários' })
+  if (!Array.isArray(exams) || exams.length < 1 || exams.length > 2) {
+    return res.status(400).json({ error: 'Informe 1 ou 2 exames' })
   }
   for (const exam of exams) {
     if (!exam.exam_name || !exam.exam_type || exam.value == null || exam.value <= 0) {
