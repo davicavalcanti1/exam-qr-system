@@ -19,8 +19,10 @@ import ClinicNavbar from './components/ClinicNavbar'
 
 function ClinicLayout() {
   const user = getUser()
-  if (!user) return <Navigate to="/login" replace />
-  if (user.role !== 'clinic') return <Navigate to="/" replace />
+  if (!user || user.role !== 'clinic') {
+    localStorage.removeItem('token')
+    return <Navigate to="/login" replace />
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <ClinicNavbar />
@@ -33,8 +35,10 @@ function ClinicLayout() {
 
 function PartnerLayout() {
   const user = getUser()
-  if (!user) return <Navigate to="/login" replace />
-  if (user.role !== 'partner') return <Navigate to="/clinic" replace />
+  if (!user || user.role !== 'partner') {
+    localStorage.removeItem('token')
+    return <Navigate to="/login" replace />
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <PartnerNavbar />
@@ -49,7 +53,10 @@ function RootRedirect() {
   const user = getUser()
   if (!user) return <Navigate to="/login" replace />
   if (user.role === 'clinic') return <Navigate to="/clinic" replace />
-  return <Navigate to="/dashboard" replace />
+  if (user.role === 'partner') return <Navigate to="/dashboard" replace />
+  // role desconhecida — limpa e manda pro login
+  localStorage.removeItem('token')
+  return <Navigate to="/login" replace />
 }
 
 export default function App() {
