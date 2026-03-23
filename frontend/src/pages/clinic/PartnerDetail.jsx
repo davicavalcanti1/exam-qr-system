@@ -72,10 +72,10 @@ export default function PartnerDetail() {
           <div className="flex items-center gap-8">
             <span className="text-xl font-bold tracking-tighter text-indigo-700">ExameQR</span>
             <nav className="hidden md:flex gap-6 text-sm font-medium">
-              <span className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Dashboard</span>
+              <button onClick={() => navigate('/clinic')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Dashboard</button>
               <span className="text-indigo-700 font-semibold border-b-2 border-indigo-600 pb-1">Parceiros</span>
-              <span className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Pacientes</span>
-              <span className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Relatórios</span>
+              <button onClick={() => alert('Módulo de pacientes globais em desenvolvimento.')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Pacientes</button>
+              <button onClick={() => alert('Módulo de relatórios em desenvolvimento.')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Relatórios</button>
             </nav>
           </div>
           <div className="flex items-center gap-4">
@@ -137,7 +137,15 @@ export default function PartnerDetail() {
                 <h3 className="text-xl font-bold text-on-surface tracking-tight mb-1">Controle de Verba</h3>
                 <p className="text-sm text-on-surface-variant">Gestão de cotas mensais do parceiro</p>
               </div>
-              <button className="text-primary font-semibold text-sm hover:underline flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const newLimit = prompt(`Novo limite de orçamento para ${partner.name} (atual: ${fmt(limit)}):`)
+                  if (newLimit !== null && !isNaN(parseFloat(newLimit))) {
+                    api.updatePartner(id, { budget_limit: parseFloat(newLimit) }).then(load).catch(e => alert(e.message))
+                  }
+                }}
+                className="text-primary font-semibold text-sm hover:underline flex items-center gap-1"
+              >
                 Editar limite
                 <span className="material-symbols-outlined text-sm">edit</span>
               </button>
@@ -192,8 +200,11 @@ export default function PartnerDetail() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-6 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors">
-              Ver histórico completo
+            <button
+              onClick={() => alert('Histórico financeiro completo disponível no módulo Financeiro (em desenvolvimento).')}
+              className="w-full mt-6 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors"
+            >
+              Ver histórico completo →
             </button>
           </div>
         </div>
@@ -226,7 +237,7 @@ export default function PartnerDetail() {
               <tbody className="divide-y divide-outline-variant/5">
                 {filtered.map((p) => {
                   const st = qrStatusLabel(p)
-                  const date = new Date(p.createdAt).toLocaleString('pt-BR')
+                  const date = new Date(p.created_at || p.createdAt).toLocaleString('pt-BR')
                   return (
                     <tr key={p.id} className="hover:bg-surface-bright transition-colors cursor-pointer" onClick={() => navigate(`/patients/${p.id}`)}>
                       <td className="px-8 py-5 font-semibold text-on-surface">{p.name}</td>
@@ -249,8 +260,8 @@ export default function PartnerDetail() {
           <div className="px-8 py-4 bg-surface-container-low flex items-center justify-between text-xs text-on-surface-variant font-medium">
             <span>Mostrando {filtered.length} de {patients.length} registros</span>
             <div className="flex gap-2">
-              <button className="px-3 py-1 rounded bg-white border border-outline-variant hover:bg-surface-container-high">Anterior</button>
-              <button className="px-3 py-1 rounded bg-white border border-outline-variant hover:bg-surface-container-high">Próxima</button>
+              <button disabled className="px-3 py-1 rounded bg-white border border-outline-variant text-on-surface-variant/50 cursor-not-allowed">Anterior</button>
+              <button disabled className="px-3 py-1 rounded bg-white border border-outline-variant text-on-surface-variant/50 cursor-not-allowed">Próxima</button>
             </div>
           </div>
         </section>

@@ -163,30 +163,23 @@ export default function Scanner() {
             </div>
           )}
 
-          {/* Default state cards */}
+          {/* Idle state — instructions */}
           {!result && (
-            <>
-              <div className="bg-emerald-950/30 border border-emerald-500/30 p-5 rounded-2xl flex items-start gap-4">
-                <div className="bg-emerald-500/20 p-3 rounded-xl">
-                  <span className="material-symbols-outlined text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-emerald-100">Autorização Confirmada</h3>
-                  <p className="text-emerald-300/70 text-sm mt-1">Paciente: Ricardo Oliveira<br />Protocolo: #4920-A</p>
-                  <div className="mt-3 inline-flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">VÁLIDO HOJE</div>
+            <div className="col-span-full bg-slate-800/50 border border-slate-700/50 p-5 rounded-2xl flex items-start gap-4">
+              <div className="bg-indigo-500/20 p-3 rounded-xl flex-shrink-0">
+                <span className="material-symbols-outlined text-indigo-400" style={{ fontVariationSettings: "'FILL' 1" }}>qr_code_scanner</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-200">Aguardando leitura</h3>
+                <p className="text-slate-400 text-sm mt-1">
+                  Selecione o tipo de uso acima, clique em <span className="text-indigo-400 font-semibold">Iniciar Câmera</span> e aponte para o QR Code do paciente.
+                </p>
+                <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                  <span className="flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>info</span> QR Codes são válidos por 72h</span>
+                  <span className="flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>lock</span> Dados criptografados</span>
                 </div>
               </div>
-              <div className="bg-rose-950/30 border border-rose-500/30 p-5 rounded-2xl flex items-start gap-4">
-                <div className="bg-rose-500/20 p-3 rounded-xl">
-                  <span className="material-symbols-outlined text-rose-400" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-rose-100">Cota Esgotada</h3>
-                  <p className="text-rose-300/70 text-sm mt-1">Este voucher já foi utilizado ou expirou o prazo de 24h.</p>
-                  <button className="mt-3 text-xs font-bold text-rose-400 hover:underline">Ver Detalhes</button>
-                </div>
-              </div>
-            </>
+            </div>
           )}
         </section>
 
@@ -210,7 +203,10 @@ export default function Scanner() {
 
       {/* FAB */}
       <div className="fixed bottom-8 right-8">
-        <button className="w-14 h-14 rounded-full bg-slate-800 text-white shadow-xl flex items-center justify-center hover:bg-slate-700 border border-slate-700 transition-all">
+        <button
+          onClick={() => alert('Suporte ExameQR\n\nDúvidas com o scanner?\n• Certifique-se que a câmera está ativada no navegador\n• O QR Code deve estar bem iluminado\n• Mantenha o dispositivo estável\n\nContato: suporte@exameqr.com.br')}
+          className="w-14 h-14 rounded-full bg-slate-800 text-white shadow-xl flex items-center justify-center hover:bg-slate-700 border border-slate-700 transition-all"
+        >
           <span className="material-symbols-outlined">help_outline</span>
         </button>
       </div>

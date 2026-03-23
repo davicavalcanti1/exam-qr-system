@@ -4,18 +4,59 @@ import { api } from '../api'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+const FAKE_PIX_KEY = '00020126580014br.gov.bcb.pix0136e09e-7d6f-402a-b4c3-9a1f7d2e8b0052040000530398654041.005802BR5925ExameQR Sistemas Medicos6009Sao Paulo62070503***6304A1B2'
+
 export default function Payment() {
   const navigate = useNavigate()
-  const [method, setMethod] = useState('card') // 'pix' | 'card'
+  const [method, setMethod] = useState('card')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [paid, setPaid] = useState(false)
 
   useEffect(() => {
     api.getPartnerDashboard().then(d => setData(d)).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const amount = data?.partner?.committed || 450
-  const protocol = data?.partner?.id || '829102'
+  const amount = data?.partner?.committed || 0
+  const protocol = data?.partner?.id ? `PAG-${data.partner.id}` : 'PAG-001'
+
+  async function handleCopyPix() {
+    try {
+      await navigator.clipboard.writeText(FAKE_PIX_KEY)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      alert('Chave Pix copiada: ' + FAKE_PIX_KEY.slice(0, 40) + '...')
+    }
+  }
+
+  async function handleConfirmPayment() {
+    setConfirming(true)
+    try {
+      await api.confirmPayment(method)
+      setPaid(true)
+      setTimeout(() => navigate('/dashboard'), 2500)
+    } catch (err) {
+      alert(err.message || 'Erro ao confirmar pagamento. Tente novamente.')
+    } finally {
+      setConfirming(false)
+    }
+  }
+
+  if (paid) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-surface">
+      <div className="text-center space-y-4">
+        <div className="w-20 h-20 rounded-full bg-tertiary/10 flex items-center justify-center mx-auto">
+          <span className="material-symbols-outlined text-5xl text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+        </div>
+        <h2 className="text-2xl font-bold text-on-surface">Pagamento Confirmado!</h2>
+        <p className="text-on-surface-variant">Redirecionando para o painel...</p>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+      </div>
+    </div>
+  )
 
   if (loading) return (
     <div className="flex items-center justify-center py-32">
@@ -89,14 +130,20 @@ export default function Payment() {
                   </div>
                   <div className="w-full bg-white rounded-lg p-3 border border-outline-variant/30 mb-6 flex items-center gap-3">
                     <span className="text-xs font-mono text-on-surface-variant truncate">00020126580014br.gov.bcb.pix0136e09e-7d6f-402a...</span>
-                    <button className="flex items-center gap-1 text-primary font-semibold text-sm shrink-0">
-                      <span className="material-symbols-outlined text-sm">content_copy</span>
-                      📋 Copiar
+                    <button onClick={handleCopyPix} className="flex items-center gap-1 text-primary font-semibold text-sm shrink-0 hover:opacity-75 transition-opacity">
+                      <span className="material-symbols-outlined text-sm">{copied ? 'check' : 'content_copy'}</span>
+                      {copied ? 'Copiado!' : '📋 Copiar'}
                     </button>
                   </div>
-                  <button className="w-full py-4 rounded-lg bg-tertiary text-white font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all">
-                    <span className="material-symbols-outlined">check_circle</span>
-                    ✅ Confirmar Pagamento Pix
+                  <button
+                    onClick={handleConfirmPayment}
+                    disabled={confirming}
+                    className="w-full py-4 rounded-lg bg-tertiary text-white font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {confirming
+                      ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Confirmando...</>
+                      : <><span className="material-symbols-outlined">check_circle</span> ✅ Confirmar Pagamento Pix</>
+                    }
                   </button>
                 </div>
               </div>
@@ -154,9 +201,15 @@ export default function Payment() {
                       <span>Siga as instruções no visor verde</span>
                     </li>
                   </ul>
-                  <button className="w-full bg-primary-container text-white py-4 px-8 rounded-lg font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
-                    <span className="material-symbols-outlined">point_of_sale</span>
-                    Inserir / Aproximar Cartão
+                  <button
+                    onClick={handleConfirmPayment}
+                    disabled={confirming}
+                    className="w-full bg-primary-container text-white py-4 px-8 rounded-lg font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+                  >
+                    {confirming
+                      ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Processando...</>
+                      : <><span className="material-symbols-outlined">point_of_sale</span> Inserir / Aproximar Cartão</>
+                    }
                   </button>
                   <p className="mt-4 text-xs text-on-surface-variant text-center opacity-60">
                     O sistema aguardará a resposta da maquineta por até 2 minutos.

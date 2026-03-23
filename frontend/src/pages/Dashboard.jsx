@@ -192,7 +192,11 @@ export default function Dashboard() {
                         >
                           <span className="material-symbols-outlined">visibility</span>
                         </button>
-                        <button className="p-2 text-on-surface-variant hover:text-secondary transition-colors">
+                        <button
+                          className="p-2 text-on-surface-variant hover:text-secondary transition-colors"
+                          title="Ver QR Code"
+                          onClick={() => navigate(`/patients/${p.id}`)}
+                        >
                           <span className="material-symbols-outlined">qr_code_2</span>
                         </button>
                       </td>
@@ -211,8 +215,8 @@ export default function Dashboard() {
             <div className="px-6 py-4 bg-surface-container/10 border-t border-outline-variant/10 flex justify-between items-center">
               <span className="text-xs text-on-surface-variant font-medium">Mostrando {patients.length} pacientes</span>
               <div className="flex gap-2">
-                <button className="px-3 py-1 rounded border border-outline-variant text-xs font-bold hover:bg-surface transition-colors">Anterior</button>
-                <button className="px-3 py-1 rounded border border-outline-variant text-xs font-bold hover:bg-surface transition-colors">Próximo</button>
+                <button disabled className="px-3 py-1 rounded border border-outline-variant text-xs font-bold text-on-surface-variant/50 cursor-not-allowed">Anterior</button>
+                <button disabled className="px-3 py-1 rounded border border-outline-variant text-xs font-bold text-on-surface-variant/50 cursor-not-allowed">Próximo</button>
               </div>
             </div>
           </div>

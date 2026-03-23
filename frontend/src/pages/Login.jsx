@@ -82,7 +82,11 @@ export default function Login() {
                   <label className="block text-xs font-bold tracking-widest text-on-surface-variant uppercase" htmlFor="senha">
                     Senha
                   </label>
-                  <button type="button" className="text-xs font-semibold text-primary hover:text-primary-container transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => alert('Entre em contato com o administrador da clínica para redefinir sua senha.')}
+                    className="text-xs font-semibold text-primary hover:text-primary-container transition-colors"
+                  >
                     Esqueceu a senha?
                   </button>
                 </div>
@@ -139,7 +143,10 @@ export default function Login() {
 
             <div className="mt-8 pt-6 border-t border-outline-variant/10 flex flex-col items-center gap-4">
               <p className="text-xs text-on-surface-variant">Ainda não tem acesso?</p>
-              <button className="text-sm font-bold text-on-surface hover:text-primary transition-colors flex items-center gap-2">
+              <button
+                onClick={() => alert('Fale com o administrador da clínica para solicitar credenciais de acesso de parceiro.')}
+                className="text-sm font-bold text-on-surface hover:text-primary transition-colors flex items-center gap-2"
+              >
                 Solicitar acesso para parceiro
                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>open_in_new</span>
               </button>
@@ -150,8 +157,8 @@ export default function Login() {
         {/* Footer */}
         <footer className="mt-8 flex justify-between items-center px-2">
           <div className="flex gap-4">
-            <a className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors" href="#">Privacidade</a>
-            <a className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors" href="#">Termos</a>
+            <button onClick={() => alert('Política de privacidade disponível em breve.')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Privacidade</button>
+            <button onClick={() => alert('Termos de uso disponíveis em breve.')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Termos</button>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim" />

@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { logout } from '../auth'
 
 const navItems = [
@@ -39,12 +39,12 @@ export default function ClinicSidebar() {
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const active = isActive(item)
+          const implemented = item.to === '/clinic'
           return (
-            <Link
+            <button
               key={item.to}
-              to={item.to === '/clinic' ? '/clinic' : '#'}
-              onClick={item.to !== '/clinic' ? (e) => e.preventDefault() : undefined}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              onClick={() => implemented ? navigate(item.to) : alert(`"${item.label}" está em desenvolvimento e será disponibilizado em breve.`)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${
                 active
                   ? 'bg-white text-indigo-600 shadow-sm font-bold scale-105'
                   : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-500'
@@ -52,7 +52,8 @@ export default function ClinicSidebar() {
             >
               <span className="material-symbols-outlined">{item.icon}</span>
               <span className="font-inter text-sm">{item.label}</span>
-            </Link>
+              {!implemented && <span className="ml-auto text-[9px] font-bold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase">Em breve</span>}
+            </button>
           )
         })}
       </nav>

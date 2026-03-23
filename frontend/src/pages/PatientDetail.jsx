@@ -147,13 +147,13 @@ export default function PatientDetail() {
                 <div>
                   <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Registrado em</span>
                   <p className="text-on-surface font-medium tabular-nums">
-                    {new Date(patient.createdAt).toLocaleDateString('pt-BR')}
+                    {new Date(patient.created_at || patient.createdAt).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
                 <div>
                   <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Última Atualização</span>
                   <p className="text-on-surface font-medium tabular-nums">
-                    {new Date(patient.updatedAt || patient.createdAt).toLocaleString('pt-BR')}
+                    {new Date(patient.updated_at || patient.updatedAt || patient.created_at || patient.createdAt).toLocaleString('pt-BR')}
                   </p>
                 </div>
               </div>
