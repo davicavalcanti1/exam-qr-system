@@ -7,51 +7,55 @@ export default function BudgetBar({ budget }) {
   if (!budget) return null
 
   const pct = Math.min(budget.percentUsed ?? (budget.committed / budget.limit) * 100, 100)
-  const barColor = budget.blocked ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-500' : 'bg-green-500'
 
-  // Bloqueado pela clínica
   if (budget.blockedByClinic) {
     return (
-      <div className="bg-red-50 border-2 border-red-400 rounded-xl p-5 mb-6">
+      <div className="bg-error-container/40 border-2 border-error/30 rounded-2xl p-5 mb-6">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">🔒</span>
+          <div className="w-10 h-10 bg-error/10 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="material-symbols-outlined text-error" style={{ fontSize: '20px' }}>lock</span>
+          </div>
           <div>
-            <h2 className="font-bold text-red-700 text-lg">Emissão Bloqueada pela Clínica</h2>
-            <p className="text-red-500 text-sm">Entre em contato com a clínica para regularização.</p>
+            <h2 className="font-bold text-error text-base">Emissão Bloqueada pela Clínica</h2>
+            <p className="text-on-error-container text-sm mt-0.5">Entre em contato com a clínica para regularização.</p>
           </div>
         </div>
       </div>
     )
   }
 
-  // Saldo esgotado
   if (budget.budgetBlocked) {
     return (
-      <div className="bg-red-50 border-2 border-red-400 rounded-xl p-5 mb-6">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xl">🔒</span>
-              <h2 className="font-bold text-red-700 text-lg">Emissão de QR Codes Bloqueada</h2>
+      <div className="bg-error-container/40 border-2 border-error/30 rounded-2xl p-5 mb-6">
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-error/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-error" style={{ fontSize: '20px' }}>block</span>
             </div>
-            <p className="text-red-600 text-sm">
-              Saldo devedor: <strong>{fmt(budget.amountDue)}</strong>
-              {budget.amountDue > budget.limit && (
-                <span className="ml-1 text-xs opacity-70">(+{fmt(budget.amountDue - budget.limit)} acima do limite)</span>
-              )}
-            </p>
+            <div>
+              <h2 className="font-bold text-error text-base">Emissão de QR Codes Bloqueada</h2>
+              <p className="text-on-error-container text-sm mt-0.5">
+                Saldo devedor: <strong>{fmt(budget.amountDue)}</strong>
+                {budget.amountDue > budget.limit && (
+                  <span className="ml-1 text-xs opacity-70">
+                    (+{fmt(budget.amountDue - budget.limit)} acima do limite)
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
           <button
             onClick={() => navigate('/payment')}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition shadow"
+            className="glass-gradient text-white font-bold px-5 py-2.5 rounded-xl text-sm transition hover:opacity-90 shadow flex items-center gap-2"
           >
-            💳 Fazer Pagamento
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>credit_card</span>
+            Fazer Pagamento
           </button>
         </div>
-        <div className="w-full bg-red-200 rounded-full h-3 overflow-hidden mt-4">
-          <div className="bg-red-500 h-3 rounded-full w-full" />
+        <div className="w-full bg-error/20 rounded-full h-2 overflow-hidden mt-4">
+          <div className="bg-error h-2 rounded-full w-full" />
         </div>
-        <div className="flex justify-between text-xs text-red-400 mt-1">
+        <div className="flex justify-between text-xs text-on-error-container/60 mt-1.5">
           <span>Utilizado: {fmt(budget.committed)}</span>
           <span>Limite: {fmt(budget.limit)}</span>
         </div>
@@ -59,18 +63,24 @@ export default function BudgetBar({ budget }) {
     )
   }
 
+  const barClass = pct >= 80 ? 'bg-yellow-400' : 'bg-tertiary-fixed-dim'
+  const availableColor = pct >= 80 ? 'text-yellow-700' : 'text-tertiary'
+
   return (
-    <div className="bg-white rounded-xl shadow p-5 mb-6">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="font-semibold text-gray-700">Saldo de Liberação</h2>
-        <span className={`text-sm font-bold ${pct >= 80 ? 'text-yellow-600' : 'text-green-700'}`}>
+    <div className="bg-surface rounded-2xl border border-surface-container-high shadow-card p-5 mb-6">
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '18px' }}>account_balance_wallet</span>
+          <h2 className="font-semibold text-on-surface">Saldo de Liberação</h2>
+        </div>
+        <span className={`text-sm font-bold ${availableColor}`}>
           {fmt(budget.available)} disponível
         </span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-        <div className={`${barColor} h-4 rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+      <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+        <div className={`${barClass} h-2 rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
       </div>
-      <div className="flex justify-between text-xs text-gray-500 mt-1">
+      <div className="flex justify-between text-xs text-on-surface-variant mt-1.5">
         <span>Utilizado: {fmt(budget.committed)}</span>
         <span>Limite: {fmt(budget.limit)}</span>
       </div>

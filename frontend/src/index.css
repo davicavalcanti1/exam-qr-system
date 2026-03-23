@@ -1,3 +1,54 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9ff;
+    color: #121c2a;
+  }
+}
+
+@layer components {
+  .glass-gradient {
+    background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+  }
+
+  .soft-bg-gradient {
+    background: linear-gradient(135deg, #eff4ff 0%, #dee9fc 100%);
+  }
+
+  .pix-gradient {
+    background: linear-gradient(135deg, #00b09b 0%, #4edea3 100%);
+  }
+
+  .card-machine-gradient {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-size: 20px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    user-select: none;
+  }
+
+  .scanner-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #4f46e5, #4edea3, #4f46e5, transparent);
+    animation: scan 2s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(79, 70, 229, 0.8);
+  }
+}
+
+@keyframes scan {
+  0%   { top: 10%; }
+  50%  { top: 85%; }
+  100% { top: 10%; }
+}
