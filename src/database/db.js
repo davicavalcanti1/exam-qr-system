@@ -22,12 +22,26 @@ export function getDB() {
 
 export function initDB() {
   const db = getDB()
+
   db.exec(`
-    CREATE TABLE IF NOT EXISTS patients (
+    CREATE TABLE IF NOT EXISTS partners (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
-      cpf TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      budget_limit REAL NOT NULL DEFAULT 2000,
+      status TEXT NOT NULL DEFAULT 'active',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS patients (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      partner_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      cpf TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(partner_id, cpf),
+      FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS exams (
@@ -61,10 +75,13 @@ export function initDB() {
 
     CREATE TABLE IF NOT EXISTS payments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      partner_id INTEGER NOT NULL,
       amount REAL NOT NULL,
       method TEXT NOT NULL,
-      paid_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      paid_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (partner_id) REFERENCES partners(id)
     );
   `)
+
   console.log('Database initialized at', DB_PATH)
 }

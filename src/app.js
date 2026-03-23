@@ -4,6 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { initDB } from './database/db.js'
 import authRouter from './routes/auth.js'
+import clinicRouter from './routes/clinic.js'
 import patientsRouter from './routes/patients.js'
 import qrcodesRouter from './routes/qrcodes.js'
 import scannerRouter from './routes/scanner.js'
@@ -18,12 +19,12 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 
 app.use('/api/auth', authRouter)
+app.use('/api/clinic', clinicRouter)
 app.use('/api/patients', patientsRouter)
 app.use('/api/qrcodes', qrcodesRouter)
 app.use('/api/scanner', scannerRouter)
 app.use('/api/payments', paymentsRouter)
 
-// Serve built frontend
 const frontendDist = path.join(__dirname, '../frontend/dist')
 app.use(express.static(frontendDist))
 app.get('*', (req, res) => {

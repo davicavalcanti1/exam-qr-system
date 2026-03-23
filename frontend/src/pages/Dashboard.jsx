@@ -13,6 +13,9 @@ function StatusBadge({ patient }) {
   if (patient.qr_status === 'exhausted') {
     return <span className="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700">Esgotado</span>
   }
+  if (patient.qr_status === 'revoked') {
+    return <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">Revogado</span>
+  }
   const uses = patient.qr_uses || 0
   return (
     <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
@@ -34,7 +37,7 @@ export default function Dashboard() {
       setPatients(p)
       setBudget(b)
     } catch (err) {
-      if (err.message?.includes('autorizado') || err.message?.includes('Token')) {
+      if (err.message?.includes('autorizado') || err.message?.includes('Token') || err.message?.includes('parceiro')) {
         localStorage.removeItem('token')
         navigate('/login')
       }
@@ -64,7 +67,7 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-gray-800">Pacientes Cadastrados</h1>
         <Link
           to="/patients/new"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${budget?.blocked ? 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
         >
           + Novo Paciente
         </Link>

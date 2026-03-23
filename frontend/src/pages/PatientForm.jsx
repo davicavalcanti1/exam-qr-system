@@ -111,7 +111,7 @@ export default function PatientForm() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate('/')} className="text-gray-400 hover:text-gray-600 text-xl">←</button>
+        <button onClick={() => navigate('/dashboard')} className="text-gray-400 hover:text-gray-600 text-xl">←</button>
         <h1 className="text-2xl font-bold text-gray-800">Novo Paciente</h1>
       </div>
 
@@ -198,7 +198,7 @@ export default function PatientForm() {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-50 transition"
           >
             Cancelar

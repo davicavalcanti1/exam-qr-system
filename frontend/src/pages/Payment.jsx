@@ -150,8 +150,8 @@ export default function Payment() {
   useEffect(() => {
     api.getBudget().then(b => {
       setBudget(b)
-      if (!b.blocked) navigate('/')
-    }).catch(() => navigate('/'))
+      if (!b.blocked) navigate('/dashboard')
+    }).catch(() => navigate('/dashboard'))
   }, [])
 
   async function handleSelectMethod(m) {
@@ -172,7 +172,7 @@ export default function Payment() {
     setConfirming(true)
     try {
       await api.confirmPayment(method)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -186,7 +186,7 @@ export default function Payment() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-blue-700 text-white px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <button onClick={() => navigate('/')} className="text-blue-200 hover:text-white">←</button>
+          <button onClick={() => navigate('/dashboard')} className="text-blue-200 hover:text-white">←</button>
           <span className="font-bold">Pagamento de Saldo</span>
         </div>
       </nav>

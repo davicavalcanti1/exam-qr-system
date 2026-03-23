@@ -6,25 +6,40 @@ export default function BudgetBar({ budget }) {
   const navigate = useNavigate()
   if (!budget) return null
 
-  const pct = Math.min((budget.committed / budget.limit) * 100, 100)
+  const pct = Math.min(budget.percentUsed ?? (budget.committed / budget.limit) * 100, 100)
   const barColor = budget.blocked ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-500' : 'bg-green-500'
 
-  if (budget.blocked) {
+  // Bloqueado pela clínica
+  if (budget.blockedByClinic) {
+    return (
+      <div className="bg-red-50 border-2 border-red-400 rounded-xl p-5 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">🔒</span>
+          <div>
+            <h2 className="font-bold text-red-700 text-lg">Emissão Bloqueada pela Clínica</h2>
+            <p className="text-red-500 text-sm">Entre em contato com a clínica para regularização.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Saldo esgotado
+  if (budget.budgetBlocked) {
     return (
       <div className="bg-red-50 border-2 border-red-400 rounded-xl p-5 mb-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-red-600 text-xl">🔒</span>
+              <span className="text-xl">🔒</span>
               <h2 className="font-bold text-red-700 text-lg">Emissão de QR Codes Bloqueada</h2>
             </div>
             <p className="text-red-600 text-sm">
               Saldo devedor: <strong>{fmt(budget.amountDue)}</strong>
               {budget.amountDue > budget.limit && (
-                <span className="ml-1 text-xs">(excedente de {fmt(budget.amountDue - budget.limit)} acima do limite)</span>
+                <span className="ml-1 text-xs opacity-70">(+{fmt(budget.amountDue - budget.limit)} acima do limite)</span>
               )}
             </p>
-            <p className="text-red-500 text-xs mt-0.5">Faça o pagamento para liberar novas emissões.</p>
           </div>
           <button
             onClick={() => navigate('/payment')}
@@ -53,10 +68,7 @@ export default function BudgetBar({ budget }) {
         </span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-        <div
-          className={`${barColor} h-4 rounded-full transition-all duration-500`}
-          style={{ width: `${pct}%` }}
-        />
+        <div className={`${barColor} h-4 rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
       </div>
       <div className="flex justify-between text-xs text-gray-500 mt-1">
         <span>Utilizado: {fmt(budget.committed)}</span>

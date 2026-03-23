@@ -1,50 +1,49 @@
 import { Router } from 'express'
 import { getDB } from '../database/db.js'
-import { requireAuth } from '../middleware/auth.js'
-import { getBudgetStatus } from './qrcodes.js'
+import { requirePartner } from '../middleware/auth.js'
+import { getPartnerBudget } from './budget.js'
 
 const router = Router()
+router.use(requirePartner)
 
-// Gera código Pix falso no formato EMV (copia e cola)
 function generateFakePixCode(amount) {
   const amountStr = amount.toFixed(2)
+  const pixKey = 'exameqr@pagamento.com.br'
   const merchantName = 'EXAMEQR SAUDE LTDA'
   const merchantCity = 'SAO PAULO'
   const txId = Math.random().toString(36).substring(2, 15).toUpperCase()
+  const fakeCrc = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0')
 
-  // Formato simplificado que parece um código Pix real
-  const pixKey = `exameqr@pagamento.com.br`
-  const payload = [
-    '000201',
-    '010212',
+  return [
+    '000201', '010212',
     `26${String(14 + pixKey.length + 10).padStart(2, '0')}0014BR.GOV.BCB.PIX01${String(pixKey.length).padStart(2, '0')}${pixKey}`,
-    '52040000',
-    '5303986',
+    '52040000', '5303986',
     `54${String(amountStr.length).padStart(2, '0')}${amountStr}`,
     '5802BR',
     `59${String(merchantName.length).padStart(2, '0')}${merchantName}`,
     `60${String(merchantCity.length).padStart(2, '0')}${merchantCity}`,
     `62${String(txId.length + 4).padStart(2, '0')}05${String(txId.length).padStart(2, '0')}${txId}`,
-    '6304',
+    '6304' + fakeCrc
   ].join('')
-
-  // CRC16 simples (fake mas parecido)
-  const fakeCrc = Math.floor(Math.random() * 65535).toString(16).toUpperCase().padStart(4, '0')
-  return payload + fakeCrc
 }
 
-// Inicia pagamento — retorna método e dados (Pix ou Cartão)
-router.post('/initiate', requireAuth, (req, res) => {
+router.get('/history', (req, res) => {
+  const db = getDB()
+  const history = db.prepare(
+    'SELECT * FROM payments WHERE partner_id = ? ORDER BY paid_at DESC'
+  ).all(req.user.partnerId)
+  res.json(history)
+})
+
+router.post('/initiate', (req, res) => {
   const { method } = req.body
   if (!['pix', 'card'].includes(method)) {
-    return res.status(400).json({ error: 'Método inválido. Use "pix" ou "card".' })
+    return res.status(400).json({ error: 'Método inválido' })
   }
 
-  const db = getDB()
-  const budget = getBudgetStatus(db)
-
-  if (!budget.blocked) {
-    return res.status(400).json({ error: 'Não há saldo devedor no momento.' })
+  const budget = getPartnerBudget(req.user.partnerId)
+  if (!budget || !budget.budgetBlocked) {
+    return res.status(400).json({ error: 'Não há saldo devedor no momento' })
   }
 
   const amount = budget.amountDue
@@ -56,36 +55,30 @@ router.post('/initiate', requireAuth, (req, res) => {
       pixCode: generateFakePixCode(amount),
       pixKey: 'exameqr@pagamento.com.br',
       beneficiary: 'ExameQR Saúde Ltda',
-      instructions: 'Copie o código, abra seu banco e cole em Pix → Copia e Cola'
+      instructions: 'Abra seu banco → Pix → Copia e Cola'
     })
   }
 
-  // Cartão
-  return res.json({
-    method: 'card',
-    amount,
-    instructions: 'Insira ou aproxime o cartão na maquineta'
-  })
+  return res.json({ method: 'card', amount })
 })
 
-// Confirma pagamento (registra no banco)
-router.post('/confirm', requireAuth, (req, res) => {
+router.post('/confirm', (req, res) => {
   const { method } = req.body
   if (!['pix', 'card'].includes(method)) {
-    return res.status(400).json({ error: 'Método inválido.' })
+    return res.status(400).json({ error: 'Método inválido' })
   }
 
-  const db = getDB()
-  const budget = getBudgetStatus(db)
-
-  if (!budget.blocked) {
-    return res.status(400).json({ error: 'Não há saldo devedor para quitar.' })
+  const partnerId = req.user.partnerId
+  const budget = getPartnerBudget(partnerId)
+  if (!budget?.budgetBlocked) {
+    return res.status(400).json({ error: 'Não há saldo devedor para quitar' })
   }
 
-  db.prepare('INSERT INTO payments (amount, method) VALUES (?, ?)').run(budget.amountDue, method)
+  getDB().prepare(
+    'INSERT INTO payments (partner_id, amount, method) VALUES (?, ?, ?)'
+  ).run(partnerId, budget.amountDue, method)
 
-  const newBudget = getBudgetStatus(db)
-  res.json({ success: true, message: 'Pagamento registrado com sucesso.', budget: newBudget })
+  res.json({ success: true, message: 'Pagamento registrado', budget: getPartnerBudget(partnerId) })
 })
 
 export default router
