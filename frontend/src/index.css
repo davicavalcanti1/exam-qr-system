@@ -1,54 +1,68 @@
 @tailwind base;
-@tailwind components;
 @tailwind utilities;
+@tailwind components;
 
-@layer base {
-  body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8f9ff;
-    color: #121c2a;
-  }
+body { font-family: 'Inter', sans-serif; }
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
 }
 
-@layer components {
-  .glass-gradient {
-    background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
-  }
+.signature-gradient {
+  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+}
 
-  .soft-bg-gradient {
-    background: linear-gradient(135deg, #eff4ff 0%, #dee9fc 100%);
-  }
+.glass-gradient {
+  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+}
 
-  .pix-gradient {
-    background: linear-gradient(135deg, #00b09b 0%, #4edea3 100%);
-  }
+.soft-bg-gradient {
+  background: linear-gradient(180deg, #eff4ff 0%, #e2dfff 100%);
+}
 
-  .card-machine-gradient {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  }
+.pix-gradient {
+  background: linear-gradient(135deg, #32bcad 0%, #1ea194 100%);
+}
 
-  .material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    font-size: 20px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    user-select: none;
-  }
+.card-machine-gradient {
+  background: linear-gradient(180deg, #27313f 0%, #121c2a 100%);
+}
 
-  .scanner-line {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #4f46e5, #4edea3, #4f46e5, transparent);
-    animation: scan 2s ease-in-out infinite;
-    box-shadow: 0 0 8px rgba(79, 70, 229, 0.8);
-  }
+.glass-header {
+  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+}
+
+.form-gradient-btn {
+  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+}
+
+.qr-gradient {
+  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.scanner-viewport {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanner-line {
+  height: 2px;
+  background: #4f46e5;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  box-shadow: 0 0 15px #4f46e5;
+  animation: scan 3s linear infinite;
 }
 
 @keyframes scan {
-  0%   { top: 10%; }
-  50%  { top: 85%; }
-  100% { top: 10%; }
+  0% { top: 0; }
+  50% { top: 100%; }
+  100% { top: 0; }
 }

@@ -3,52 +3,44 @@ import { logout, getUser } from '../auth'
 
 export default function PartnerNavbar() {
   const navigate = useNavigate()
-  const location = useLocation()
+  const location = useNavigate()
   const user = getUser()
-
   function handleLogout() { logout(); navigate('/login') }
 
-  function navClass(path) {
-    return location.pathname === path
-      ? 'text-white font-semibold'
-      : 'text-white/70 hover:text-white'
+  function linkClass(path) {
+    const active = window.location.pathname === path
+    return active
+      ? 'text-indigo-700 font-semibold border-b-2 border-indigo-600 pb-1 font-inter tracking-tight text-sm'
+      : 'text-slate-500 hover:text-indigo-500 font-inter tracking-tight text-sm font-medium transition-colors'
   }
 
   return (
-    <nav className="glass-gradient shadow-md">
-      <div className="max-w-5xl mx-auto px-4 py-0 flex items-center justify-between h-14">
-        <div className="flex items-center gap-6">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
-              <span className="material-symbols-outlined text-white" style={{ fontSize: '16px' }}>qr_code_2</span>
-            </div>
-            <span className="font-bold text-white tracking-tight">Carnexa</span>
-          </Link>
-
-          <div className="flex items-center gap-1">
-            <Link to="/dashboard" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition ${navClass('/dashboard')}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>grid_view</span>
-              Pacientes
-            </Link>
-            <Link to="/patients/new" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition ${navClass('/patients/new')}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>person_add</span>
-              Novo Paciente
-            </Link>
-            <Link to="/scanner" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition ${navClass('/scanner')}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>qr_code_scanner</span>
-              Leitor
-            </Link>
+    <nav className="bg-white border-none sticky top-0 z-50 shadow-sm">
+      <div className="flex justify-between items-center w-full px-8 py-4">
+        <div className="flex items-center gap-8">
+          <span className="text-xl font-bold tracking-tighter text-indigo-700">ExameQR</span>
+          <div className="hidden md:flex gap-6 items-center">
+            <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>
+            <Link to="/patients/new" className={linkClass('/patients/new')}>Pacientes</Link>
+            <Link to="/scanner" className={linkClass('/scanner')}>Scanner</Link>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-white/70 text-sm hidden sm:block">{user?.partnerName}</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+            <button className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+              <span className="material-symbols-outlined">settings</span>
+            </button>
+          </div>
+          <div className="h-8 w-px bg-outline-variant/30 mx-2" />
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white transition px-2 py-1.5 rounded-lg hover:bg-white/10"
+            className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold text-sm ring-2 ring-surface-container-high hover:opacity-90 transition"
+            title={user?.partnerName || 'Sair'}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-            Sair
+            {user?.partnerName?.charAt(0)?.toUpperCase() || 'U'}
           </button>
         </div>
       </div>

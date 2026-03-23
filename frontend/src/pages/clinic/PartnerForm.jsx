@@ -2,168 +2,191 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../api'
 
-const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-
-export default function ClinicPartnerForm() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', budget_limit: '2000' })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+export default function PartnerForm() {
   const navigate = useNavigate()
+  const [form, setForm] = useState({ name: '', email: '', password: '', budgetLimit: '' })
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  function set(field) {
-    return (e) => setForm(f => ({ ...f, [field]: e.target.value }))
-  }
+  function set(k) { return e => setForm(f => ({ ...f, [k]: e.target.value })) }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await api.createPartner(form)
+      await api.createPartner({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        budget_limit: parseFloat(form.budgetLimit.replace(',', '.')) || 0,
+      })
       navigate('/clinic')
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Erro ao criar parceiro')
     } finally {
       setLoading(false)
     }
   }
 
-  const inputClass = "w-full border border-outline-variant bg-surface-container-low rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
-  const labelClass = "block text-sm font-medium text-on-surface mb-1.5"
-
   return (
-    <div className="max-w-lg">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <button
-          onClick={() => navigate('/clinic')}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-on-surface">Novo Parceiro</h1>
-          <p className="text-on-surface-variant text-sm">Preencha os dados do parceiro</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="bg-surface rounded-2xl border border-surface-container-high shadow-card p-6 space-y-5">
-        <div>
-          <label className={labelClass}>
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>business</span>
-              Nome do Parceiro
-            </span>
-          </label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={set('name')}
-            className={inputClass}
-            placeholder="Ex: Clínica São Lucas"
-            required
-          />
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>mail</span>
-              Email de Acesso
-            </span>
-          </label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={set('email')}
-            className={inputClass}
-            placeholder="parceiro@email.com"
-            required
-          />
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>lock</span>
-              Senha
-            </span>
-          </label>
-          <input
-            type="password"
-            value={form.password}
-            onChange={set('password')}
-            className={inputClass}
-            placeholder="Mínimo 6 caracteres"
-            minLength={6}
-            required
-          />
-        </div>
-
-        <div>
-          <label className={labelClass}>
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>account_balance_wallet</span>
-              Limite de Orçamento (R$)
-            </span>
-          </label>
-          <input
-            type="number"
-            min="100"
-            step="50"
-            value={form.budget_limit}
-            onChange={set('budget_limit')}
-            className={inputClass}
-            required
-          />
-          <p className="text-xs text-on-surface-variant mt-1.5 flex items-start gap-1">
-            <span className="material-symbols-outlined flex-shrink-0" style={{ fontSize: '14px' }}>info</span>
-            O parceiro poderá liberar exames até este valor. Quando ultrapassado, emissão é bloqueada automaticamente.
-          </p>
-        </div>
-
-        {/* Budget preview */}
-        {form.budget_limit && (
-          <div className="bg-surface-container-low rounded-xl p-4 border border-surface-container-high">
-            <p className="text-xs text-on-surface-variant mb-1">Limite configurado</p>
-            <p className="text-xl font-bold text-primary">{fmt(parseFloat(form.budget_limit) || 0)}</p>
+    <div className="bg-surface text-on-surface antialiased min-h-screen">
+      {/* Top Navigation */}
+      <header className="bg-surface-container-low flex justify-between items-center w-full px-8 py-4">
+        <div className="text-xl font-bold tracking-tighter text-indigo-700">ExameQR</div>
+        <div className="flex items-center gap-4">
+          <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
+          <div className="h-8 w-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+            <div className="w-full h-full bg-primary-container flex items-center justify-center text-white font-bold text-sm">A</div>
           </div>
-        )}
+        </div>
+      </header>
 
-        {error && (
-          <div className="flex items-center gap-2 bg-error-container border border-error/20 rounded-xl px-4 py-3">
-            <span className="material-symbols-outlined text-error" style={{ fontSize: '18px' }}>error</span>
-            <p className="text-on-error-container text-sm">{error}</p>
-          </div>
-        )}
+      <main className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-xl w-full">
+          {/* Breadcrumb */}
+          <nav className="flex items-center space-x-2 text-on-surface-variant mb-6 text-sm font-medium">
+            <span
+              className="hover:text-primary cursor-pointer transition-colors"
+              onClick={() => navigate('/clinic')}
+            >Parceiros</span>
+            <span className="material-symbols-outlined text-sm">chevron_right</span>
+            <span className="text-primary font-semibold">Novo Registro</span>
+          </nav>
 
-        <div className="flex gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => navigate('/clinic')}
-            className="flex-1 border border-outline-variant text-on-surface-variant py-3 rounded-xl text-sm hover:bg-surface-container transition font-medium"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 glass-gradient text-white font-semibold py-3 rounded-xl text-sm transition hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Criando...
-              </>
-            ) : (
-              <>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check</span>
-                Criar Parceiro
-              </>
+          {/* Form Card */}
+          <div className="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/15 shadow-2xl shadow-indigo-900/5">
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold tracking-tight text-on-surface mb-2">Criar Novo Parceiro</h1>
+              <p className="text-on-surface-variant text-sm">
+                Preencha os dados abaixo para registrar uma nova unidade ou laboratório parceiro no sistema.
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-error-container text-on-error-container text-sm font-medium">{error}</div>
             )}
-          </button>
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {/* Nome do Parceiro */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                  Nome do Parceiro
+                </label>
+                <input
+                  className="w-full bg-surface border-none ring-1 ring-outline-variant/30 focus:ring-2 focus:ring-secondary-fixed rounded-lg py-3 px-4 text-on-surface placeholder:text-outline/50 transition-all outline-none"
+                  placeholder="Ex: Laboratório Central"
+                  type="text"
+                  value={form.name}
+                  onChange={set('name')}
+                  required
+                />
+              </div>
+
+              {/* Email + Senha grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                    Email de Acesso
+                  </label>
+                  <input
+                    className="w-full bg-surface border-none ring-1 ring-outline-variant/30 focus:ring-2 focus:ring-secondary-fixed rounded-lg py-3 px-4 text-on-surface placeholder:text-outline/50 transition-all outline-none"
+                    placeholder="admin@parceiro.com.br"
+                    type="email"
+                    value={form.email}
+                    onChange={set('email')}
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                    Senha Temporária
+                  </label>
+                  <div className="relative">
+                    <input
+                      className="w-full bg-surface border-none ring-1 ring-outline-variant/30 focus:ring-2 focus:ring-secondary-fixed rounded-lg py-3 px-4 pr-10 text-on-surface placeholder:text-outline/50 transition-all outline-none"
+                      placeholder="••••••••"
+                      type={showPass ? 'text' : 'password'}
+                      value={form.password}
+                      onChange={set('password')}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-3.5 text-on-surface-variant"
+                      onClick={() => setShowPass(s => !s)}
+                    >
+                      <span className="material-symbols-outlined text-lg">{showPass ? 'visibility_off' : 'visibility'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Limite de Orçamento */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                  Limite de Orçamento (R$)
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-on-surface-variant font-medium">R$</span>
+                  </div>
+                  <input
+                    className="w-full bg-surface border-none ring-1 ring-outline-variant/30 focus:ring-2 focus:ring-secondary-fixed rounded-lg py-3 pl-12 pr-4 text-on-surface tabular-nums placeholder:text-outline/50 transition-all outline-none"
+                    placeholder="0,00"
+                    type="text"
+                    value={form.budgetLimit}
+                    onChange={set('budgetLimit')}
+                  />
+                </div>
+                <div className="flex items-start gap-2 mt-2 px-1">
+                  <span className="material-symbols-outlined text-primary text-sm mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+                  <p className="text-[0.8rem] text-on-surface-variant leading-relaxed">
+                    Quando o limite for atingido, novas solicitações de exames serão bloqueadas automaticamente até a renovação da cota ou ajuste manual pelo administrador.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-6 flex flex-col sm:flex-row-reverse gap-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="form-gradient-btn text-white font-semibold py-3 px-8 rounded-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 flex-1 disabled:opacity-60"
+                >
+                  <span>{loading ? 'Criando...' : 'Criar Parceiro'}</span>
+                  <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/clinic')}
+                  className="bg-surface-container-high text-on-surface font-semibold py-3 px-8 rounded-lg hover:bg-surface-dim transition-all flex-1"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Footer Meta */}
+          <div className="mt-8 flex justify-center items-center gap-8 text-xs text-outline font-medium tracking-wide uppercase">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">verified_user</span>
+              <span>Transação Criptografada</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">shield</span>
+              <span>Conformidade LGPD</span>
+            </div>
+          </div>
         </div>
-      </form>
+      </main>
+
+      {/* Side decoration */}
+      <div className="hidden lg:block fixed bottom-0 right-0 p-12 opacity-10 pointer-events-none">
+        <span className="material-symbols-outlined text-[12rem]" style={{ fontVariationSettings: "'wght' 200" }}>clinical_notes</span>
+      </div>
     </div>
   )
 }

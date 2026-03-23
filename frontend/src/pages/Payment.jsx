@@ -4,319 +4,197 @@ import { api } from '../api'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-function PixView({ data, onConfirm, loading }) {
-  const [copied, setCopied] = useState(false)
-
-  function copyCode() {
-    navigator.clipboard.writeText(data.pixCode)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 3000)
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* Amount */}
-      <div className="pix-gradient rounded-2xl p-5 text-center">
-        <span className="material-symbols-outlined text-white mb-2" style={{ fontSize: '28px' }}>bolt</span>
-        <p className="text-white font-bold text-2xl">{fmt(data.amount)}</p>
-        <p className="text-white/80 text-sm mt-0.5">Pix — Pagamento instantâneo</p>
-      </div>
-
-      {/* Pix key */}
-      <div>
-        <p className="text-sm font-medium text-on-surface mb-1.5 flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>key</span>
-          Chave Pix
-        </p>
-        <div className="bg-surface-container-low border border-surface-container-high rounded-xl px-4 py-3 font-mono text-sm text-on-surface">
-          {data.pixKey}
-        </div>
-        <p className="text-xs text-on-surface-variant mt-1">Favorecido: {data.beneficiary}</p>
-      </div>
-
-      {/* Pix code */}
-      <div>
-        <p className="text-sm font-medium text-on-surface mb-1.5 flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>content_copy</span>
-          Código Pix (Copia e Cola)
-        </p>
-        <div className="bg-surface-container-low border border-surface-container-high rounded-2xl p-3 font-mono text-xs text-on-surface break-all leading-relaxed max-h-28 overflow-y-auto">
-          {data.pixCode}
-        </div>
-        <button
-          onClick={copyCode}
-          className={`mt-2 w-full py-3 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 ${
-            copied
-              ? 'bg-[#e8f5e9] text-green-700 border border-green-200'
-              : 'bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-container-high'
-          }`}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
-            {copied ? 'check_circle' : 'content_copy'}
-          </span>
-          {copied ? 'Código copiado!' : 'Copiar código'}
-        </button>
-      </div>
-
-      <p className="text-xs text-on-surface-variant text-center">{data.instructions}</p>
-
-      <button
-        onClick={onConfirm}
-        disabled={loading}
-        className="w-full bg-[#00875a] hover:bg-[#006644] text-white font-bold py-4 rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
-      >
-        {loading ? (
-          <>
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Confirmando...
-          </>
-        ) : (
-          <>
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
-            Confirmar Pagamento Pix
-          </>
-        )}
-      </button>
-    </div>
-  )
-}
-
-function CardMachine({ amount, onConfirm }) {
-  const [step, setStep] = useState('idle')
-
-  function handleInsertCard() {
-    setStep('processing')
-    setTimeout(() => setStep('approved'), 2500)
-  }
-
-  return (
-    <div className="space-y-5">
-      {/* Card machine illustration */}
-      <div className="flex justify-center">
-        <div className="card-machine-gradient rounded-3xl p-5 w-52 text-center shadow-xl border border-slate-700">
-          <div className="bg-slate-700 rounded-2xl p-4 mb-4">
-            <div className="text-slate-400 text-xs mb-1 uppercase tracking-wide">Valor a pagar</div>
-            <div className="text-white font-bold text-2xl">{fmt(amount)}</div>
-          </div>
-
-          {/* Display */}
-          <div className="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2.5 mb-4 min-h-10 flex items-center justify-center">
-            {step === 'idle' && (
-              <span className="text-slate-300 text-xs">INSIRA OU APROXIME O CARTÃO</span>
-            )}
-            {step === 'processing' && (
-              <span className="text-yellow-300 text-xs animate-pulse">PROCESSANDO...</span>
-            )}
-            {step === 'approved' && (
-              <span className="text-green-300 text-sm font-bold">APROVADO ✓</span>
-            )}
-          </div>
-
-          {/* Card slot */}
-          <div className="bg-slate-600 h-2 rounded-full mx-6 mb-4" />
-
-          {/* Keypad */}
-          <div className="grid grid-cols-4 gap-1.5 mb-2">
-            {['1','2','3','4','5','6','7','8','9','*','0','#'].map(k => (
-              <div key={k} className="bg-slate-700 rounded-lg text-slate-300 text-xs py-1.5 text-center">{k}</div>
-            ))}
-          </div>
-          <div className="flex gap-1.5">
-            <div className="flex-1 bg-red-800 rounded-lg text-white text-xs py-1.5 text-center">C</div>
-            <div className="flex-1 bg-yellow-700 rounded-lg text-white text-xs py-1.5 text-center">⌫</div>
-            <div className="flex-1 bg-green-800 rounded-lg text-white text-xs py-1.5 text-center">OK</div>
-          </div>
-        </div>
-      </div>
-
-      {step === 'idle' && (
-        <button
-          onClick={handleInsertCard}
-          className="w-full glass-gradient text-white font-bold py-4 rounded-2xl transition hover:opacity-90 flex items-center justify-center gap-2 shadow"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>credit_card</span>
-          Inserir / Aproximar Cartão
-        </button>
-      )}
-
-      {step === 'processing' && (
-        <div className="text-center py-4">
-          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-on-surface-variant text-sm">Aguardando autorização...</p>
-        </div>
-      )}
-
-      {step === 'approved' && (
-        <div className="space-y-3">
-          <div className="bg-[#e8f5e9] border border-green-200 rounded-2xl px-5 py-4 text-center">
-            <span className="material-symbols-outlined text-green-600 mb-2" style={{ fontSize: '32px' }}>check_circle</span>
-            <p className="text-green-800 font-bold text-base">Pagamento Aprovado!</p>
-            <p className="text-green-600 text-sm mt-0.5">{fmt(amount)} debitado com sucesso</p>
-          </div>
-          <button
-            onClick={onConfirm}
-            className="w-full bg-[#00875a] hover:bg-[#006644] text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-2"
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>done_all</span>
-            Concluir e liberar emissão
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function Payment() {
   const navigate = useNavigate()
-  const [budget, setBudget] = useState(null)
-  const [method, setMethod] = useState(null)
-  const [paymentData, setPaymentData] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [confirming, setConfirming] = useState(false)
-  const [error, setError] = useState('')
+  const [method, setMethod] = useState('card') // 'pix' | 'card'
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.getBudget().then(b => {
-      setBudget(b)
-      if (!b.blocked) navigate('/dashboard')
-    }).catch(() => navigate('/dashboard'))
+    api.getPartnerDashboard().then(d => setData(d)).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  async function handleSelectMethod(m) {
-    setMethod(m)
-    setError('')
-    setLoading(true)
-    try {
-      const data = await api.initiatePayment(m)
-      setPaymentData(data)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const amount = data?.partner?.committed || 450
+  const protocol = data?.partner?.id || '829102'
 
-  async function handleConfirm() {
-    setConfirming(true)
-    try {
-      await api.confirmPayment(method)
-      navigate('/dashboard')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setConfirming(false)
-    }
-  }
-
-  if (!budget) return (
-    <div className="min-h-screen bg-surface flex items-center justify-center">
+  if (loading) return (
+    <div className="flex items-center justify-center py-32">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-surface">
-      {/* Header */}
-      <div className="glass-gradient px-4 py-0 shadow">
-        <div className="max-w-lg mx-auto flex items-center gap-3 h-14">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-white" style={{ fontSize: '20px' }}>credit_card</span>
-            <span className="font-bold text-white">Pagamento de Saldo</span>
+    <div className="bg-surface font-body text-on-surface min-h-screen flex flex-col items-center">
+      <main className="flex-1 w-full max-w-4xl px-4 py-12 flex flex-col items-center">
+        <div className="w-full bg-surface-container-lowest rounded-xl overflow-hidden" style={{ boxShadow: '0 20px 40px -10px rgba(18,28,42,0.06)' }}>
+          {/* Summary Header */}
+          <div className="p-8 text-center border-b border-outline-variant/15">
+            <span className="text-on-surface-variant uppercase tracking-widest font-semibold block mb-2 text-sm">Total do Pagamento</span>
+            <h1 className="text-primary font-extrabold text-5xl tracking-tight tabular-nums">{fmt(amount)}</h1>
+            <p className="text-on-surface-variant mt-2">Referente a Exames Laboratoriais • Protocolo #{protocol}</p>
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
-        <div className="bg-surface rounded-2xl border border-surface-container-high shadow-card p-6">
-          {/* Amount due */}
-          <div className="text-center mb-6 pb-6 border-b border-surface-container-high">
-            <p className="text-on-surface-variant text-sm mb-1">Saldo devedor total</p>
-            <p className="text-4xl font-bold text-on-surface">{fmt(budget.amountDue)}</p>
-            {budget.amountDue > budget.limit && (
-              <p className="text-xs text-on-surface-variant mt-2">
-                <span className="bg-surface-container px-2 py-1 rounded-full">
-                  Limite {fmt(budget.limit)} + excedente {fmt(budget.amountDue - budget.limit)}
-                </span>
-              </p>
+          {/* Method Selection */}
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Pix Card */}
+            <button
+              onClick={() => setMethod('pix')}
+              className={`relative group p-6 rounded-xl border-2 transition-all duration-300 flex items-center gap-4 text-left ${
+                method === 'pix'
+                  ? 'border-indigo-600 bg-white shadow-sm'
+                  : 'border-transparent bg-surface-container-low hover:border-tertiary-fixed-dim'
+              }`}
+            >
+              <div className="w-12 h-12 rounded-lg pix-gradient flex items-center justify-center text-white">
+                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-on-surface">⚡ Pix</h3>
+                <p className="text-sm text-on-surface-variant">Confirmação instantânea</p>
+              </div>
+              <div className={`ml-auto transition-opacity ${method === 'pix' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                <span className="material-symbols-outlined text-tertiary">check_circle</span>
+              </div>
+            </button>
+
+            {/* Card Payment */}
+            <button
+              onClick={() => setMethod('card')}
+              className={`relative group p-6 rounded-xl border-2 transition-all duration-300 flex items-center gap-4 text-left ${
+                method === 'card'
+                  ? 'border-indigo-600 bg-white shadow-sm'
+                  : 'border-transparent bg-surface-container-low hover:border-tertiary-fixed-dim'
+              }`}
+            >
+              <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-white">
+                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>credit_card</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-on-surface">💳 Cartão</h3>
+                <p className="text-sm text-on-surface-variant">Crédito ou Débito</p>
+              </div>
+              <div className={`ml-auto transition-opacity ${method === 'card' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                <span className="material-symbols-outlined text-primary">check_circle</span>
+              </div>
+            </button>
+          </div>
+
+          {/* Payment Content */}
+          <div className="px-8 pb-12 flex flex-col md:flex-row gap-12 items-center justify-center">
+            {method === 'pix' && (
+              <div className="w-full max-w-sm">
+                <div className="bg-surface p-6 rounded-xl border border-outline-variant/30 flex flex-col items-center">
+                  <div className="w-48 h-48 bg-white p-4 rounded-lg mb-6 border border-outline-variant/20 shadow-sm flex items-center justify-center">
+                    <span className="material-symbols-outlined text-6xl text-on-surface-variant">qr_code_2</span>
+                  </div>
+                  <div className="w-full bg-white rounded-lg p-3 border border-outline-variant/30 mb-6 flex items-center gap-3">
+                    <span className="text-xs font-mono text-on-surface-variant truncate">00020126580014br.gov.bcb.pix0136e09e-7d6f-402a...</span>
+                    <button className="flex items-center gap-1 text-primary font-semibold text-sm shrink-0">
+                      <span className="material-symbols-outlined text-sm">content_copy</span>
+                      📋 Copiar
+                    </button>
+                  </div>
+                  <button className="w-full py-4 rounded-lg bg-tertiary text-white font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+                    <span className="material-symbols-outlined">check_circle</span>
+                    ✅ Confirmar Pagamento Pix
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {method === 'card' && (
+              <div className="w-full flex flex-col md:flex-row gap-12 items-center justify-center">
+                {/* Illustrated Card Machine */}
+                <div
+                  className="relative w-64 h-96 rounded-[2.5rem] p-4 shadow-2xl border-4 flex flex-col items-center"
+                  style={{ background: 'linear-gradient(180deg, #27313f 0%, #121c2a 100%)', borderColor: '#3a4455' }}
+                >
+                  <div className="w-3/4 h-2 rounded-full mb-8" style={{ backgroundColor: '#0d141d' }} />
+                  <div
+                    className="w-full aspect-[4/3] rounded-xl border-4 p-4 flex flex-col items-center justify-center text-center overflow-hidden"
+                    style={{ backgroundColor: '#1d3d33', borderColor: '#2c3748' }}
+                  >
+                    <span className="text-[0.6rem] text-tertiary-fixed-dim uppercase tracking-widest mb-1">Processando</span>
+                    <div className="text-tertiary-fixed-dim font-bold text-2xl tabular-nums">{fmt(amount)}</div>
+                    <div className="mt-4 flex gap-1">
+                      <div className="w-2 h-2 bg-tertiary-fixed-dim rounded-full animate-pulse" />
+                      <div className="w-2 h-2 bg-tertiary-fixed-dim/40 rounded-full" />
+                      <div className="w-2 h-2 bg-tertiary-fixed-dim/40 rounded-full" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mt-8 w-full px-2">
+                    {Array(9).fill(0).map((_, i) => (
+                      <div key={i} className="h-6 rounded-md opacity-40" style={{ backgroundColor: '#2c3748' }} />
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-6 w-full px-2">
+                    <div className="flex-1 h-8 bg-error/30 rounded-md" />
+                    <div className="flex-1 h-8 bg-yellow-500/30 rounded-md" />
+                    <div className="flex-1 h-8 bg-tertiary/60 rounded-md" />
+                  </div>
+                  <div className="mt-auto mb-4 text-slate-600">
+                    <span className="material-symbols-outlined text-3xl">contactless</span>
+                  </div>
+                </div>
+
+                {/* Card Instructions */}
+                <div className="max-w-xs text-center md:text-left">
+                  <h2 className="font-bold text-2xl text-on-surface mb-4">Aguardando Cartão</h2>
+                  <ul className="space-y-4 mb-8">
+                    <li className="flex items-center gap-3 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-primary">check</span>
+                      <span>Aproxime seu cartão ou celular</span>
+                    </li>
+                    <li className="flex items-center gap-3 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-primary">check</span>
+                      <span>Ou insira o cartão no topo da máquina</span>
+                    </li>
+                    <li className="flex items-center gap-3 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-primary">check</span>
+                      <span>Siga as instruções no visor verde</span>
+                    </li>
+                  </ul>
+                  <button className="w-full bg-primary-container text-white py-4 px-8 rounded-lg font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                    <span className="material-symbols-outlined">point_of_sale</span>
+                    Inserir / Aproximar Cartão
+                  </button>
+                  <p className="mt-4 text-xs text-on-surface-variant text-center opacity-60">
+                    O sistema aguardará a resposta da maquineta por até 2 minutos.
+                  </p>
+                </div>
+              </div>
             )}
           </div>
 
-          {error && (
-            <div className="flex items-center gap-2 bg-error-container border border-error/20 rounded-xl px-4 py-3 mb-4">
-              <span className="material-symbols-outlined text-error" style={{ fontSize: '18px' }}>error</span>
-              <p className="text-on-error-container text-sm">{error}</p>
+          {/* Footer Assistance */}
+          <div className="bg-surface-container-low p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-on-surface-variant">support_agent</span>
+              <span className="text-sm text-on-surface-variant">Precisa de ajuda com o pagamento?</span>
             </div>
-          )}
-
-          {/* Method selector */}
-          {!method && (
-            <div>
-              <p className="text-sm text-on-surface-variant text-center mb-4 font-medium">Selecione a forma de pagamento</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleSelectMethod('pix')}
-                  className="flex flex-col items-center gap-3 border-2 border-outline-variant hover:border-primary rounded-2xl p-5 transition hover:bg-surface-container-low group"
-                >
-                  <div className="w-12 h-12 pix-gradient rounded-2xl flex items-center justify-center">
-                    <span className="material-symbols-outlined text-white" style={{ fontSize: '24px' }}>bolt</span>
-                  </div>
-                  <div>
-                    <span className="block font-bold text-on-surface">Pix</span>
-                    <span className="text-xs text-on-surface-variant">Instantâneo</span>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleSelectMethod('card')}
-                  className="flex flex-col items-center gap-3 border-2 border-outline-variant hover:border-primary rounded-2xl p-5 transition hover:bg-surface-container-low group"
-                >
-                  <div className="w-12 h-12 glass-gradient rounded-2xl flex items-center justify-center">
-                    <span className="material-symbols-outlined text-white" style={{ fontSize: '24px' }}>credit_card</span>
-                  </div>
-                  <div>
-                    <span className="block font-bold text-on-surface">Cartão</span>
-                    <span className="text-xs text-on-surface-variant">Débito / Crédito</span>
-                  </div>
-                </button>
-              </div>
+            <div className="flex gap-4">
+              <button className="text-sm font-semibold text-indigo-700 hover:underline">Falar com suporte</button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="text-sm font-semibold text-on-surface-variant hover:text-on-surface"
+              >
+                Cancelar operação
+              </button>
             </div>
-          )}
-
-          {/* Loading */}
-          {method && loading && (
-            <div className="text-center py-10">
-              <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-on-surface-variant text-sm">Gerando dados de pagamento...</p>
-            </div>
-          )}
-
-          {/* Pix */}
-          {method === 'pix' && paymentData && !loading && (
-            <PixView data={paymentData} onConfirm={handleConfirm} loading={confirming} />
-          )}
-
-          {/* Card */}
-          {method === 'card' && paymentData && !loading && (
-            <CardMachine amount={budget.amountDue} onConfirm={handleConfirm} />
-          )}
-
-          {/* Change method */}
-          {method && !loading && (
-            <button
-              onClick={() => { setMethod(null); setPaymentData(null) }}
-              className="w-full mt-4 text-sm text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1.5 py-2 transition"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>swap_horiz</span>
-              Trocar forma de pagamento
-            </button>
-          )}
+          </div>
         </div>
-      </div>
+
+        {/* Card brands */}
+        <div className="mt-12 flex items-center gap-8 opacity-40 grayscale">
+          <span className="text-sm font-bold text-slate-800 px-2">VISA</span>
+          <span className="text-sm font-bold text-slate-800 px-2">MASTERCARD</span>
+          <span className="text-sm font-bold text-slate-800 px-2">ELO</span>
+          <div className="flex items-center gap-2 font-bold text-slate-800">
+            <span className="material-symbols-outlined text-lg">bolt</span>
+            <span>PIX</span>
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

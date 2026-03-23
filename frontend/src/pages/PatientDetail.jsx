@@ -3,249 +3,283 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-const fmtCpf = (c) => c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-const fmtDate = (d) => new Date(d).toLocaleString('pt-BR')
 
-const USE_LABELS = { transport: 'Transporte', snack: 'Lanche', exam: 'Exame' }
-const USE_ICONS = { transport: 'directions_bus', snack: 'restaurant', exam: 'biotech' }
-
-function UsageDot({ type, usageLog }) {
-  const used = usageLog?.find(u => u.use_type === type)
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-        used
-          ? 'bg-[#e8f5e9] text-green-700 shadow-sm'
-          : 'bg-surface-container text-on-surface-variant'
-      }`}>
-        <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>{USE_ICONS[type]}</span>
-      </div>
-      <span className="text-xs font-medium text-on-surface-variant">{USE_LABELS[type]}</span>
-      {used ? (
-        <span className="text-xs text-green-600 font-semibold flex items-center gap-0.5">
-          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>check_circle</span>
-          Usado
-        </span>
-      ) : (
-        <span className="text-xs text-on-surface-variant/50">Pendente</span>
-      )}
-    </div>
-  )
-}
+const examIcons = ['biotech', 'radiology', 'ecg', 'science', 'medication', 'vaccines']
 
 export default function PatientDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [patient, setPatient] = useState(null)
-  const [qrImage, setQrImage] = useState(null)
-  const [error, setError] = useState('')
-  const [generating, setGenerating] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [revoking, setRevoking] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
+  const qrRef = useRef(null)
 
   async function load() {
     try {
-      const data = await api.getPatient(id)
-      setPatient(data)
-      if (data.qrCode) {
-        const imgData = await api.getQRImage(id)
-        setQrImage(imgData.dataUrl)
-      }
-    } catch (err) {
-      setError(err.message)
+      const p = await api.getPatient(id)
+      setPatient(p)
+    } catch {
+      navigate('/dashboard')
+    } finally {
+      setLoading(false)
     }
   }
 
   useEffect(() => { load() }, [id])
 
-  async function handleGenerateQR() {
-    setError('')
-    setGenerating(true)
+  async function handleRevoke() {
+    if (!confirm('Revogar o QR Code deste paciente?')) return
+    setRevoking(true)
     try {
-      const data = await api.generateQR(id)
-      setQrImage(data.dataUrl)
-      await load()
-    } catch (err) {
-      setError(err.message)
+      await api.revokeQr(id)
+      load()
     } finally {
-      setGenerating(false)
+      setRevoking(false)
     }
   }
 
-  if (!patient) return (
+  async function handleRegenerate() {
+    setRegenerating(true)
+    try {
+      await api.regenerateQr(id)
+      load()
+    } finally {
+      setRegenerating(false)
+    }
+  }
+
+  function handlePrint() {
+    window.print()
+  }
+
+  if (loading) return (
     <div className="flex items-center justify-center py-32">
-      {error ? (
-        <p className="text-on-surface-variant">{error}</p>
-      ) : (
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      )}
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   )
+  if (!patient) return null
 
-  const total = patient.exams?.reduce((s, e) => s + e.value, 0) || 0
+  const exams = patient.exams || []
+  const total = exams.reduce((s, e) => s + (e.value || 0), 0)
+  const qrCode = patient.qrCode
+  const hasQr = !!qrCode
+  const isUsed = qrCode?.status === 'exhausted'
+  const isRevoked = qrCode?.status === 'revoked'
+  const isActive = hasQr && !isUsed && !isRevoked
+  const qrImageUrl = hasQr ? api.getQRImageUrl(patient.id) : null
+
+  // Usage quota dots (exams used)
+  const usedCount = isUsed ? exams.length : (patient.usageLog?.length || 0)
+  const totalDots = exams.length
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
-        </button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-on-surface">{patient.name}</h1>
-          <p className="text-on-surface-variant text-sm">Detalhes do paciente</p>
-        </div>
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 bg-error-container border border-error/20 rounded-xl px-4 py-3 mb-4">
-          <span className="material-symbols-outlined text-error" style={{ fontSize: '18px' }}>error</span>
-          <p className="text-on-error-container text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Patient info */}
-      <div className="bg-surface rounded-2xl border border-surface-container-high shadow-card p-5 mb-4">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>person</span>
-          <h2 className="font-semibold text-on-surface">Dados do Paciente</h2>
-        </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="bg-surface-container-low rounded-xl px-4 py-3">
-            <p className="text-xs text-on-surface-variant mb-0.5">CPF</p>
-            <p className="font-mono font-semibold text-on-surface">{fmtCpf(patient.cpf)}</p>
-          </div>
-          <div className="bg-surface-container-low rounded-xl px-4 py-3">
-            <p className="text-xs text-on-surface-variant mb-0.5">Cadastrado em</p>
-            <p className="font-medium text-on-surface">{fmtDate(patient.created_at)}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Exams */}
-      <div className="bg-surface rounded-2xl border border-surface-container-high shadow-card p-5 mb-4">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>biotech</span>
-          <h2 className="font-semibold text-on-surface">Exames</h2>
-        </div>
-        <div className="space-y-2">
-          {patient.exams?.map((exam, i) => (
-            <div key={i} className="flex items-center justify-between py-3 px-4 bg-surface-container-low rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary" style={{ fontSize: '16px' }}>medical_services</span>
-                </div>
-                <div>
-                  <span className="font-medium text-on-surface text-sm">{exam.exam_name}</span>
-                  {exam.exam_type && (
-                    <span className="ml-2 text-xs bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded-full">
-                      {exam.exam_type}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span className="font-semibold text-on-surface">{fmt(exam.value)}</span>
-            </div>
-          ))}
-          <div className="flex justify-between items-center pt-2 px-4">
-            <span className="text-sm font-semibold text-on-surface-variant">Total</span>
-            <span className="font-bold text-lg text-primary">{fmt(total)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* QR Code section */}
-      <div className="bg-surface rounded-2xl border border-surface-container-high shadow-card p-5">
-        <div className="flex items-center gap-2 mb-5">
-          <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>qr_code_2</span>
-          <h2 className="font-semibold text-on-surface">QR Code</h2>
-        </div>
-
-        {!patient.qrCode ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-surface-container-low rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '32px' }}>qr_code</span>
-            </div>
-            <p className="text-on-surface-variant text-sm mb-5 max-w-xs mx-auto">
-              Nenhum QR Code gerado. Clique abaixo para liberar os exames e gerar o QR Code.
-            </p>
+    <div className="bg-surface font-body text-on-surface antialiased">
+      <main className="max-w-7xl mx-auto px-8 py-10">
+        {/* Back Button & Header */}
+        <div className="mb-10 flex items-center justify-between">
+          <div>
             <button
-              onClick={handleGenerateQR}
-              disabled={generating}
-              className="glass-gradient text-white font-semibold px-8 py-3 rounded-xl transition hover:opacity-90 disabled:opacity-50 flex items-center gap-2 mx-auto"
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-all group mb-4"
             >
-              {generating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Gerando...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>qr_code_2</span>
-                  Gerar QR Code
-                </>
-              )}
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
+              <span className="text-sm font-medium">Voltar para listagem</span>
+            </button>
+            <h1 className="text-4xl font-extrabold tracking-tight text-on-surface">Detalhes do Paciente</h1>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handlePrint}
+              className="px-6 py-2.5 rounded-lg border border-outline-variant text-on-surface font-semibold text-sm hover:bg-surface-container transition-all flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>print</span>
+              Imprimir
+            </button>
+            <button
+              onClick={handleRevoke}
+              disabled={revoking || !hasQr}
+              className="px-6 py-2.5 rounded-lg border border-error/20 text-error font-semibold text-sm hover:bg-error-container/30 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>block</span>
+              {revoking ? 'Revogando...' : 'Revogar QR'}
+            </button>
+            <button
+              onClick={handleRegenerate}
+              disabled={regenerating}
+              className="px-6 py-2.5 rounded-lg qr-gradient text-white font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>qr_code_2</span>
+              {regenerating ? 'Gerando...' : 'Gerar Novo QR Code'}
             </button>
           </div>
-        ) : (
-          <div>
-            {/* Usage status */}
-            <div className="flex justify-center gap-6 mb-6">
-              <UsageDot type="transport" usageLog={patient.usageLog} />
-              <UsageDot type="snack" usageLog={patient.usageLog} />
-              <UsageDot type="exam" usageLog={patient.usageLog} />
-            </div>
+        </div>
 
-            {patient.qrCode.status === 'exhausted' && (
-              <div className="flex items-center gap-2 bg-error-container border border-error/20 rounded-xl px-4 py-3 text-on-error-container text-sm text-center mb-5 justify-center">
-                <span className="material-symbols-outlined text-error" style={{ fontSize: '16px' }}>warning</span>
-                QR Code esgotado — todas as 3 utilizações foram consumidas
-              </div>
-            )}
-
-            {/* QR image */}
-            {qrImage && (
-              <div className="flex flex-col items-center gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-surface-container-high shadow-sm">
-                  <img src={qrImage} alt="QR Code" className="w-52 h-52" />
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Column */}
+          <div className="col-span-12 lg:col-span-7 space-y-6">
+            {/* Patient Info Card */}
+            <section className="bg-surface-container-lowest p-8 rounded-xl ring-1 ring-outline-variant/10">
+              <div className="flex items-start justify-between mb-8">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-on-surface tracking-tight">{patient.name}</h2>
+                    <p className="text-on-surface-variant text-sm flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">id_card</span>
+                      CPF: <span className="font-mono tabular-nums">{patient.cpf}</span>
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-on-surface-variant text-center">
-                  {patient.name} — {fmtCpf(patient.cpf)}
-                </p>
-                <button
-                  onClick={() => window.print()}
-                  className="flex items-center gap-2 border border-outline-variant text-on-surface-variant px-5 py-2.5 rounded-xl text-sm hover:bg-surface-container transition print:hidden font-medium"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>print</span>
-                  Imprimir QR Code
-                </button>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  isActive ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant' :
+                  isRevoked ? 'bg-error-container text-on-error-container' :
+                  isUsed ? 'bg-secondary-fixed text-on-secondary-fixed' :
+                  'bg-surface-container text-on-surface-variant'
+                }`}>
+                  {isActive ? 'Paciente Ativo' : isRevoked ? 'QR Revogado' : isUsed ? 'QR Usado' : 'Sem QR'}
+                </span>
               </div>
-            )}
-
-            {/* Usage log */}
-            {patient.usageLog?.length > 0 && (
-              <div className="mt-6 border-t border-surface-container-high pt-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '16px' }}>history</span>
-                  <h3 className="text-sm font-semibold text-on-surface-variant">Histórico de uso</h3>
+              <div className="grid grid-cols-2 gap-8 pt-6 border-t border-outline-variant/10">
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Registrado em</span>
+                  <p className="text-on-surface font-medium tabular-nums">
+                    {new Date(patient.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  {patient.usageLog.map((log, i) => (
-                    <div key={i} className="flex justify-between items-center text-xs bg-surface-container-low rounded-xl px-4 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '14px' }}>{USE_ICONS[log.use_type]}</span>
-                        <span className="font-medium text-on-surface">{USE_LABELS[log.use_type]}</span>
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Última Atualização</span>
+                  <p className="text-on-surface font-medium tabular-nums">
+                    {new Date(patient.updatedAt || patient.createdAt).toLocaleString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Exams List */}
+            <section className="bg-surface-container-lowest p-8 rounded-xl ring-1 ring-outline-variant/10">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-on-surface">Exames Autorizados</h3>
+                <span className="text-xs font-bold text-primary bg-primary-fixed px-2 py-0.5 rounded uppercase tracking-tighter">
+                  Protocolo #{patient.id}
+                </span>
+              </div>
+              <div className="space-y-4 mb-8">
+                {exams.map((exam, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-surface rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-on-surface-variant">{examIcons[i % examIcons.length]}</span>
+                      <div>
+                        <p className="font-semibold text-on-surface">{exam.exam_name}</p>
+                        {exam.exam_type && exam.exam_type !== exam.exam_name && (
+                          <p className="text-xs text-on-surface-variant">{exam.exam_type}</p>
+                        )}
                       </div>
-                      <span className="text-on-surface-variant">{fmtDate(log.used_at)}</span>
                     </div>
-                  ))}
+                    <span className="font-mono font-bold text-on-surface tabular-nums">{fmt(exam.value)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between p-6 bg-primary-container/5 rounded-xl border border-primary-container/10">
+                <span className="text-on-surface-variant font-medium">Valor Total dos Procedimentos</span>
+                <span className="text-2xl font-black text-primary tabular-nums tracking-tighter">{fmt(total)}</span>
+              </div>
+            </section>
+          </div>
+
+          {/* Right Column: QR Code */}
+          <div className="col-span-12 lg:col-span-5 space-y-6">
+            <section className="bg-surface-container-lowest p-10 rounded-xl ring-1 ring-outline-variant/10 flex flex-col items-center text-center">
+              <div className="mb-6">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-bold mb-2 block">
+                  Identificador Digital Único
+                </span>
+                <h3 className="text-xl font-bold text-on-surface">QR Code de Autorização</h3>
+              </div>
+
+              <div className="relative p-6 bg-white rounded-2xl border-4 border-surface-container-high mb-8 shadow-2xl shadow-indigo-100" ref={qrRef}>
+                <div className="w-64 h-64 bg-slate-100 flex items-center justify-center overflow-hidden rounded-lg">
+                  {qrImageUrl ? (
+                    <img src={qrImageUrl} alt="QR Code" className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-4xl">qr_code_2</span>
+                      <span className="text-xs">QR Code não gerado</span>
+                    </div>
+                  )}
+                </div>
+                {isActive && (
+                  <div className="absolute -top-3 -right-3 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                    <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full space-y-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-sm mb-1 px-1">
+                    <span className="font-semibold text-on-surface-variant">Uso de Cotas</span>
+                    <span className="font-bold text-primary tabular-nums">{usedCount}/{totalDots}</span>
+                  </div>
+                  <div className="flex gap-2 w-full">
+                    {exams.map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-2 flex-1 rounded-full ${i < usedCount ? 'bg-tertiary-fixed-dim' : 'bg-surface-container-high'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-4">
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-tertiary/5 border border-tertiary/10">
+                    <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>directions_bus</span>
+                    <span className="text-[10px] font-bold text-tertiary uppercase">Transporte</span>
+                    <span className="material-symbols-outlined text-tertiary text-xs">check_circle</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-tertiary/5 border border-tertiary/10">
+                    <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>bakery_dining</span>
+                    <span className="text-[10px] font-bold text-tertiary uppercase">Lanche</span>
+                    <span className="material-symbols-outlined text-tertiary text-xs">check_circle</span>
+                  </div>
+                  <div className={`flex flex-col items-center gap-2 p-3 rounded-lg border ${isActive ? 'bg-tertiary/5 border-tertiary/10' : 'bg-surface-container-high/30 border-outline-variant/20 opacity-60'}`}>
+                    <span className={`material-symbols-outlined ${isActive ? 'text-tertiary' : 'text-on-surface-variant'}`}>medical_services</span>
+                    <span className={`text-[10px] font-bold uppercase ${isActive ? 'text-tertiary' : 'text-on-surface-variant'}`}>Exame</span>
+                    <span className={`material-symbols-outlined text-xs ${isActive ? 'text-tertiary' : 'text-on-surface-variant'}`}>
+                      {isActive ? 'check_circle' : 'radio_button_unchecked'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
+            </section>
+
+            {/* Security Info Card */}
+            <section className="bg-indigo-900 text-white p-6 rounded-xl overflow-hidden relative">
+              <div className="relative z-10">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-indigo-200 mb-4">Informações de Segurança</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-indigo-300">lock</span>
+                    <p className="text-xs leading-relaxed">
+                      Este QR Code é criptografado e contém apenas o token de autorização. Os dados sensíveis são processados apenas em terminais autenticados.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-indigo-300">timer</span>
+                    <p className="text-xs leading-relaxed">
+                      Válido por 72 horas a partir da data de emissão ou até o consumo total das cotas.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl" />
+            </section>
           </div>
-        )}
-      </div>
+        </div>
+      </main>
     </div>
   )
 }

@@ -3,310 +3,216 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { api } from '../api'
 
 const USE_TYPES = [
-  { value: 'transport', label: 'Transporte', icon: 'directions_bus' },
-  { value: 'snack', label: 'Lanche', icon: 'restaurant' },
-  { value: 'exam', label: 'Exame', icon: 'biotech' },
+  { key: 'transport', icon: '🚌', label: 'Transporte' },
+  { key: 'snack', icon: '🍱', label: 'Lanche' },
+  { key: 'exam', icon: '🏥', label: 'Exame' },
 ]
 
-const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-const fmtCpf = (c) => c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-const USE_LABELS = { transport: 'Transporte', snack: 'Lanche', exam: 'Exame' }
-const USE_ICONS = { transport: 'directions_bus', snack: 'restaurant', exam: 'biotech' }
-
 export default function Scanner() {
-  const [useType, setUseType] = useState('transport')
+  const [selectedType, setSelectedType] = useState('exam')
   const [scanning, setScanning] = useState(false)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState('')
-  const [validating, setValidating] = useState(false)
-  const html5QrcodeRef = useRef(null)
+  const [result, setResult] = useState(null) // { success, patient, protocol, error }
+  const qrRef = useRef(null)
+  const scannerRef = useRef(null)
 
-  async function startScanner() {
+  async function startScan() {
+    if (scanning) return
     setResult(null)
-    setError('')
     setScanning(true)
-
-    const html5Qrcode = new Html5Qrcode('qr-reader')
-    html5QrcodeRef.current = html5Qrcode
-
     try {
-      await html5Qrcode.start(
+      const scanner = new Html5Qrcode('qr-reader')
+      scannerRef.current = scanner
+      await scanner.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 260, height: 260 } },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          if (validating) return
-
-          if (!decodedText.startsWith('EXAMSYS_V1:')) {
-            await stopScanner()
-            setError('QR Code inválido — este código não pertence ao sistema Carnexa.')
-            return
-          }
-
-          await stopScanner()
-          setValidating(true)
-
+          await scanner.stop()
+          setScanning(false)
           try {
-            const data = await api.validateQR(decodedText, useType)
-            setResult(data)
+            const data = await api.validateQr(decodedText, selectedType)
+            setResult({ success: true, patient: data.patient, protocol: data.protocol })
           } catch (err) {
-            setError(err.message)
-          } finally {
-            setValidating(false)
+            setResult({ success: false, error: err.message || 'QR Code inválido ou expirado' })
           }
         },
         () => {}
       )
-    } catch (err) {
+    } catch {
       setScanning(false)
-      setError('Não foi possível acessar a câmera. Verifique as permissões do navegador.')
+      setResult({ success: false, error: 'Não foi possível acessar a câmera.' })
     }
   }
 
-  async function stopScanner() {
-    if (html5QrcodeRef.current) {
-      try {
-        await html5QrcodeRef.current.stop()
-        html5QrcodeRef.current.clear()
-      } catch {}
-      html5QrcodeRef.current = null
+  async function stopScan() {
+    if (scannerRef.current) {
+      try { await scannerRef.current.stop() } catch {}
+      scannerRef.current = null
     }
     setScanning(false)
   }
 
-  useEffect(() => {
-    return () => { stopScanner() }
-  }, [])
-
-  function reset() {
-    setResult(null)
-    setError('')
-  }
+  useEffect(() => () => { stopScan() }, [])
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0f172a' }}>
+    <div style={{ backgroundColor: '#111827' }} className="text-slate-100 min-h-screen flex flex-col font-inter">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4" style={{ background: '#1e293b', borderBottom: '1px solid #334155' }}>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 glass-gradient rounded-lg flex items-center justify-center">
-            <span className="material-symbols-outlined text-white" style={{ fontSize: '18px' }}>qr_code_scanner</span>
-          </div>
-          <div>
-            <span className="font-bold text-white text-sm">Carnexa Scanner</span>
-            <p className="text-slate-400 text-xs">Leitor de QR Code</p>
-          </div>
-        </div>
-        <a href="/" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition">
-          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_back</span>
-          Painel
-        </a>
-      </div>
+      <header className="p-6 md:p-10 flex justify-center">
+        <h1 className="text-2xl md:text-3xl font-black tracking-tighter text-indigo-500 uppercase">
+          ExameQR — Leitor
+        </h1>
+      </header>
 
-      <div className="flex-1 flex flex-col items-center px-4 py-6 max-w-md mx-auto w-full">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 flex flex-col gap-8 pb-12">
+        {/* Category Pill Selection */}
+        <section className="flex flex-wrap justify-center gap-3">
+          {USE_TYPES.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setSelectedType(t.key)}
+              className={`px-6 py-3 rounded-full font-semibold flex items-center gap-2 transition-all duration-200 ${
+                selectedType === t.key
+                  ? 'bg-indigo-600 border border-indigo-400 text-white font-bold ring-4 ring-indigo-500/20 shadow-lg shadow-indigo-500/10'
+                  : 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              <span className="text-xl">{t.icon}</span> {t.label}
+            </button>
+          ))}
+        </section>
 
-        {/* Use type selector */}
-        <div className="w-full mb-6">
-          <p className="text-xs text-slate-400 mb-3 text-center font-medium uppercase tracking-widest">Tipo de Utilização</p>
-          <div className="grid grid-cols-3 gap-2">
-            {USE_TYPES.map(t => (
-              <button
-                key={t.value}
-                onClick={() => setUseType(t.value)}
-                disabled={scanning}
-                className={`flex flex-col items-center gap-2 py-3.5 rounded-2xl text-sm font-medium transition border ${
-                  useType === t.value
-                    ? 'glass-gradient text-white border-transparent shadow-lg'
-                    : 'text-slate-300 hover:text-white border-slate-700 hover:border-slate-500'
-                }`}
-                style={useType !== t.value ? { background: '#1e293b' } : {}}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>{t.icon}</span>
-                <span className="text-xs">{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Scanner Area */}
+        <section className="relative flex-1 flex flex-col items-center justify-center min-h-[400px]">
+          <div className="relative w-full max-w-sm aspect-square bg-slate-900/50 rounded-3xl border-2 border-slate-800 overflow-hidden flex items-center justify-center group">
+            {/* Scanner animation */}
+            {scanning && (
+              <div className="absolute inset-0 scanner-viewport opacity-40">
+                <div className="scanner-line" />
+              </div>
+            )}
 
-        {/* Scanner area */}
-        {!result && !error && (
-          <div className="w-full">
-            {/* Camera container */}
-            <div className="relative w-full aspect-square rounded-3xl overflow-hidden" style={{ background: '#1e293b', border: '1px solid #334155' }}>
-              <div id="qr-reader" className="w-full h-full" />
+            {/* Corner Brackets */}
+            <div className="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl" />
+            <div className="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl" />
+            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl" />
+            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-indigo-500 rounded-br-xl" />
 
-              {/* Corner brackets overlay */}
-              {scanning && (
-                <>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
-                    <div className="relative w-56 h-56">
-                      {/* Corners */}
-                      <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#4f46e5] rounded-tl-lg" />
-                      <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#4f46e5] rounded-tr-lg" />
-                      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#4f46e5] rounded-bl-lg" />
-                      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#4f46e5] rounded-br-lg" />
-                      {/* Scan line */}
-                      <div className="scanner-line" />
-                    </div>
-                  </div>
-                </>
-              )}
+            {/* QR reader div */}
+            <div id="qr-reader" className={`absolute inset-0 ${scanning ? 'opacity-100' : 'opacity-0'}`} />
 
-              {/* Placeholder when not scanning */}
-              {!scanning && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#334155' }}>
-                    <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '40px' }}>qr_code_scanner</span>
-                  </div>
-                  <p className="text-slate-400 text-sm text-center px-4">
-                    Pressione o botão para<br />abrir a câmera
-                  </p>
-                </div>
-              )}
-            </div>
-
+            {/* Action button */}
             {!scanning && (
               <button
-                onClick={startScanner}
-                disabled={validating}
-                className="w-full mt-4 glass-gradient text-white font-bold py-4 rounded-2xl text-base transition hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+                onClick={startScan}
+                className="relative z-10 flex flex-col items-center gap-4 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-2xl font-bold transition-all transform active:scale-95 shadow-2xl shadow-indigo-600/20"
               >
-                {validating ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Validando...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>photo_camera</span>
-                    Iniciar Câmera
-                  </>
-                )}
+                <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
+                <span>Iniciar Câmera</span>
+              </button>
+            )}
+            {scanning && (
+              <button
+                onClick={stopScan}
+                className="relative z-10 flex flex-col items-center gap-4 bg-slate-700 hover:bg-slate-600 text-white px-8 py-5 rounded-2xl font-bold transition-all"
+              >
+                <span className="material-symbols-outlined text-4xl">stop</span>
+                <span>Parar</span>
               </button>
             )}
 
-            {scanning && (
-              <div className="mt-4 text-center">
-                <p className="text-sm text-blue-300 animate-pulse mb-3">
-                  Aponte para o QR Code do paciente...
+            <p className="absolute bottom-10 text-slate-500 font-medium text-sm tracking-wide">
+              Aponte para o QR Code do paciente
+            </p>
+          </div>
+        </section>
+
+        {/* Result States */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Success Card */}
+          {result?.success && (
+            <div className="bg-emerald-950/30 border border-emerald-500/30 p-5 rounded-2xl flex items-start gap-4 col-span-full">
+              <div className="bg-emerald-500/20 p-3 rounded-xl">
+                <span className="material-symbols-outlined text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-emerald-100">Autorização Confirmada</h3>
+                <p className="text-emerald-300/70 text-sm mt-1">
+                  Paciente: {result.patient}<br />
+                  Protocolo: #{result.protocol}
                 </p>
+                <div className="mt-3 inline-flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">VÁLIDO HOJE</div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Card */}
+          {result && !result.success && (
+            <div className="bg-rose-950/30 border border-rose-500/30 p-5 rounded-2xl flex items-start gap-4 col-span-full">
+              <div className="bg-rose-500/20 p-3 rounded-xl">
+                <span className="material-symbols-outlined text-rose-400" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-rose-100">Erro na Validação</h3>
+                <p className="text-rose-300/70 text-sm mt-1">{result.error}</p>
                 <button
-                  onClick={stopScanner}
-                  className="text-slate-400 hover:text-white text-sm underline transition"
+                  className="mt-3 text-xs font-bold text-rose-400 hover:underline"
+                  onClick={() => setResult(null)}
                 >
-                  Cancelar
+                  Tentar novamente
                 </button>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Error result */}
-        {error && !result && (
-          <div className="w-full">
-            <div className="rounded-3xl p-6 text-center" style={{ background: '#1e293b', border: '1px solid #ef44441a' }}>
-              <div className="w-16 h-16 bg-error/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="material-symbols-outlined text-error" style={{ fontSize: '32px' }}>cancel</span>
-              </div>
-              <h2 className="text-xl font-bold text-red-300 mb-2">QR Code Inválido</h2>
-              <p className="text-slate-400 text-sm">{error}</p>
             </div>
-            <button
-              onClick={reset}
-              className="w-full mt-4 py-3.5 rounded-2xl font-medium transition text-white flex items-center justify-center gap-2"
-              style={{ background: '#1e293b', border: '1px solid #334155' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
-              Tentar novamente
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Success result */}
-        {result && (
-          <div className="w-full space-y-4">
-            {result.valid ? (
-              <div className="rounded-3xl p-5" style={{ background: '#1e293b', border: '1px solid #16a34a33' }}>
-                <div className="text-center mb-5">
-                  <div className="w-16 h-16 bg-green-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <span className="material-symbols-outlined text-green-400" style={{ fontSize: '32px' }}>check_circle</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-green-300">QR Code Válido</h2>
-                  <p className="text-slate-400 text-sm mt-1">
-                    Utilização registrada: <strong className="text-white">{result.useLabel}</strong>
-                  </p>
+          {/* Default state cards */}
+          {!result && (
+            <>
+              <div className="bg-emerald-950/30 border border-emerald-500/30 p-5 rounded-2xl flex items-start gap-4">
+                <div className="bg-emerald-500/20 p-3 rounded-xl">
+                  <span className="material-symbols-outlined text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                 </div>
-
-                <div className="rounded-2xl p-4 space-y-2.5 text-sm" style={{ background: '#0f172a' }}>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Paciente</span>
-                    <span className="font-semibold text-white">{result.patient.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">CPF</span>
-                    <span className="font-mono text-white">{fmtCpf(result.patient.cpf)}</span>
-                  </div>
-                  <div className="border-t border-slate-700 my-1" />
-                  {result.exams.map((exam, i) => (
-                    <div key={i} className="flex justify-between">
-                      <span className="text-slate-400">{exam.exam_name}</span>
-                      <span className="text-white">{fmt(exam.value)}</span>
-                    </div>
-                  ))}
+                <div>
+                  <h3 className="font-bold text-emerald-100">Autorização Confirmada</h3>
+                  <p className="text-emerald-300/70 text-sm mt-1">Paciente: Ricardo Oliveira<br />Protocolo: #4920-A</p>
+                  <div className="mt-3 inline-flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">VÁLIDO HOJE</div>
                 </div>
-
-                {/* Usage status */}
-                <div className="mt-5">
-                  <p className="text-xs text-slate-500 mb-3 text-center uppercase tracking-wide">
-                    Utilizações ({result.usesCount}/{result.maxUses})
-                  </p>
-                  <div className="flex justify-center gap-6">
-                    {['transport', 'snack', 'exam'].map(type => {
-                      const used = result.usageLog.find(u => u.use_type === type)
-                      return (
-                        <div key={type} className="flex flex-col items-center gap-1.5">
-                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
-                            used ? 'bg-green-900/60' : 'bg-slate-700'
-                          }`}>
-                            <span
-                              className="material-symbols-outlined"
-                              style={{ fontSize: '20px', color: used ? '#4ade80' : '#64748b' }}
-                            >
-                              {USE_ICONS[type]}
-                            </span>
-                          </div>
-                          <span className="text-xs text-slate-400">{USE_LABELS[type]}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {result.isExhausted && (
-                  <div className="flex items-center justify-center gap-2 mt-4 text-yellow-400 text-sm font-medium">
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>warning</span>
-                    QR Code esgotado após esta utilização
-                  </div>
-                )}
               </div>
-            ) : (
-              <div className="rounded-3xl p-6 text-center" style={{ background: '#1e293b', border: '1px solid #ef44441a' }}>
-                <div className="w-16 h-16 bg-error/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="material-symbols-outlined text-error" style={{ fontSize: '32px' }}>cancel</span>
+              <div className="bg-rose-950/30 border border-rose-500/30 p-5 rounded-2xl flex items-start gap-4">
+                <div className="bg-rose-500/20 p-3 rounded-xl">
+                  <span className="material-symbols-outlined text-rose-400" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
                 </div>
-                <h2 className="text-xl font-bold text-red-300 mb-2">Inválido</h2>
-                <p className="text-slate-400 text-sm">{result.error}</p>
+                <div>
+                  <h3 className="font-bold text-rose-100">Cota Esgotada</h3>
+                  <p className="text-rose-300/70 text-sm mt-1">Este voucher já foi utilizado ou expirou o prazo de 24h.</p>
+                  <button className="mt-3 text-xs font-bold text-rose-400 hover:underline">Ver Detalhes</button>
+                </div>
               </div>
-            )}
+            </>
+          )}
+        </section>
 
-            <button
-              onClick={reset}
-              className="w-full py-3.5 rounded-2xl font-medium transition text-white flex items-center justify-center gap-2"
-              style={{ background: '#1e293b', border: '1px solid #334155' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>qr_code_scanner</span>
-              Escanear outro QR Code
-            </button>
+        {/* Footer */}
+        <footer className="mt-auto pt-8 border-t border-slate-800 flex flex-col items-center gap-4">
+          <div className="flex items-center gap-6 text-slate-500 text-sm font-medium">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              Terminal Ativo
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">history</span>
+              Últimos 12 registros
+            </div>
           </div>
-        )}
+          <div className="flex items-center gap-2 opacity-30">
+            <span className="text-[10px] tracking-[0.2em] font-black">SECURE SCAN TECHNOLOGY</span>
+          </div>
+        </footer>
+      </main>
+
+      {/* FAB */}
+      <div className="fixed bottom-8 right-8">
+        <button className="w-14 h-14 rounded-full bg-slate-800 text-white shadow-xl flex items-center justify-center hover:bg-slate-700 border border-slate-700 transition-all">
+          <span className="material-symbols-outlined">help_outline</span>
+        </button>
       </div>
     </div>
   )

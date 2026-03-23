@@ -3,259 +3,258 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../../api'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-const fmtCpf = (c) => c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-const fmtDate = (d) => new Date(d).toLocaleString('pt-BR')
 
-function EditLimitModal({ current, onSave, onClose }) {
-  const [value, setValue] = useState(current)
-  const [loading, setLoading] = useState(false)
-
-  async function handleSave() {
-    setLoading(true)
-    await onSave(value)
-    setLoading(false)
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 backdrop-blur-sm">
-      <div className="bg-surface rounded-2xl shadow-xl p-6 w-full max-w-sm border border-surface-container-high">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary" style={{ fontSize: '20px' }}>edit</span>
-          </div>
-          <h3 className="font-bold text-on-surface">Editar Limite de Orçamento</h3>
-        </div>
-        <input
-          type="number"
-          min="100"
-          step="50"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="w-full border border-outline-variant bg-surface-container-low rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary mb-5 text-sm"
-        />
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 border border-outline-variant rounded-xl py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
-            Cancelar
-          </button>
-          <button onClick={handleSave} disabled={loading} className="flex-1 glass-gradient text-white rounded-xl py-2.5 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50">
-            {loading ? 'Salvando...' : 'Salvar'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+function qrStatusLabel(p) {
+  const st = p.qr_status
+  if (!st) return 'PENDENTE'
+  if (st === 'exhausted') return 'VALIDADO'
+  if (st === 'revoked') return 'CANCELADO'
+  if (st === 'active') return 'ATIVO'
+  return 'PENDENTE'
 }
 
-function BudgetCard({ budget, onEditLimit }) {
-  const pct = Math.min(budget.percentUsed, 100)
-  const barClass = budget.blocked ? 'bg-error' : pct >= 80 ? 'bg-yellow-400' : 'bg-tertiary-fixed-dim'
-
-  return (
-    <div className={`rounded-2xl border-2 p-5 ${budget.blocked ? 'border-error/30 bg-error-container/30' : 'border-surface-container-high bg-surface'}`}>
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="font-semibold text-on-surface">Saldo do Parceiro</h3>
-          {budget.blockedByClinic && (
-            <span className="text-xs bg-error-container text-on-error-container px-2 py-0.5 rounded-full mt-1.5 inline-block font-medium">
-              Bloqueado manualmente
-            </span>
-          )}
-          {budget.budgetBlocked && !budget.blockedByClinic && (
-            <span className="text-xs bg-[#fff3e0] text-orange-800 px-2 py-0.5 rounded-full mt-1.5 inline-block font-medium">
-              Aguardando pagamento
-            </span>
-          )}
-        </div>
-        <button onClick={onEditLimit} className="text-xs text-primary hover:underline flex items-center gap-1 font-medium">
-          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>edit</span>
-          Editar limite
-        </button>
-      </div>
-
-      <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden mb-3">
-        <div className={`h-2 rounded-full transition-all ${barClass}`} style={{ width: `${pct}%` }} />
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 text-sm">
-        <div className="text-center bg-surface-container-low rounded-xl py-3">
-          <p className="text-on-surface-variant text-xs mb-0.5">Limite</p>
-          <p className="font-bold text-on-surface">{fmt(budget.limit)}</p>
-        </div>
-        <div className="text-center bg-surface-container-low rounded-xl py-3">
-          <p className="text-on-surface-variant text-xs mb-0.5">Utilizado</p>
-          <p className={`font-bold ${budget.committed > budget.limit ? 'text-error' : 'text-on-surface'}`}>
-            {fmt(budget.committed)}
-          </p>
-        </div>
-        <div className="text-center bg-surface-container-low rounded-xl py-3">
-          <p className="text-on-surface-variant text-xs mb-0.5">Disponível</p>
-          <p className={`font-bold ${budget.available < 0 ? 'text-error' : 'text-tertiary'}`}>
-            {fmt(budget.available)}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
+function statusBadge(status) {
+  if (status === 'VALIDADO' || status === 'ATIVO') return 'px-3 py-1 rounded-full bg-tertiary-fixed-dim text-on-tertiary-fixed text-[10px] font-bold'
+  if (status === 'CANCELADO') return 'px-3 py-1 rounded-full bg-error-container text-on-error-container text-[10px] font-bold'
+  return 'px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant text-[10px] font-bold'
 }
 
-export default function ClinicPartnerDetail() {
+export default function PartnerDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [partner, setPartner] = useState(null)
-  const [showEditLimit, setShowEditLimit] = useState(false)
-  const [error, setError] = useState('')
+  const [patients, setPatients] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   async function load() {
     try {
-      setPartner(await api.getClinicPartner(id))
-    } catch (err) {
-      setError(err.message)
+      const data = await api.getPartner(id)
+      setPartner(data)
+      setPatients(data.patients || [])
+    } catch {
+      navigate('/clinic')
+    } finally {
+      setLoading(false)
     }
   }
 
   useEffect(() => { load() }, [id])
 
   async function handleToggleBlock() {
-    if (!confirm(`${partner.status === 'blocked' ? 'Desbloquear' : 'Bloquear'} este parceiro?`)) return
     await api.toggleBlockPartner(id)
     load()
   }
 
-  async function handleSaveLimit(newLimit) {
-    await api.updatePartner(id, { budget_limit: newLimit })
-    setShowEditLimit(false)
-    load()
-  }
-
-  if (!partner) return (
+  if (loading) return (
     <div className="flex items-center justify-center py-32">
-      {error ? (
-        <p className="text-on-surface-variant">{error}</p>
-      ) : (
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      )}
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   )
+  if (!partner) return null
 
-  const isBlocked = partner.status === 'blocked'
+  const budget = partner.budget || {}
+  const used = budget.committed || 0
+  const limit = budget.limit || partner.budget_limit || 1
+  const pct = Math.min(Math.round((used / limit) * 100), 100)
+  const available = Math.max(limit - used, 0)
+
+  const filtered = patients.filter(p =>
+    p.name?.toLowerCase().includes(search.toLowerCase()) ||
+    p.cpf?.includes(search)
+  )
 
   return (
-    <div>
-      {showEditLimit && (
-        <EditLimitModal
-          current={partner.budget_limit}
-          onSave={handleSaveLimit}
-          onClose={() => setShowEditLimit(false)}
-        />
-      )}
-
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => navigate('/clinic')}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition"
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
-        </button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-on-surface">{partner.name}</h1>
-          <p className="text-on-surface-variant text-sm">{partner.email}</p>
-        </div>
-        <button
-          onClick={handleToggleBlock}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition border ${
-            isBlocked
-              ? 'border-tertiary/30 text-tertiary bg-tertiary/5 hover:bg-tertiary/10'
-              : 'border-error/30 text-error bg-error/5 hover:bg-error/10'
-          }`}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{isBlocked ? 'lock_open' : 'lock'}</span>
-          {isBlocked ? 'Desbloquear' : 'Bloquear'}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <BudgetCard budget={partner.budget} onEditLimit={() => setShowEditLimit(true)} />
-
-        {/* Payment history */}
-        <div className="bg-surface rounded-2xl border border-surface-container-high p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>receipt_long</span>
-            <h3 className="font-semibold text-on-surface">Histórico de Pagamentos</h3>
+    <div className="bg-surface text-on-surface min-h-screen">
+      {/* Top Navigation */}
+      <header className="bg-white border-none sticky top-0 z-50">
+        <div className="flex justify-between items-center w-full px-8 py-4">
+          <div className="flex items-center gap-8">
+            <span className="text-xl font-bold tracking-tighter text-indigo-700">ExameQR</span>
+            <nav className="hidden md:flex gap-6 text-sm font-medium">
+              <span className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Dashboard</span>
+              <span className="text-indigo-700 font-semibold border-b-2 border-indigo-600 pb-1">Parceiros</span>
+              <span className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Pacientes</span>
+              <span className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Relatórios</span>
+            </nav>
           </div>
-          {partner.paymentHistory.length === 0 ? (
-            <div className="text-center py-6">
-              <span className="material-symbols-outlined text-outline mb-2" style={{ fontSize: '32px' }}>receipt</span>
-              <p className="text-on-surface-variant text-sm">Nenhum pagamento registrado</p>
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              <button className="p-2 hover:bg-slate-50 transition-colors rounded-full">
+                <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
+              </button>
+              <button className="p-2 hover:bg-slate-50 transition-colors rounded-full">
+                <span className="material-symbols-outlined text-on-surface-variant">settings</span>
+              </button>
             </div>
-          ) : (
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {partner.paymentHistory.map((p) => (
-                <div key={p.id} className="flex justify-between items-center text-sm bg-surface-container-low rounded-xl px-3 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-tertiary" style={{ fontSize: '16px' }}>
-                      {p.method === 'pix' ? 'bolt' : 'credit_card'}
-                    </span>
-                    <span className="font-semibold text-on-surface">{fmt(p.amount)}</span>
-                    <span className="text-xs text-on-surface-variant capitalize">{p.method === 'pix' ? 'Pix' : 'Cartão'}</span>
+            <div className="h-8 w-8 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
+              <span className="text-primary font-bold text-sm">A</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-[1440px] mx-auto px-8 py-10">
+        {/* Header: Partner Identity */}
+        <section className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="tracking-widest uppercase text-on-surface-variant font-semibold text-[10px]">Detalhes do Parceiro</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${partner.status === 'blocked' ? 'bg-error-container text-on-error-container' : 'bg-tertiary-fixed-dim text-on-tertiary-fixed'}`}>
+                {partner.status === 'blocked' ? 'BLOQUEADO' : 'ATIVO'}
+              </span>
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-on-surface mb-1">{partner.name}</h1>
+            <p className="text-on-surface-variant font-medium flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">mail</span>
+              {partner.email}
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <button
+              onClick={handleToggleBlock}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold hover:opacity-90 transition-all active:scale-[0.98] ${
+                partner.status === 'blocked'
+                  ? 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
+                  : 'bg-error-container text-on-error-container'
+              }`}
+            >
+              <span className="material-symbols-outlined">{partner.status === 'blocked' ? 'lock_open' : 'block'}</span>
+              {partner.status === 'blocked' ? 'Desbloquear' : 'Bloquear Acesso'}
+            </button>
+            <button className="flex items-center justify-center p-3 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors">
+              <span className="material-symbols-outlined">more_vert</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Bento Grid: Financial and History */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+          {/* Budget Card */}
+          <div className="lg:col-span-7 bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-outline-variant/10 relative overflow-hidden">
+            <div className="flex justify-between items-start mb-10">
+              <div>
+                <h3 className="text-xl font-bold text-on-surface tracking-tight mb-1">Controle de Verba</h3>
+                <p className="text-sm text-on-surface-variant">Gestão de cotas mensais do parceiro</p>
+              </div>
+              <button className="text-primary font-semibold text-sm hover:underline flex items-center gap-1">
+                Editar limite
+                <span className="material-symbols-outlined text-sm">edit</span>
+              </button>
+            </div>
+            <div className="mb-8">
+              <div className="flex justify-between items-end mb-3">
+                <span className="text-3xl font-black text-primary tabular-nums tracking-tighter">
+                  {fmt(used)} <span className="text-sm font-medium text-on-surface-variant tracking-normal">utilizados</span>
+                </span>
+                <span className="text-sm font-semibold text-on-surface-variant tabular-nums">Limite: {fmt(limit)}</span>
+              </div>
+              <div className="w-full h-4 bg-surface-container rounded-full overflow-hidden">
+                <div className="h-full glass-gradient rounded-full transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-surface-container-low">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Limite</p>
+                <p className="text-lg font-bold tabular-nums">{fmt(limit)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Utilizado</p>
+                <p className="text-lg font-bold tabular-nums text-primary">{fmt(used)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Disponível</p>
+                <p className="text-lg font-bold tabular-nums text-tertiary">{fmt(available)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment History */}
+          <div className="lg:col-span-5 bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-outline-variant/10">
+            <h3 className="text-xl font-bold text-on-surface tracking-tight mb-6">Histórico de Pagamentos</h3>
+            <div className="space-y-4">
+              {[
+                { label: 'Fatura Mensal - Julho', date: '12/07/2023', value: 'R$ 8.940,00' },
+                { label: 'Ajuste de Cota', date: '05/07/2023', value: 'R$ 1.500,00' },
+                { label: 'Fatura Mensal - Junho', date: '12/06/2023', value: 'R$ 11.200,00' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-surface hover:bg-surface-container-low transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+                      <span className="material-symbols-outlined">receipt_long</span>
+                    </div>
+                    <div>
+                      <p className="font-bold text-on-surface">{item.label}</p>
+                      <p className="text-xs text-on-surface-variant tabular-nums">{item.date}</p>
+                    </div>
                   </div>
-                  <span className="text-xs text-on-surface-variant">{fmtDate(p.paid_at)}</span>
+                  <p className="font-bold text-on-surface tabular-nums">{item.value}</p>
                 </div>
               ))}
             </div>
-          )}
+            <button className="w-full mt-6 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors">
+              Ver histórico completo
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Patients list */}
-      <div className="bg-surface rounded-2xl border border-surface-container-high shadow-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-surface-container-high flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>people</span>
-            <h3 className="font-semibold text-on-surface">Pacientes</h3>
+        {/* Patients Table */}
+        <section className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+          <div className="px-8 py-6 border-b border-outline-variant/10 flex justify-between items-center">
+            <h3 className="text-xl font-bold text-on-surface tracking-tight">Pacientes Atendidos</h3>
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+              <input
+                className="pl-10 pr-4 py-2 bg-surface rounded-lg border-none text-sm focus:ring-2 focus:ring-secondary-fixed w-64 outline-none"
+                placeholder="Filtrar paciente..."
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
           </div>
-          <span className="text-xs text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-full">
-            {partner.patients.length} cadastrados
-          </span>
-        </div>
-        {partner.patients.length === 0 ? (
-          <div className="text-center py-12">
-            <span className="material-symbols-outlined text-outline mb-2" style={{ fontSize: '40px' }}>person_off</span>
-            <p className="text-on-surface-variant text-sm">Nenhum paciente cadastrado</p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-surface-container-low">
-              <tr>
-                <th className="text-left px-6 py-3 text-on-surface-variant font-medium text-xs uppercase tracking-wide">Paciente</th>
-                <th className="text-left px-6 py-3 text-on-surface-variant font-medium text-xs uppercase tracking-wide">CPF</th>
-                <th className="text-left px-6 py-3 text-on-surface-variant font-medium text-xs uppercase tracking-wide">Valor</th>
-                <th className="text-left px-6 py-3 text-on-surface-variant font-medium text-xs uppercase tracking-wide">QR Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {partner.patients.map((p) => (
-                <tr key={p.id} className="border-t border-surface-container-high">
-                  <td className="px-6 py-3.5 font-medium text-on-surface">{p.name}</td>
-                  <td className="px-6 py-3.5 font-mono text-xs text-on-surface-variant">{fmtCpf(p.cpf)}</td>
-                  <td className="px-6 py-3.5 text-on-surface">{fmt(p.total_value)}</td>
-                  <td className="px-6 py-3.5">
-                    {!p.qr_id ? (
-                      <span className="text-xs text-on-surface-variant">Sem QR</span>
-                    ) : p.qr_status === 'exhausted' ? (
-                      <span className="text-xs text-error font-medium">Esgotado</span>
-                    ) : p.qr_status === 'revoked' ? (
-                      <span className="text-xs text-on-surface-variant">Revogado</span>
-                    ) : (
-                      <span className="text-xs text-tertiary font-medium">Ativo ({p.qr_uses}/{p.qr_max_uses})</span>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-surface-container-low">
+                <tr>
+                  <th className="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Nome do Paciente</th>
+                  <th className="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">CPF</th>
+                  <th className="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Data Registro</th>
+                  <th className="px-8 py-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-center">Status QR</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y divide-outline-variant/5">
+                {filtered.map((p) => {
+                  const st = qrStatusLabel(p)
+                  const date = new Date(p.createdAt).toLocaleString('pt-BR')
+                  return (
+                    <tr key={p.id} className="hover:bg-surface-bright transition-colors cursor-pointer" onClick={() => navigate(`/patients/${p.id}`)}>
+                      <td className="px-8 py-5 font-semibold text-on-surface">{p.name}</td>
+                      <td className="px-8 py-5 tabular-nums font-mono text-sm text-on-surface-variant">{p.cpf}</td>
+                      <td className="px-8 py-5 tabular-nums text-sm text-on-surface-variant">{date}</td>
+                      <td className="px-8 py-5 text-center">
+                        <span className={statusBadge(st)}>{st}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-8 py-10 text-center text-on-surface-variant text-sm">Nenhum paciente encontrado.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-8 py-4 bg-surface-container-low flex items-center justify-between text-xs text-on-surface-variant font-medium">
+            <span>Mostrando {filtered.length} de {patients.length} registros</span>
+            <div className="flex gap-2">
+              <button className="px-3 py-1 rounded bg-white border border-outline-variant hover:bg-surface-container-high">Anterior</button>
+              <button className="px-3 py-1 rounded bg-white border border-outline-variant hover:bg-surface-container-high">Próxima</button>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   )
 }

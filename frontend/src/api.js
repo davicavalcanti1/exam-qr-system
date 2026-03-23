@@ -48,5 +48,22 @@ export const api = {
   confirmPayment: (method) => request('POST', '/payments/confirm', { method }),
 
   // Scanner (public)
-  validateQR: (token, useType) => request('POST', '/scanner/validate', { token, useType })
+  validateQR: (token, useType) => request('POST', '/scanner/validate', { token, useType }),
+  validateQr: (token, useType) => request('POST', '/scanner/validate', { token, useType }),
+
+  // Aliases for page compatibility
+  getPartner: (id) => request('GET', `/clinic/partners/${id}`),
+  getPartnerPatients: (id) => request('GET', `/clinic/partners/${id}/patients`),
+  revokeQr: (patientId) => request('DELETE', `/qrcodes/revoke/${patientId}`),
+  regenerateQr: (patientId) => request('POST', `/qrcodes/generate/${patientId}`),
+  getQRImageUrl: (patientId) => `${BASE}/qrcodes/image/${patientId}`,
+
+  // Combined partner dashboard
+  getPartnerDashboard: async () => {
+    const [budget, patients] = await Promise.all([
+      request('GET', '/qrcodes/budget'),
+      request('GET', '/patients')
+    ])
+    return { partner: budget, patients }
+  }
 }

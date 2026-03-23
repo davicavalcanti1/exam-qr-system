@@ -24,9 +24,9 @@ function ClinicLayout() {
     return <Navigate to="/login" replace />
   }
   return (
-    <div className="min-h-screen bg-surface flex">
+    <div className="min-h-screen bg-surface">
       <ClinicSidebar />
-      <main className="flex-1 ml-64 p-8 min-h-screen">
+      <main className="ml-64 min-h-screen bg-surface">
         <Outlet />
       </main>
     </div>
@@ -40,11 +40,9 @@ function PartnerLayout() {
     return <Navigate to="/login" replace />
   }
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-surface text-on-surface">
       <PartnerNavbar />
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <Outlet />
-      </main>
+      <Outlet />
     </div>
   )
 }
