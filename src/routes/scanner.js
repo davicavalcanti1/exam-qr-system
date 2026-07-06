@@ -101,4 +101,43 @@ router.post('/validate', (req, res) => {
   })
 })
 
+// Get reading history (public - for terminals/staff)
+router.get('/history', (req, res) => {
+  const db = getDB()
+
+  const { limit = 50, skip = 0 } = req.query
+
+  const history = db.prepare(`
+    SELECT
+      ul.id,
+      ul.use_type,
+      ul.used_at,
+      p.name as patient_name,
+      p.cpf,
+      qr.id as qr_id,
+      qr.status as qr_status
+    FROM qr_usage_log ul
+    JOIN qr_codes qr ON ul.qr_code_id = qr.id
+    JOIN patients p ON qr.patient_id = p.id
+    ORDER BY ul.used_at DESC
+    LIMIT ? OFFSET ?
+  `).all(parseInt(limit), parseInt(skip))
+
+  const total = db.prepare('SELECT COUNT(*) as count FROM qr_usage_log').get().count
+
+  const formatted = history.map(h => ({
+    ...h,
+    use_type_label: USE_LABELS[h.use_type],
+    used_at_formatted: new Date(h.used_at).toLocaleString('pt-BR')
+  }))
+
+  res.json({
+    history: formatted,
+    total,
+    limit: parseInt(limit),
+    skip: parseInt(skip),
+    hasMore: (parseInt(skip) + parseInt(limit)) < total
+  })
+})
+
 export default router

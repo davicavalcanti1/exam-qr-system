@@ -3,6 +3,7 @@ import { getUser } from './auth'
 
 import Login from './pages/Login'
 import Scanner from './pages/Scanner'
+import ScannerHistory from './pages/ScannerHistory'
 
 // Partner pages
 import Dashboard from './pages/Dashboard'
@@ -62,6 +63,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/scanner" element={<Scanner />} />
+        <Route path="/history" element={<ScannerHistory />} />
         <Route path="/" element={<RootRedirect />} />
 
         {/* Clinic routes */}

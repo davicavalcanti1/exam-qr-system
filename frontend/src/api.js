@@ -69,6 +69,7 @@ export const api = {
   // Scanner (public)
   validateQR: (token, useType) => request('POST', '/scanner/validate', { token, useType }),
   validateQr: (token, useType) => request('POST', '/scanner/validate', { token, useType }),
+  getScannerHistory: (limit = 50, skip = 0) => request('GET', `/scanner/history?limit=${limit}&skip=${skip}`),
 
   // Aliases for page compatibility
   getPartner: (id) => request('GET', `/clinic/partners/${id}`),
