@@ -8,12 +8,14 @@ import { getPartnerBudget } from './budget.js'
 const router = Router()
 router.use(requirePartner)
 
+// Specific routes FIRST (before :parameterized routes)
 router.get('/budget', (req, res) => {
   const budget = getPartnerBudget(req.user.partnerId)
   if (!budget) return res.status(404).json({ error: 'Parceiro não encontrado' })
   res.json(budget)
 })
 
+// Parameterized routes AFTER specific ones
 router.post('/generate/:patientId', async (req, res) => {
   try {
     const db = getDB()
@@ -25,8 +27,11 @@ router.post('/generate/:patientId', async (req, res) => {
     ).get(patientId, partnerId)
     if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' })
 
+    // Allow regeneration: revoke old QR if it exists
     const existingQR = db.prepare('SELECT id FROM qr_codes WHERE patient_id = ?').get(patientId)
-    if (existingQR) return res.status(400).json({ error: 'QR Code já gerado para este paciente' })
+    if (existingQR) {
+      db.prepare('UPDATE qr_codes SET status = ? WHERE id = ?').run('revoked', existingQR.id)
+    }
 
     const budget = getPartnerBudget(partnerId)
 
@@ -48,13 +53,21 @@ router.post('/generate/:patientId', async (req, res) => {
       'SELECT COALESCE(SUM(value), 0) as total FROM exams WHERE patient_id = ?'
     ).get(patientId).total
 
-    const insertResult = db.prepare(
-      `INSERT INTO qr_codes (patient_id, token, status) VALUES (?, ?, 'active')`
-    ).run(patientId, 'temp-token-placeholder')
-    const qrId = insertResult.lastInsertRowid
-
-    const token = generateQRToken(qrId, patientId)
-    db.prepare('UPDATE qr_codes SET token = ? WHERE id = ?').run(token, qrId)
+    let qrId, token
+    if (existingQR) {
+      // Update existing QR code
+      qrId = existingQR.id
+      token = generateQRToken(qrId, patientId)
+      db.prepare('UPDATE qr_codes SET token = ?, status = ?, uses_count = 0 WHERE id = ?').run(token, 'active', qrId)
+    } else {
+      // Create new QR code
+      const insertResult = db.prepare(
+        `INSERT INTO qr_codes (patient_id, token, status) VALUES (?, ?, 'active')`
+      ).run(patientId, 'temp-token-placeholder')
+      qrId = insertResult.lastInsertRowid
+      token = generateQRToken(qrId, patientId)
+      db.prepare('UPDATE qr_codes SET token = ? WHERE id = ?').run(token, qrId)
+    }
 
     const newCommitted = budget.committed + examTotal
     const willBlock = newCommitted >= budget.limit
