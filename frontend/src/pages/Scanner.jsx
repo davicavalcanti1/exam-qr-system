@@ -25,7 +25,6 @@ export default function Scanner() {
         throw new Error('Nenhuma câmera encontrada no dispositivo')
       }
 
-      // Request permission
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
       stream.getTracks().forEach(track => track.stop())
       return true
@@ -42,38 +41,35 @@ export default function Scanner() {
     setScanning(true)
 
     try {
-      // First check camera permission
       await checkCameraPermission()
       setDebugInfo('Câmera acessível. Iniciando scanner...')
 
-      // Clear old scanner if exists
       if (scannerRef.current) {
         try {
           await scannerRef.current.stop()
         } catch {}
       }
 
-      // Small delay to ensure DOM is ready
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      const scanner = new Html5Qrcode('qr-reader', {
-        willReadFrequently: true,
-        formatsToSupport: undefined // Explicitly no formats hint
-      })
+      const scanner = new Html5Qrcode('qr-reader')
       scannerRef.current = scanner
 
       await scanner.start(
         { facingMode: 'environment' },
         {
-          fps: 5,
-          qrbox: { width: 250, height: 250 }
+          fps: 10,
+          qrbox: { width: 300, height: 300 },
+          aspectRatio: 1.0
         },
         async (decodedText) => {
           console.log('QR detectado:', decodedText)
           setDebugInfo('QR detectado! Processando...')
 
           try {
-            await scanner.stop()
+            if (scannerRef.current) {
+              await scannerRef.current.stop()
+            }
             setScanning(false)
             const data = await api.validateQr(decodedText, selectedType)
             setResult({ success: true, patient: data.patient, protocol: data.protocol })
@@ -81,9 +77,7 @@ export default function Scanner() {
             setResult({ success: false, error: err.message || 'QR Code inválido ou expirado' })
           }
         },
-        (err) => {
-          // Ignore scanning errors (expected)
-        }
+        () => {} // Ignore scanning errors
       )
 
       setDebugInfo('Scanner ativo - aponte para o QR Code')
@@ -151,36 +145,15 @@ export default function Scanner() {
         </section>
 
         {/* Scanner Area */}
-        <section className="relative flex-1 flex flex-col items-center justify-center min-h-[400px]">
-          <div className="relative w-full max-w-sm aspect-square bg-black rounded-3xl border-2 border-slate-800 overflow-hidden flex items-center justify-center group">
-            {/* Scanner animation */}
-            {scanning && (
-              <div className="absolute inset-0 scanner-viewport opacity-40">
-                <div className="scanner-line" />
-              </div>
-            )}
+        <section className="relative flex-1 flex flex-col items-center justify-center min-h-[500px]">
+          {!scanning && (
+            <div className="relative w-full max-w-md bg-black rounded-3xl border-2 border-slate-800 overflow-hidden flex items-center justify-center aspect-video">
+              {/* Corner Brackets */}
+              <div className="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl" />
+              <div className="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl" />
+              <div className="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl" />
+              <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-indigo-500 rounded-br-xl" />
 
-            {/* Corner Brackets */}
-            <div className="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-indigo-500 rounded-tl-xl" />
-            <div className="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-indigo-500 rounded-tr-xl" />
-            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-indigo-500 rounded-bl-xl" />
-            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-indigo-500 rounded-br-xl" />
-
-            {/* QR reader div */}
-            <div
-              id="qr-reader"
-              style={{
-                width: '100%',
-                height: '100%',
-                display: scanning ? 'block' : 'none',
-                position: 'absolute',
-                top: 0,
-                left: 0
-              }}
-            />
-
-            {/* Action button */}
-            {!scanning && (
               <button
                 onClick={startScan}
                 className="relative z-10 flex flex-col items-center gap-4 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-5 rounded-2xl font-bold transition-all transform active:scale-95 shadow-2xl shadow-indigo-600/20"
@@ -188,28 +161,32 @@ export default function Scanner() {
                 <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
                 <span>Iniciar Câmera</span>
               </button>
-            )}
-            {scanning && (
-              <button
-                onClick={stopScan}
-                className="relative z-10 flex flex-col items-center gap-4 bg-slate-700 hover:bg-slate-600 text-white px-8 py-5 rounded-2xl font-bold transition-all"
-              >
-                <span className="material-symbols-outlined text-4xl">stop</span>
-                <span>Parar</span>
-              </button>
-            )}
 
-            {debugInfo && (
-              <p className="absolute bottom-10 text-indigo-300 font-medium text-sm tracking-wide animate-pulse">
-                {debugInfo}
-              </p>
-            )}
-            {!scanning && !debugInfo && (
               <p className="absolute bottom-10 text-slate-500 font-medium text-sm tracking-wide">
                 Aponte para o QR Code do paciente
               </p>
-            )}
-          </div>
+            </div>
+          )}
+
+          {scanning && (
+            <div className="relative w-full max-w-md rounded-3xl border-2 border-slate-800 overflow-hidden">
+              <div id="qr-reader" style={{ width: '100%', minHeight: '400px' }} />
+
+              <button
+                onClick={stopScan}
+                className="absolute bottom-4 right-4 z-20 flex flex-col items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-2xl font-bold transition-all"
+              >
+                <span className="material-symbols-outlined text-2xl">stop</span>
+                <span className="text-xs">Parar</span>
+              </button>
+
+              {debugInfo && (
+                <p className="absolute top-4 left-4 right-4 z-20 text-indigo-300 font-medium text-sm tracking-wide animate-pulse bg-black/50 px-3 py-2 rounded">
+                  {debugInfo}
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Result States */}
