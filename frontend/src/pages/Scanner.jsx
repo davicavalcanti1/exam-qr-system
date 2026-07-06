@@ -72,6 +72,7 @@ export default function Scanner() {
             }
             setScanning(false)
             const data = await api.validateQr(decodedText, selectedType)
+            playSuccessConfirmation()
             setResult({ success: true, patient: data.patient, protocol: data.protocol })
           } catch (err) {
             setResult({ success: false, error: err.message || 'QR Code inválido ou expirado' })
@@ -113,6 +114,34 @@ export default function Scanner() {
     }
     setScanning(false)
     setDebugInfo('')
+  }
+
+  function playSuccessConfirmation() {
+    // Vibração (haptic feedback)
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100])
+    }
+
+    // Som de sucesso (beep)
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.value = 800
+      oscillator.type = 'sine'
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.2)
+    } catch (err) {
+      console.log('Audio context not available')
+    }
   }
 
   useEffect(() => () => { stopScan() }, [])
@@ -189,21 +218,78 @@ export default function Scanner() {
           )}
         </section>
 
+        {/* Success Confirmation Modal */}
+        {result?.success && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm p-4" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+            <style>{`
+              @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+              @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+            `}</style>
+            <div className="bg-gradient-to-b from-emerald-900 to-emerald-950 border-2 border-emerald-500 rounded-3xl p-8 max-w-sm w-full shadow-2xl shadow-emerald-500/50" style={{ animation: 'scaleIn 0.4s ease-out' }}>
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-6 relative">
+                  <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl animate-pulse" />
+                  <div className="relative bg-emerald-500/20 p-6 rounded-full border-2 border-emerald-500">
+                    <span className="material-symbols-outlined text-6xl text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      check_circle
+                    </span>
+                  </div>
+                </div>
+
+                <h2 className="text-2xl md:text-3xl font-black text-emerald-100 mb-2">
+                  Autorização Confirmada! ✓
+                </h2>
+
+                <p className="text-emerald-300/70 text-sm mb-6">
+                  QR Code validado com sucesso
+                </p>
+
+                <div className="bg-emerald-950/50 border border-emerald-500/30 rounded-2xl p-4 w-full mb-6">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-emerald-400/70 text-xs uppercase tracking-wider mb-1">Paciente</p>
+                      <p className="text-white font-bold text-lg">{result.patient}</p>
+                    </div>
+                    <div>
+                      <p className="text-emerald-400/70 text-xs uppercase tracking-wider mb-1">Protocolo</p>
+                      <p className="text-emerald-300 font-mono font-bold">#{result.protocol}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-3 py-2 rounded-full mb-6 w-full">
+                  <span className="material-symbols-outlined text-sm">verified</span>
+                  VÁLIDO HOJE — Exame Autorizado
+                </div>
+
+                <button
+                  onClick={() => setResult(null)}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-2xl transition-all active:scale-95"
+                >
+                  Continuar Lendo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Result States */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Success Card */}
+          {/* Success Card (kept for larger screens) */}
           {result?.success && (
-            <div className="bg-emerald-950/30 border border-emerald-500/30 p-5 rounded-2xl flex items-start gap-4 col-span-full">
-              <div className="bg-emerald-500/20 p-3 rounded-xl">
-                <span className="material-symbols-outlined text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-              </div>
-              <div>
-                <h3 className="font-bold text-emerald-100">Autorização Confirmada</h3>
-                <p className="text-emerald-300/70 text-sm mt-1">
-                  Paciente: {result.patient}<br />
-                  Protocolo: #{result.protocol}
-                </p>
-                <div className="mt-3 inline-flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">VÁLIDO HOJE</div>
+            <div className="hidden md:flex bg-emerald-950/30 border border-emerald-500/30 p-5 rounded-2xl flex-col gap-4 col-span-full">
+              <div className="flex items-start gap-4">
+                <div className="bg-emerald-500/20 p-3 rounded-xl">
+                  <span className="material-symbols-outlined text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-emerald-100">Autorização Confirmada</h3>
+                  <p className="text-emerald-300/70 text-sm mt-1">
+                    Paciente: {result.patient}<br />
+                    Protocolo: #{result.protocol}
+                  </p>
+                  <div className="mt-3 inline-flex items-center text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">VÁLIDO HOJE</div>
+                </div>
               </div>
             </div>
           )}
