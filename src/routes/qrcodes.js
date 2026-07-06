@@ -4,6 +4,7 @@ import { getDB } from '../database/db.js'
 import { requirePartner } from '../middleware/auth.js'
 import { generateQRToken } from '../utils/qrToken.js'
 import { getPartnerBudget } from './budget.js'
+import { generateReceipt } from '../utils/receiptGenerator.js'
 
 const router = Router()
 router.use(requirePartner)
@@ -113,6 +114,41 @@ router.delete('/revoke/:patientId', (req, res) => {
 
   db.prepare('UPDATE qr_codes SET status = ? WHERE id = ?').run('revoked', qr.id)
   res.json({ message: 'QR Code revogado com sucesso' })
+})
+
+// Generate Receipt PDF
+router.get('/receipt/:patientId', async (req, res) => {
+  try {
+    const db = getDB()
+    const partnerId = req.user.partnerId
+    const patientId = parseInt(req.params.patientId)
+
+    // Fetch patient
+    const patient = db.prepare(
+      'SELECT * FROM patients WHERE id = ? AND partner_id = ?'
+    ).get(patientId, partnerId)
+    if (!patient) return res.status(404).json({ error: 'Paciente não encontrado' })
+
+    // Fetch QR code
+    const qr = db.prepare('SELECT * FROM qr_codes WHERE patient_id = ?').get(patientId)
+    if (!qr) return res.status(404).json({ error: 'QR Code não encontrado' })
+    if (qr.status !== 'active') return res.status(400).json({ error: 'QR Code não está ativo' })
+
+    // Fetch exams
+    const exams = db.prepare('SELECT * FROM exams WHERE patient_id = ?').all(patientId)
+    if (exams.length === 0) return res.status(400).json({ error: 'Nenhum exame autorizado' })
+
+    // Generate PDF
+    const pdfBuffer = await generateReceipt(patient, exams, qr.token)
+
+    // Send as download
+    res.contentType('application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="recibo_${patient.id}_${new Date().getTime()}.pdf"`)
+    res.send(pdfBuffer)
+  } catch (error) {
+    console.error('Erro ao gerar recibo:', error)
+    res.status(500).json({ error: 'Erro ao gerar recibo em PDF' })
+  }
 })
 
 export default router

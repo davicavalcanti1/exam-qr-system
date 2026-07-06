@@ -41,6 +41,25 @@ export const api = {
   generateQR: (patientId) => request('POST', `/qrcodes/generate/${patientId}`),
   getQRImage: (patientId) => request('GET', `/qrcodes/image/${patientId}`).then(d => d.dataUrl),
   revokeQR: (patientId) => request('DELETE', `/qrcodes/revoke/${patientId}`),
+  downloadReceipt: async (patientId) => {
+    const token = localStorage.getItem('token')
+    const res = await fetch(`${BASE}/qrcodes/receipt/${patientId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(data.error || 'Erro ao baixar recibo')
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `recibo_${patientId}_${new Date().getTime()}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  },
 
   // Partner — payments
   getPaymentHistory: () => request('GET', '/payments/history'),

@@ -14,6 +14,7 @@ export default function PatientDetail() {
   const [loading, setLoading] = useState(true)
   const [revoking, setRevoking] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false)
   const qrRef = useRef(null)
 
   async function load() {
@@ -68,6 +69,17 @@ export default function PatientDetail() {
     window.print()
   }
 
+  async function handleDownloadReceipt() {
+    setDownloadingReceipt(true)
+    try {
+      await api.downloadReceipt(id)
+    } catch (err) {
+      alert(`Erro: ${err.message}`)
+    } finally {
+      setDownloadingReceipt(false)
+    }
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center py-32">
       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -109,6 +121,14 @@ export default function PatientDetail() {
             >
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>print</span>
               Imprimir
+            </button>
+            <button
+              onClick={handleDownloadReceipt}
+              disabled={downloadingReceipt || !hasQr}
+              className="px-6 py-2.5 rounded-lg border border-primary/20 text-primary font-semibold text-sm hover:bg-primary-container/30 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
+              {downloadingReceipt ? 'Baixando...' : 'Recibo PDF'}
             </button>
             <button
               onClick={handleRevoke}
