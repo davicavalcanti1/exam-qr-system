@@ -53,16 +53,20 @@ export default function Scanner() {
         } catch {}
       }
 
-      const scanner = new Html5Qrcode('qr-reader')
+      // Small delay to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const scanner = new Html5Qrcode('qr-reader', {
+        willReadFrequently: true,
+        formatsToSupport: undefined // Explicitly no formats hint
+      })
       scannerRef.current = scanner
 
       await scanner.start(
-        { facingMode: 'environment' },
+        { facingMode: 'environment', width: 360 },
         {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          disableFlip: false,
-          aspectRatio: 1.0
+          fps: 5,
+          qrbox: { width: 250, height: 250 }
         },
         async (decodedText) => {
           console.log('QR detectado:', decodedText)
@@ -79,9 +83,6 @@ export default function Scanner() {
         },
         (err) => {
           // Ignore scanning errors (expected)
-          if (err && err.includes && !err.includes('Not able to find camera')) {
-            console.debug('Scanning error:', err)
-          }
         }
       )
 
@@ -166,7 +167,17 @@ export default function Scanner() {
             <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-indigo-500 rounded-br-xl" />
 
             {/* QR reader div */}
-            <div id="qr-reader" className={`absolute inset-0 ${scanning ? 'opacity-100' : 'hidden'}`} />
+            <div
+              id="qr-reader"
+              style={{
+                width: '100%',
+                height: '100%',
+                display: scanning ? 'block' : 'none',
+                position: 'absolute',
+                top: 0,
+                left: 0
+              }}
+            />
 
             {/* Action button */}
             {!scanning && (
