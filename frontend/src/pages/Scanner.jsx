@@ -11,50 +11,105 @@ const USE_TYPES = [
 export default function Scanner() {
   const [selectedType, setSelectedType] = useState('exam')
   const [scanning, setScanning] = useState(false)
-  const [result, setResult] = useState(null) // { success, patient, protocol, error }
-  const qrRef = useRef(null)
+  const [result, setResult] = useState(null)
+  const [debugInfo, setDebugInfo] = useState('')
   const scannerRef = useRef(null)
+
+  async function checkCameraPermission() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const cameras = devices.filter(d => d.kind === 'videoinput')
+      console.log('Câmeras encontradas:', cameras.length)
+
+      if (cameras.length === 0) {
+        throw new Error('Nenhuma câmera encontrada no dispositivo')
+      }
+
+      // Request permission
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      stream.getTracks().forEach(track => track.stop())
+      return true
+    } catch (err) {
+      console.error('Permission error:', err)
+      throw err
+    }
+  }
 
   async function startScan() {
     if (scanning) return
     setResult(null)
+    setDebugInfo('Verificando câmera...')
     setScanning(true)
+
     try {
-      const scanner = new Html5Qrcode('qr-reader')
+      // First check camera permission
+      await checkCameraPermission()
+      setDebugInfo('Câmera acessível. Iniciando scanner...')
+
+      // Clear old scanner if exists
+      if (scannerRef.current) {
+        try {
+          await scannerRef.current.stop()
+        } catch {}
+      }
+
+      const scanner = new Html5Qrcode('qr-reader', { formatsToSupport: ['QR_CODE'] })
       scannerRef.current = scanner
 
       await scanner.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          console.log('QR detected:', decodedText)
-          await scanner.stop()
-          setScanning(false)
+          console.log('QR detectado:', decodedText)
+          setDebugInfo('QR detectado! Processando...')
+
           try {
+            await scanner.stop()
+            setScanning(false)
             const data = await api.validateQr(decodedText, selectedType)
             setResult({ success: true, patient: data.patient, protocol: data.protocol })
           } catch (err) {
             setResult({ success: false, error: err.message || 'QR Code inválido ou expirado' })
           }
         },
-        () => {}
+        (err) => {
+          // Ignore scanning errors (expected)
+        }
       )
+
+      setDebugInfo('Scanner ativo - aponte para o QR Code')
     } catch (error) {
-      console.error('Scanner error:', error)
+      console.error('Erro ao iniciar scanner:', error)
       setScanning(false)
-      setResult({
-        success: false,
-        error: error?.message || 'Não foi possível acessar a câmera. Verifique as permissões do navegador.'
-      })
+      setDebugInfo('')
+
+      let errorMsg = 'Não foi possível acessar a câmera.'
+
+      if (error.name === 'NotAllowedError') {
+        errorMsg = 'Permissão de câmera negada. Verifique as configurações do navegador.'
+      } else if (error.name === 'NotFoundError') {
+        errorMsg = 'Nenhuma câmera encontrada. Verifique se seu dispositivo tem câmera.'
+      } else if (error.name === 'NotReadableError') {
+        errorMsg = 'Câmera em uso por outro app. Feche outros apps e tente novamente.'
+      } else if (error.message) {
+        errorMsg = error.message
+      }
+
+      setResult({ success: false, error: errorMsg })
     }
   }
 
   async function stopScan() {
     if (scannerRef.current) {
-      try { await scannerRef.current.stop() } catch {}
+      try {
+        await scannerRef.current.stop()
+      } catch (err) {
+        console.error('Error stopping scanner:', err)
+      }
       scannerRef.current = null
     }
     setScanning(false)
+    setDebugInfo('')
   }
 
   useEffect(() => () => { stopScan() }, [])
@@ -125,9 +180,16 @@ export default function Scanner() {
               </button>
             )}
 
-            <p className="absolute bottom-10 text-slate-500 font-medium text-sm tracking-wide">
-              Aponte para o QR Code do paciente
-            </p>
+            {debugInfo && (
+              <p className="absolute bottom-10 text-indigo-300 font-medium text-sm tracking-wide animate-pulse">
+                {debugInfo}
+              </p>
+            )}
+            {!scanning && !debugInfo && (
+              <p className="absolute bottom-10 text-slate-500 font-medium text-sm tracking-wide">
+                Aponte para o QR Code do paciente
+              </p>
+            )}
           </div>
         </section>
 
