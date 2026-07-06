@@ -24,6 +24,13 @@ router.post('/generate/:patientId', async (req, res) => {
     const patientId = parseInt(req.params.patientId)
     const { allowTransport, allowSnack, allowExam } = req.body
 
+    // Check partner status
+    const partner = db.prepare('SELECT status FROM partners WHERE id = ?').get(partnerId)
+    if (!partner) return res.status(403).json({ error: 'Parceiro não encontrado' })
+    if (partner.status === 'blocked') {
+      return res.status(403).json({ error: 'Seu acesso foi bloqueado. Entre em contato com o suporte.' })
+    }
+
     const patient = db.prepare(
       'SELECT * FROM patients WHERE id = ? AND partner_id = ?'
     ).get(patientId, partnerId)

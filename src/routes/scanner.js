@@ -49,6 +49,19 @@ router.post('/validate', (req, res) => {
     return res.json({ valid: false, error: 'QR Code revogado' })
   }
 
+  // Step 2b: Check if QR code expired (72 hours)
+  const createdAt = new Date(qr.created_at)
+  const now = new Date()
+  const hoursElapsed = (now - createdAt) / (1000 * 60 * 60)
+  const QR_VALIDITY_HOURS = parseInt(process.env.QR_VALIDITY_HOURS) || 72
+
+  if (hoursElapsed > QR_VALIDITY_HOURS) {
+    return res.json({
+      valid: false,
+      error: `QR Code expirado — válido por ${QR_VALIDITY_HOURS}h, passaram ${Math.round(hoursElapsed)}h`
+    })
+  }
+
   // Step 3: check if this use type is permitted
   const permissionField = `allow_${useType}`
   if (!qr[permissionField]) {
