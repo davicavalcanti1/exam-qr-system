@@ -13,6 +13,7 @@ export default function Scanner() {
   const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState(null)
   const [debugInfo, setDebugInfo] = useState('')
+  const [closeTimer, setCloseTimer] = useState(null)
   const scannerRef = useRef(null)
 
   async function checkCameraPermission() {
@@ -144,6 +145,23 @@ export default function Scanner() {
     }
   }
 
+  useEffect(() => {
+    if (result?.success) {
+      setCloseTimer(3)
+      const countdown = setInterval(() => {
+        setCloseTimer(t => {
+          if (t <= 1) {
+            clearInterval(countdown)
+            setResult(null)
+            return null
+          }
+          return t - 1
+        })
+      }, 1000)
+      return () => clearInterval(countdown)
+    }
+  }, [result])
+
   useEffect(() => () => { stopScan() }, [])
 
   return (
@@ -266,7 +284,7 @@ export default function Scanner() {
                   onClick={() => setResult(null)}
                   className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-2xl transition-all active:scale-95"
                 >
-                  Continuar Lendo
+                  Continuar Lendo {closeTimer && <span className="text-xs opacity-70">({closeTimer}s)</span>}
                 </button>
               </div>
             </div>
