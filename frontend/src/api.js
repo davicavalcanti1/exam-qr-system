@@ -39,7 +39,7 @@ export const api = {
   // Partner — QR codes
   getBudget: () => request('GET', '/qrcodes/budget'),
   generateQR: (patientId) => request('POST', `/qrcodes/generate/${patientId}`),
-  getQRImage: (patientId) => request('GET', `/qrcodes/image/${patientId}`),
+  getQRImage: (patientId) => request('GET', `/qrcodes/image/${patientId}`).then(d => d.dataUrl),
   revokeQR: (patientId) => request('DELETE', `/qrcodes/revoke/${patientId}`),
 
   // Partner — payments

@@ -10,6 +10,7 @@ export default function PatientDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [patient, setPatient] = useState(null)
+  const [qrImage, setQrImage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [revoking, setRevoking] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -19,6 +20,16 @@ export default function PatientDetail() {
     try {
       const p = await api.getPatient(id)
       setPatient(p)
+
+      // Load QR image if exists
+      if (p.qrCode) {
+        try {
+          const imgData = await api.getQRImage(p.id)
+          setQrImage(imgData)
+        } catch (err) {
+          console.log('QR image load failed:', err.message)
+        }
+      }
     } catch {
       navigate('/dashboard')
     } finally {
@@ -42,7 +53,11 @@ export default function PatientDetail() {
   async function handleRegenerate() {
     setRegenerating(true)
     try {
-      await api.regenerateQr(id)
+      const result = await api.regenerateQr(id)
+      // Update patient data and QR image
+      if (result.dataUrl) {
+        setQrImage(result.dataUrl)
+      }
       load()
     } finally {
       setRegenerating(false)
@@ -67,7 +82,6 @@ export default function PatientDetail() {
   const isUsed = qrCode?.status === 'exhausted'
   const isRevoked = qrCode?.status === 'revoked'
   const isActive = hasQr && !isUsed && !isRevoked
-  const qrImageUrl = hasQr ? api.getQRImageUrl(patient.id) : null
 
   // Usage quota dots (exams used)
   const usedCount = isUsed ? exams.length : (patient.usageLog?.length || 0)
@@ -202,8 +216,8 @@ export default function PatientDetail() {
 
               <div className="relative p-6 bg-white rounded-2xl border-4 border-surface-container-high mb-8 shadow-2xl shadow-indigo-100" ref={qrRef}>
                 <div className="w-64 h-64 bg-slate-100 flex items-center justify-center overflow-hidden rounded-lg">
-                  {qrImageUrl ? (
-                    <img src={qrImageUrl} alt="QR Code" className="w-full h-full object-contain" />
+                  {qrImage ? (
+                    <img src={qrImage} alt="QR Code" className="w-full h-full object-contain" />
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-on-surface-variant">
                       <span className="material-symbols-outlined text-4xl">qr_code_2</span>
