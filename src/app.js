@@ -19,6 +19,12 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
+// Debug middleware
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.path} - Auth: ${req.headers.authorization ? '✓' : '✗'}`)
+  next()
+})
+
 app.use('/api/auth', authRouter)
 app.use('/api/clinic', clinicRouter)
 app.use('/api/patients', patientsRouter)
