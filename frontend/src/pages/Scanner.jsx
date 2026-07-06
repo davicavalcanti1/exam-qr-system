@@ -22,10 +22,12 @@ export default function Scanner() {
     try {
       const scanner = new Html5Qrcode('qr-reader')
       scannerRef.current = scanner
+
       await scanner.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
+          console.log('QR detected:', decodedText)
           await scanner.stop()
           setScanning(false)
           try {
@@ -37,9 +39,13 @@ export default function Scanner() {
         },
         () => {}
       )
-    } catch {
+    } catch (error) {
+      console.error('Scanner error:', error)
       setScanning(false)
-      setResult({ success: false, error: 'Não foi possível acessar a câmera.' })
+      setResult({
+        success: false,
+        error: error?.message || 'Não foi possível acessar a câmera. Verifique as permissões do navegador.'
+      })
     }
   }
 
@@ -82,7 +88,7 @@ export default function Scanner() {
 
         {/* Scanner Area */}
         <section className="relative flex-1 flex flex-col items-center justify-center min-h-[400px]">
-          <div className="relative w-full max-w-sm aspect-square bg-slate-900/50 rounded-3xl border-2 border-slate-800 overflow-hidden flex items-center justify-center group">
+          <div className="relative w-full max-w-sm aspect-square bg-black rounded-3xl border-2 border-slate-800 overflow-hidden flex items-center justify-center group">
             {/* Scanner animation */}
             {scanning && (
               <div className="absolute inset-0 scanner-viewport opacity-40">
@@ -97,7 +103,7 @@ export default function Scanner() {
             <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-indigo-500 rounded-br-xl" />
 
             {/* QR reader div */}
-            <div id="qr-reader" className={`absolute inset-0 ${scanning ? 'opacity-100' : 'opacity-0'}`} />
+            <div id="qr-reader" className={`absolute inset-0 ${scanning ? 'opacity-100' : 'hidden'}`} />
 
             {/* Action button */}
             {!scanning && (
