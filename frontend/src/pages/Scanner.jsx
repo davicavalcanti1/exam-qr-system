@@ -53,12 +53,17 @@ export default function Scanner() {
         } catch {}
       }
 
-      const scanner = new Html5Qrcode('qr-reader', { formatsToSupport: ['QR_CODE'] })
+      const scanner = new Html5Qrcode('qr-reader')
       scannerRef.current = scanner
 
       await scanner.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          disableFlip: false,
+          aspectRatio: 1.0
+        },
         async (decodedText) => {
           console.log('QR detectado:', decodedText)
           setDebugInfo('QR detectado! Processando...')
@@ -74,6 +79,9 @@ export default function Scanner() {
         },
         (err) => {
           // Ignore scanning errors (expected)
+          if (err && err.includes && !err.includes('Not able to find camera')) {
+            console.debug('Scanning error:', err)
+          }
         }
       )
 
