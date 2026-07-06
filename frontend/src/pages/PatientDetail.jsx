@@ -15,6 +15,12 @@ export default function PatientDetail() {
   const [revoking, setRevoking] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const [downloadingReceipt, setDownloadingReceipt] = useState(false)
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false)
+  const [permissions, setPermissions] = useState({
+    allowTransport: false,
+    allowSnack: false,
+    allowExam: true
+  })
   const qrRef = useRef(null)
 
   async function load() {
@@ -51,14 +57,18 @@ export default function PatientDetail() {
     }
   }
 
-  async function handleRegenerate() {
+  function handleRegenerateClick() {
+    setShowPermissionsModal(true)
+  }
+
+  async function handleRegenerateWithPermissions() {
     setRegenerating(true)
     try {
-      const result = await api.regenerateQr(id)
-      // Update patient data and QR image
+      const result = await api.regenerateQr(id, permissions)
       if (result.dataUrl) {
         setQrImage(result.dataUrl)
       }
+      setShowPermissionsModal(false)
       load()
     } finally {
       setRegenerating(false)
@@ -79,6 +89,74 @@ export default function PatientDetail() {
       setDownloadingReceipt(false)
     }
   }
+
+  // Permissions Modal
+  const PermissionsModal = () => (
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl">
+        <h2 className="text-2xl font-bold text-on-surface mb-6">Configurar Permissões</h2>
+        <p className="text-on-surface-variant text-sm mb-6">Selecione quais usos serão permitidos para este QR Code:</p>
+
+        <div className="space-y-4 mb-8">
+          <label className="flex items-center gap-3 p-4 rounded-lg border-2 border-outline-variant hover:border-primary cursor-pointer transition-all">
+            <input
+              type="checkbox"
+              checked={permissions.allowTransport}
+              onChange={(e) => setPermissions({ ...permissions, allowTransport: e.target.checked })}
+              className="w-5 h-5 cursor-pointer"
+            />
+            <div>
+              <p className="font-semibold text-on-surface">🚌 Transporte</p>
+              <p className="text-xs text-on-surface-variant">Permitir deslocamento</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 p-4 rounded-lg border-2 border-outline-variant hover:border-primary cursor-pointer transition-all">
+            <input
+              type="checkbox"
+              checked={permissions.allowSnack}
+              onChange={(e) => setPermissions({ ...permissions, allowSnack: e.target.checked })}
+              className="w-5 h-5 cursor-pointer"
+            />
+            <div>
+              <p className="font-semibold text-on-surface">🍱 Lanche</p>
+              <p className="text-xs text-on-surface-variant">Permitir alimentação</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 p-4 rounded-lg border-2 border-primary bg-primary/5 cursor-pointer transition-all">
+            <input
+              type="checkbox"
+              checked={permissions.allowExam}
+              onChange={(e) => setPermissions({ ...permissions, allowExam: e.target.checked })}
+              className="w-5 h-5 cursor-pointer"
+              disabled
+            />
+            <div>
+              <p className="font-semibold text-on-surface">🏥 Exame</p>
+              <p className="text-xs text-on-surface-variant">Sempre permitido (padrão)</p>
+            </div>
+          </label>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowPermissionsModal(false)}
+            className="flex-1 px-6 py-2.5 rounded-lg border border-outline-variant text-on-surface font-semibold text-sm hover:bg-surface-container transition-all"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleRegenerateWithPermissions}
+            disabled={regenerating}
+            className="flex-1 px-6 py-2.5 rounded-lg qr-gradient text-white font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-60"
+          >
+            {regenerating ? 'Gerando...' : 'Gerar QR Code'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 
   if (loading) return (
     <div className="flex items-center justify-center py-32">
@@ -101,6 +179,7 @@ export default function PatientDetail() {
 
   return (
     <div className="bg-surface font-body text-on-surface antialiased">
+      {showPermissionsModal && <PermissionsModal />}
       <main className="max-w-7xl mx-auto px-8 py-10">
         {/* Back Button & Header */}
         <div className="mb-10 flex items-center justify-between">
@@ -139,7 +218,7 @@ export default function PatientDetail() {
               {revoking ? 'Revogando...' : 'Revogar QR'}
             </button>
             <button
-              onClick={handleRegenerate}
+              onClick={handleRegenerateClick}
               disabled={regenerating}
               className="px-6 py-2.5 rounded-lg qr-gradient text-white font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-60"
             >

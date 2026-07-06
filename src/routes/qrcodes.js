@@ -22,6 +22,7 @@ router.post('/generate/:patientId', async (req, res) => {
     const db = getDB()
     const partnerId = req.user.partnerId
     const patientId = parseInt(req.params.patientId)
+    const { allowTransport, allowSnack, allowExam } = req.body
 
     const patient = db.prepare(
       'SELECT * FROM patients WHERE id = ? AND partner_id = ?'
@@ -59,12 +60,14 @@ router.post('/generate/:patientId', async (req, res) => {
       // Update existing QR code
       qrId = existingQR.id
       token = generateQRToken(qrId, patientId)
-      db.prepare('UPDATE qr_codes SET token = ?, status = ?, uses_count = 0 WHERE id = ?').run(token, 'active', qrId)
+      db.prepare(
+        'UPDATE qr_codes SET token = ?, status = ?, uses_count = 0, allow_transport = ?, allow_snack = ?, allow_exam = ? WHERE id = ?'
+      ).run(token, 'active', allowTransport ? 1 : 0, allowSnack ? 1 : 0, allowExam ? 1 : 0, qrId)
     } else {
       // Create new QR code
       const insertResult = db.prepare(
-        `INSERT INTO qr_codes (patient_id, token, status) VALUES (?, ?, 'active')`
-      ).run(patientId, 'temp-token-placeholder')
+        `INSERT INTO qr_codes (patient_id, token, status, allow_transport, allow_snack, allow_exam) VALUES (?, ?, 'active', ?, ?, ?)`
+      ).run(patientId, 'temp-token-placeholder', allowTransport ? 1 : 0, allowSnack ? 1 : 0, allowExam ? 1 : 0)
       qrId = insertResult.lastInsertRowid
       token = generateQRToken(qrId, patientId)
       db.prepare('UPDATE qr_codes SET token = ? WHERE id = ?').run(token, qrId)
@@ -74,7 +77,17 @@ router.post('/generate/:patientId', async (req, res) => {
     const willBlock = newCommitted >= budget.limit
 
     const dataUrl = await QRCode.toDataURL(token, { width: 350, margin: 2, errorCorrectionLevel: 'H' })
-    res.json({ qrId, dataUrl, token, willBlock })
+    res.json({
+      qrId,
+      dataUrl,
+      token,
+      willBlock,
+      permissions: {
+        transport: allowTransport ? 1 : 0,
+        snack: allowSnack ? 1 : 0,
+        exam: allowExam ? 1 : 0
+      }
+    })
   } catch (error) {
     console.error('Erro ao gerar QR Code:', error)
     res.status(500).json({ error: 'Erro ao gerar imagem do QR Code' })

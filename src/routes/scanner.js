@@ -49,7 +49,16 @@ router.post('/validate', (req, res) => {
     return res.json({ valid: false, error: 'QR Code revogado' })
   }
 
-  // Step 3: check if this use type was already consumed
+  // Step 3: check if this use type is permitted
+  const permissionField = `allow_${useType}`
+  if (!qr[permissionField]) {
+    return res.json({
+      valid: false,
+      error: `Este paciente não tem permissão para usar "${USE_LABELS[useType]}"`
+    })
+  }
+
+  // Step 4: check if this use type was already consumed
   const usageLog = db.prepare(
     'SELECT use_type, used_at FROM qr_usage_log WHERE qr_code_id = ? ORDER BY used_at'
   ).all(qr.id)

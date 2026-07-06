@@ -38,7 +38,7 @@ export const api = {
 
   // Partner — QR codes
   getBudget: () => request('GET', '/qrcodes/budget'),
-  generateQR: (patientId) => request('POST', `/qrcodes/generate/${patientId}`),
+  generateQR: (patientId, permissions) => request('POST', `/qrcodes/generate/${patientId}`, permissions),
   getQRImage: (patientId) => request('GET', `/qrcodes/image/${patientId}`).then(d => d.dataUrl),
   revokeQR: (patientId) => request('DELETE', `/qrcodes/revoke/${patientId}`),
   downloadReceipt: async (patientId) => {
@@ -74,7 +74,7 @@ export const api = {
   getPartner: (id) => request('GET', `/clinic/partners/${id}`),
   getPartnerPatients: (id) => request('GET', `/clinic/partners/${id}/patients`),
   revokeQr: (patientId) => request('DELETE', `/qrcodes/revoke/${patientId}`),
-  regenerateQr: (patientId) => request('POST', `/qrcodes/generate/${patientId}`),
+  regenerateQr: (patientId, permissions) => request('POST', `/qrcodes/generate/${patientId}`, permissions),
   getQRImageUrl: (patientId) => `${BASE}/qrcodes/image/${patientId}`,
 
   // Combined partner dashboard

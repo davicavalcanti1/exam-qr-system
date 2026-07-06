@@ -61,6 +61,9 @@ export function initDB() {
       uses_count INTEGER DEFAULT 0,
       max_uses INTEGER DEFAULT 3,
       status TEXT DEFAULT 'active',
+      allow_transport INTEGER DEFAULT 0,
+      allow_snack INTEGER DEFAULT 0,
+      allow_exam INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
     );
