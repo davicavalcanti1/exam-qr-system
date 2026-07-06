@@ -63,7 +63,7 @@ export default function Scanner() {
       scannerRef.current = scanner
 
       await scanner.start(
-        { facingMode: 'environment', width: 360 },
+        { facingMode: 'environment' },
         {
           fps: 5,
           qrbox: { width: 250, height: 250 }
