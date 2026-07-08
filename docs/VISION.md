@@ -32,13 +32,16 @@ Hoje esse controle é frágil:
 
 | Ator | O que faz | Status da definição |
 |------|-----------|---------------------|
-| **Gestor da Clínica** | Cadastra parceiros, define tetos, acompanha dívidas, registra pagamentos, autoriza | definido |
-| **Parceiro** | Tem um teto; seus pacientes fazem exames por sua conta | definido |
-| **Autorizador de exames** | Aprova a liberação de exames de parceiros | ❓ papel a definir (pessoa responsável ainda indefinida) |
+| **Gestor da Clínica** | Cadastra parceiros, define tetos, acompanha dívidas, registra pagamentos, autoriza acesso | definido |
+| **Parceiro** (conta/organização) | Tem um teto de crédito; agrupa um coordenador e seus funcionários | definido |
+| **Coordenador** (login principal do parceiro) | Gerencia os funcionários e **autoriza + gera o QR** de cada exame | definido |
+| **Funcionário** (criado pelo coordenador) | **Registra** pacientes/exames, mas **não gera nem autoriza QR** | definido |
 | **Operador do Scanner** | Escaneia o QR na chegada do paciente para confirmar o exame | ❓ quem opera (recepção?) a confirmar |
 | **Paciente** | Recebe o QR, faz o exame, não paga nada | definido |
 
-❓ **Em aberto:** quem cadastra o paciente e gera o QR — o parceiro (logado) ou a clínica?
+**Fluxo de registro → autorização:** o funcionário cadastra o paciente e seus exames
+(ficam "aguardando autorização"); o **coordenador revisa e gera o QR**, o que autoriza o exame.
+O valor só é debitado do teto quando o QR é escaneado (exame confirmado).
 
 ## 5. Regras de negócio
 
