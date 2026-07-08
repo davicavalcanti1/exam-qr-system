@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { isCoordenador } from '../auth'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -172,6 +173,7 @@ export default function PatientDetail() {
   const isUsed = qrCode?.status === 'exhausted'
   const isRevoked = qrCode?.status === 'revoked'
   const isActive = hasQr && !isUsed && !isRevoked
+  const canManageQr = isCoordenador()
 
   // Usage quota dots (exams used)
   const usedCount = isUsed ? exams.length : (patient.usageLog?.length || 0)
@@ -209,22 +211,31 @@ export default function PatientDetail() {
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>download</span>
               {downloadingReceipt ? 'Baixando...' : 'Recibo PDF'}
             </button>
-            <button
-              onClick={handleRevoke}
-              disabled={revoking || !hasQr}
-              className="px-6 py-2.5 rounded-lg border border-error/20 text-error font-semibold text-sm hover:bg-error-container/30 transition-all flex items-center gap-2 disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>block</span>
-              {revoking ? 'Revogando...' : 'Revogar QR'}
-            </button>
-            <button
-              onClick={handleRegenerateClick}
-              disabled={regenerating}
-              className="px-6 py-2.5 rounded-lg qr-gradient text-white font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-60"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>qr_code_2</span>
-              {regenerating ? 'Gerando...' : 'Gerar Novo QR Code'}
-            </button>
+            {canManageQr ? (
+              <>
+                <button
+                  onClick={handleRevoke}
+                  disabled={revoking || !hasQr}
+                  className="px-6 py-2.5 rounded-lg border border-error/20 text-error font-semibold text-sm hover:bg-error-container/30 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>block</span>
+                  {revoking ? 'Revogando...' : 'Revogar QR'}
+                </button>
+                <button
+                  onClick={handleRegenerateClick}
+                  disabled={regenerating}
+                  className="px-6 py-2.5 rounded-lg qr-gradient text-white font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 disabled:opacity-60"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>qr_code_2</span>
+                  {regenerating ? 'Gerando...' : 'Gerar Novo QR Code'}
+                </button>
+              </>
+            ) : (
+              <span className="px-4 py-2.5 rounded-lg bg-secondary-container text-on-secondary-container font-semibold text-xs flex items-center gap-2">
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>lock</span>
+                {hasQr ? 'QR já autorizado pelo coordenador' : 'Aguardando o coordenador gerar o QR'}
+              </span>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { logout, getUser } from '../auth'
+import { logout, getUser, isCoordenador } from '../auth'
 
 export default function PartnerNavbar() {
   const navigate = useNavigate()
@@ -27,6 +27,7 @@ export default function PartnerNavbar() {
             <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>
             <Link to="/patients/new" className={linkClass('/patients')}>Pacientes</Link>
             <Link to="/scanner" className={linkClass('/scanner')}>Scanner</Link>
+            {isCoordenador() && <Link to="/staff" className={linkClass('/staff')}>Funcionários</Link>}
           </div>
         </div>
         <div className="flex items-center gap-4">

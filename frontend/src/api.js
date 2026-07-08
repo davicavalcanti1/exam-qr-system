@@ -36,6 +36,11 @@ export const api = {
   updateMyProfile: (data) => request('PUT', '/partner/me', data),
   changeMyPassword: (currentPassword, newPassword) => request('PUT', '/partner/password', { currentPassword, newPassword }),
 
+  // Partner — funcionários (coordenador)
+  getStaff: () => request('GET', '/partner/staff'),
+  createStaff: (data) => request('POST', '/partner/staff', data),
+  deleteStaff: (id) => request('DELETE', `/partner/staff/${id}`),
+
   // Partner — patients
   getPatients: () => request('GET', '/patients'),
   getPatient: (id) => request('GET', `/patients/${id}`),

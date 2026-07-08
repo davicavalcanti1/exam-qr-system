@@ -23,24 +23,38 @@ router.post('/login', async (req, res) => {
     return res.json({ token, role: 'clinic' })
   }
 
-  // Check partner
   const db = getDB()
+
+  // Coordenador — login principal do parceiro (tabela partners)
   const partner = db.prepare('SELECT * FROM partners WHERE email = ?').get(email)
-  if (!partner) {
-    return res.status(401).json({ error: 'Credenciais inválidas' })
+  if (partner) {
+    const valid = await bcrypt.compare(password, partner.password_hash)
+    if (!valid) return res.status(401).json({ error: 'Credenciais inválidas' })
+
+    const payload = {
+      role: 'partner', partnerId: partner.id, partnerRole: 'coordenador',
+      partnerName: partner.name, name: partner.name
+    }
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' })
+    return res.json({ token, ...payload })
   }
 
-  const valid = await bcrypt.compare(password, partner.password_hash)
-  if (!valid) {
-    return res.status(401).json({ error: 'Credenciais inválidas' })
+  // Funcionário — usuário criado pelo coordenador (tabela partner_users)
+  const staff = db.prepare('SELECT * FROM partner_users WHERE email = ?').get(email)
+  if (staff) {
+    const valid = await bcrypt.compare(password, staff.password_hash)
+    if (!valid) return res.status(401).json({ error: 'Credenciais inválidas' })
+
+    const org = db.prepare('SELECT name FROM partners WHERE id = ?').get(staff.partner_id)
+    const payload = {
+      role: 'partner', partnerId: staff.partner_id, userId: staff.id,
+      partnerRole: staff.role, partnerName: org?.name, name: staff.name
+    }
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '12h' })
+    return res.json({ token, ...payload })
   }
 
-  const token = jwt.sign(
-    { role: 'partner', partnerId: partner.id, partnerName: partner.name },
-    JWT_SECRET,
-    { expiresIn: '12h' }
-  )
-  res.json({ token, role: 'partner', partnerId: partner.id, partnerName: partner.name })
+  return res.status(401).json({ error: 'Credenciais inválidas' })
 })
 
 router.get('/verify', (req, res) => {

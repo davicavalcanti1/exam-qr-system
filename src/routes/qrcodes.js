@@ -24,6 +24,11 @@ router.post('/generate/:patientId', async (req, res) => {
     const patientId = parseInt(req.params.patientId)
     const { allowTransport, allowSnack, allowExam } = req.body
 
+    // Só o coordenador autoriza/gera o QR. Funcionário apenas registra exames.
+    if (req.user.partnerRole === 'funcionario') {
+      return res.status(403).json({ error: 'Apenas o coordenador pode gerar e autorizar o QR do exame' })
+    }
+
     // Check partner status
     const partner = db.prepare('SELECT status FROM partners WHERE id = ?').get(partnerId)
     if (!partner) return res.status(403).json({ error: 'Parceiro não encontrado' })
@@ -122,6 +127,9 @@ router.get('/image/:patientId', async (req, res) => {
 
 // Revoke QR Code
 router.delete('/revoke/:patientId', (req, res) => {
+  if (req.user.partnerRole === 'funcionario') {
+    return res.status(403).json({ error: 'Apenas o coordenador pode revogar o QR' })
+  }
   const db = getDB()
   const patient = db.prepare(
     'SELECT id FROM patients WHERE id = ? AND partner_id = ?'

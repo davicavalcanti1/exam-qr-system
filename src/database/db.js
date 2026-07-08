@@ -84,6 +84,19 @@ export function initDB() {
       paid_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (partner_id) REFERENCES partners(id)
     );
+
+    -- Usuários de um parceiro. O login principal (tabela partners) é o coordenador;
+    -- os funcionários ficam aqui e só podem registrar exames (não geram QR).
+    CREATE TABLE IF NOT EXISTS partner_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      partner_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'funcionario',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE
+    );
   `)
 
   console.log('Database initialized at', DB_PATH)

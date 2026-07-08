@@ -225,8 +225,8 @@ export default function PatientForm() {
               onClick={handleSubmit}
               className="flex-1 md:flex-none glass-header text-white px-10 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-60"
             >
-              {loading ? 'Gerando...' : 'Gerar QR Code'}
-              <span className="material-symbols-outlined text-sm">qr_code_2</span>
+              {loading ? 'Registrando...' : 'Registrar Paciente'}
+              <span className="material-symbols-outlined text-sm">person_add</span>
             </button>
           </div>
         </div>

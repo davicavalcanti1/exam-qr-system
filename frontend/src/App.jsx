@@ -11,6 +11,7 @@ import PatientForm from './pages/PatientForm'
 import PatientDetail from './pages/PatientDetail'
 import Payment from './pages/Payment'
 import PartnerSettings from './pages/PartnerSettings'
+import PartnerStaff from './pages/PartnerStaff'
 import PartnerNavbar from './components/PartnerNavbar'
 
 // Clinic pages
@@ -89,6 +90,7 @@ export default function App() {
           <Route path="/patients/:id" element={<PatientDetail />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/settings" element={<PartnerSettings />} />
+          <Route path="/staff" element={<PartnerStaff />} />
         </Route>
 
         <Route path="*" element={<RootRedirect />} />

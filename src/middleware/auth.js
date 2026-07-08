@@ -37,6 +37,16 @@ export function requireClinic(req, res, next) {
   next()
 }
 
+export function requireCoordenador(req, res, next) {
+  const user = extractUser(req)
+  if (!user) return res.status(403).json({ error: 'Token inválido ou não fornecido' })
+  if (user.role !== 'partner' || user.partnerRole !== 'coordenador') {
+    return res.status(403).json({ error: 'Ação restrita ao coordenador do parceiro' })
+  }
+  req.user = user
+  next()
+}
+
 export function requirePartner(req, res, next) {
   const auth = req.headers.authorization
   console.log('requirePartner - Auth header:', auth ? '✓ Present' : '✗ Missing')
