@@ -4,41 +4,47 @@
 
 body { font-family: 'Inter', sans-serif; }
 
+/* Display à la AbacatePay: Fustat nos títulos, Inter no corpo. */
+h1, h2, h3, .font-headline, .font-display {
+  font-family: 'Fustat', 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+}
+
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   vertical-align: middle;
 }
 
 .signature-gradient {
-  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
 }
 
 .glass-gradient {
-  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
 }
 
 .soft-bg-gradient {
-  background: linear-gradient(180deg, #eff4ff 0%, #e2dfff 100%);
+  background: linear-gradient(180deg, #EFFBF2 0%, #FBF6DE 100%);
 }
 
 .pix-gradient {
-  background: linear-gradient(135deg, #32bcad 0%, #1ea194 100%);
+  background: linear-gradient(135deg, #16B85E 0%, #0E9E4E 100%);
 }
 
 .card-machine-gradient {
-  background: linear-gradient(180deg, #27313f 0%, #121c2a 100%);
+  background: linear-gradient(180deg, #14402A 0%, #0C2318 100%);
 }
 
 .glass-header {
-  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
 }
 
 .form-gradient-btn {
-  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
 }
 
 .qr-gradient {
-  background: linear-gradient(135deg, #3525cd 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
 }
 
 .tabular-nums {
@@ -52,12 +58,12 @@ body { font-family: 'Inter', sans-serif; }
 
 .scanner-line {
   height: 2px;
-  background: #4f46e5;
+  background: #22D66B;
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  box-shadow: 0 0 15px #4f46e5;
+  box-shadow: 0 0 15px #22D66B;
   animation: scan 3s linear infinite;
 }
 

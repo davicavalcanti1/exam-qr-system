@@ -112,6 +112,36 @@ router.put('/partners/:id', async (req, res) => {
   res.json({ message: 'Parceiro atualizado' })
 })
 
+// ── Register a payment (clinic side) ────────────────────────────
+// O gestor lança um pagamento do parceiro. Abate a dívida e, se o parceiro
+// estava bloqueado por estouro de teto e a dívida zerou, desbloqueia.
+router.post('/partners/:id/payments', (req, res) => {
+  const db = getDB()
+  const partner = db.prepare('SELECT * FROM partners WHERE id = ?').get(req.params.id)
+  if (!partner) return res.status(404).json({ error: 'Parceiro não encontrado' })
+
+  const amount = parseFloat(req.body.amount)
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Informe um valor de pagamento válido' })
+  }
+  const method = (req.body.method || 'manual').trim()
+
+  db.prepare(
+    'INSERT INTO payments (partner_id, amount, method) VALUES (?, ?, ?)'
+  ).run(partner.id, amount, method)
+
+  // Se estava bloqueado manualmente e a dívida foi quitada, libera automaticamente.
+  const budget = getPartnerBudget(partner.id)
+  if (partner.status === 'blocked' && budget.committed <= 0) {
+    db.prepare('UPDATE partners SET status = ? WHERE id = ?').run('active', partner.id)
+  }
+
+  res.json({
+    message: 'Pagamento registrado',
+    budget: getPartnerBudget(partner.id)
+  })
+})
+
 // ── Block / Unblock partner ─────────────────────────────────────
 router.patch('/partners/:id/toggle-block', (req, res) => {
   const db = getDB()
