@@ -40,7 +40,7 @@ export default function PartnerNavbar() {
             </button>
             <button
               title="Configurações"
-              onClick={() => alert('Configurações da conta disponíveis em breve.')}
+              onClick={() => navigate('/settings')}
               className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors"
             >
               <span className="material-symbols-outlined">settings</span>

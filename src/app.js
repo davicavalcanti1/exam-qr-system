@@ -10,6 +10,7 @@ import patientsRouter from './routes/patients.js'
 import qrcodesRouter from './routes/qrcodes.js'
 import scannerRouter from './routes/scanner.js'
 import paymentsRouter from './routes/payments.js'
+import profileRouter from './routes/profile.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -31,6 +32,7 @@ app.use('/api/patients', patientsRouter)
 app.use('/api/qrcodes', qrcodesRouter)
 app.use('/api/scanner', scannerRouter)
 app.use('/api/payments', paymentsRouter)
+app.use('/api/partner', profileRouter)
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))

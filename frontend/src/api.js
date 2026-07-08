@@ -31,6 +31,11 @@ export const api = {
   deletePartner: (id) => request('DELETE', `/clinic/partners/${id}`),
   registerPartnerPayment: (id, data) => request('POST', `/clinic/partners/${id}/payments`, data),
 
+  // Partner — profile / settings
+  getMyProfile: () => request('GET', '/partner/me'),
+  updateMyProfile: (data) => request('PUT', '/partner/me', data),
+  changeMyPassword: (currentPassword, newPassword) => request('PUT', '/partner/password', { currentPassword, newPassword }),
+
   // Partner — patients
   getPatients: () => request('GET', '/patients'),
   getPatient: (id) => request('GET', `/patients/${id}`),
