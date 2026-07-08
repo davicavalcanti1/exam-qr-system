@@ -16,6 +16,10 @@ import PartnerNavbar from './components/PartnerNavbar'
 import ClinicDashboard from './pages/clinic/ClinicDashboard'
 import ClinicPartnerForm from './pages/clinic/PartnerForm'
 import ClinicPartnerDetail from './pages/clinic/PartnerDetail'
+import ClinicCotas from './pages/clinic/ClinicCotas'
+import ClinicFinanceiro from './pages/clinic/ClinicFinanceiro'
+import ClinicAutorizacoes from './pages/clinic/ClinicAutorizacoes'
+import ClinicSuporte from './pages/clinic/ClinicSuporte'
 import ClinicSidebar from './components/ClinicSidebar'
 
 function ClinicLayout() {
@@ -69,6 +73,10 @@ export default function App() {
         {/* Clinic routes */}
         <Route element={<ClinicLayout />}>
           <Route path="/clinic" element={<ClinicDashboard />} />
+          <Route path="/clinic/stats" element={<ClinicCotas />} />
+          <Route path="/clinic/auth" element={<ClinicAutorizacoes />} />
+          <Route path="/clinic/finance" element={<ClinicFinanceiro />} />
+          <Route path="/clinic/support" element={<ClinicSuporte />} />
           <Route path="/clinic/partners/new" element={<ClinicPartnerForm />} />
           <Route path="/clinic/partners/:id" element={<ClinicPartnerDetail />} />
         </Route>

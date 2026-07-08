@@ -201,7 +201,7 @@ export default function PartnerDetail() {
               ))}
             </div>
             <button
-              onClick={() => alert('Histórico financeiro completo disponível no módulo Financeiro (em desenvolvimento).')}
+              onClick={() => navigate('/clinic/finance')}
               className="w-full mt-6 py-3 text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors"
             >
               Ver histórico completo →

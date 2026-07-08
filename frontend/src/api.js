@@ -29,6 +29,7 @@ export const api = {
   updatePartner: (id, data) => request('PUT', `/clinic/partners/${id}`, data),
   toggleBlockPartner: (id) => request('PATCH', `/clinic/partners/${id}/toggle-block`),
   deletePartner: (id) => request('DELETE', `/clinic/partners/${id}`),
+  registerPartnerPayment: (id, data) => request('POST', `/clinic/partners/${id}/payments`, data),
 
   // Partner — patients
   getPatients: () => request('GET', '/patients'),

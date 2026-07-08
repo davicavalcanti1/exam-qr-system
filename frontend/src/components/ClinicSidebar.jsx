@@ -39,11 +39,10 @@ export default function ClinicSidebar() {
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const active = isActive(item)
-          const implemented = item.to === '/clinic'
           return (
             <button
               key={item.to}
-              onClick={() => implemented ? navigate(item.to) : alert(`"${item.label}" está em desenvolvimento e será disponibilizado em breve.`)}
+              onClick={() => navigate(item.to)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${
                 active
                   ? 'bg-white text-indigo-600 shadow-sm font-bold scale-105'
@@ -52,7 +51,6 @@ export default function ClinicSidebar() {
             >
               <span className="material-symbols-outlined">{item.icon}</span>
               <span className="font-inter text-sm">{item.label}</span>
-              {!implemented && <span className="ml-auto text-[9px] font-bold bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase">Em breve</span>}
             </button>
           )
         })}
