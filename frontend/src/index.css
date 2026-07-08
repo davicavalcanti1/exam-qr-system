@@ -16,11 +16,11 @@ h1, h2, h3, .font-headline, .font-display {
 }
 
 .signature-gradient {
-  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
+  background: linear-gradient(120deg, #0C7E3E 0%, #1CA94F 48%, #FFCE1F 108%);
 }
 
 .glass-gradient {
-  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
+  background: linear-gradient(120deg, #0C7E3E 0%, #1CA94F 48%, #FFCE1F 108%);
 }
 
 .soft-bg-gradient {
@@ -36,7 +36,7 @@ h1, h2, h3, .font-headline, .font-display {
 }
 
 .glass-header {
-  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
+  background: linear-gradient(120deg, #0C7E3E 0%, #1CA94F 48%, #FFCE1F 108%);
 }
 
 .form-gradient-btn {
@@ -44,7 +44,7 @@ h1, h2, h3, .font-headline, .font-display {
 }
 
 .qr-gradient {
-  background: linear-gradient(135deg, #0E9E4E 0%, #22D66B 100%);
+  background: linear-gradient(120deg, #0C7E3E 0%, #1CA94F 48%, #FFCE1F 108%);
 }
 
 .tabular-nums {

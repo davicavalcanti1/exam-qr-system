@@ -88,7 +88,7 @@ export default function ClinicDashboard() {
       <header className="flex justify-between items-center w-full px-8 py-4 bg-white sticky top-0 z-40 border-b border-outline-variant/10">
         <div className="flex items-center gap-6">
           <h2 className="text-xl font-bold tracking-tighter text-indigo-700">Painel de Parceiros</h2>
-          <div className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded-md tracking-tighter">CLÍNICA</div>
+          <div className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-2 py-0.5 rounded-md tracking-tighter">CLÍNICA</div>
         </div>
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500">
@@ -143,15 +143,15 @@ export default function ClinicDashboard() {
           <div className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[11px] font-bold text-on-surface-variant tracking-widest uppercase">Gasto vs Orçamento</span>
-              <div className="w-10 h-10 bg-surface-container rounded-lg flex items-center justify-center text-primary">
+              <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-600">
                 <span className="material-symbols-outlined">account_balance_wallet</span>
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold tracking-tight tabular-nums text-primary">{totalBudgetPct}%</span>
+              <span className="text-3xl font-extrabold tracking-tight tabular-nums text-yellow-600">{totalBudgetPct}%</span>
             </div>
             <div className="w-full bg-surface-container h-1.5 rounded-full mt-3 overflow-hidden">
-              <div className="bg-primary h-full rounded-full" style={{ width: `${Math.min(totalBudgetPct, 100)}%` }} />
+              <div className="bg-yellow-400 h-full rounded-full" style={{ width: `${Math.min(totalBudgetPct, 100)}%` }} />
             </div>
             <p className="text-xs text-on-surface-variant mt-2">{fmt(stats.totalCommitted)} / {fmt(stats.totalBudgetAllocated)}</p>
           </div>

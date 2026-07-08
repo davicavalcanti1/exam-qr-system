@@ -18,6 +18,22 @@ const verde = {
   950: '#123524',
 }
 
+// Ouro da bandeira de Campina Grande — usado para reequilibrar o verde.
+// Sobrescreve yellow/amber, então todo yellow-* vira ouro da marca.
+const ouro = {
+  50: '#FEF9E7',
+  100: '#FBF1B8',
+  200: '#F7E48A',
+  300: '#F2D24E',
+  400: '#FFCE1F', // neon — barras, pontos, destaques
+  500: '#E8B90A',
+  600: '#C08A00', // legível como texto sobre branco
+  700: '#9A6E00',
+  800: '#7A5700',
+  900: '#5F4400',
+  950: '#3D2C00',
+}
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
@@ -28,6 +44,9 @@ export default {
         blue: verde,
         violet: verde,
         purple: verde,
+        // amarelo/âmbar viram o ouro da marca
+        yellow: ouro,
+        amber: ouro,
 
         // ── Tokens Material (mesmas chaves, valores Campina) ──
         "background": "#FBFCF8",
