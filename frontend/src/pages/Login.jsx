@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import PartnershipMark from '../components/PartnershipMark'
 
 const SUPPORT_EMAIL = 'suporte@exameqr.com.br'
 
@@ -190,8 +191,10 @@ export default function Login() {
           </div>
         </div>
 
+        <PartnershipMark className="mt-8" />
+
         {/* Footer */}
-        <footer className="mt-8 flex justify-between items-center px-2">
+        <footer className="mt-6 flex justify-between items-center px-2">
           <div className="flex gap-4">
             <button onClick={() => setModal('privacidade')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Privacidade</button>
             <button onClick={() => setModal('termos')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Termos</button>

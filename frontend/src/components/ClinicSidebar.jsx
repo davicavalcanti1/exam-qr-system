@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { logout } from '../auth'
+import PartnershipMark from './PartnershipMark'
 
 const navItems = [
   { to: '/clinic', label: 'Visão Geral', icon: 'dashboard', exact: true },
@@ -25,9 +26,9 @@ export default function ClinicSidebar() {
       {/* Logo */}
       <div className="mb-8 px-2">
         <div className="flex items-center gap-3">
-          <img src="/brotopay.png" alt="Brotopay" className="w-11 h-11 object-contain" />
+          <img src="/brotopay.png" alt="Brotopay" className="w-14 h-14 object-contain" />
           <div>
-            <h1 className="text-lg font-black text-primary leading-none">brotopay</h1>
+            <h1 className="text-2xl font-black text-primary leading-none">brotopay</h1>
             <p className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase mt-1">Modo Gestor Clínica</p>
           </div>
         </div>
@@ -70,6 +71,7 @@ export default function ClinicSidebar() {
           <span className="material-symbols-outlined">logout</span>
           <span className="font-inter text-sm">Sair</span>
         </button>
+        <PartnershipMark className="mt-4" imgClass="h-4" />
       </div>
     </aside>
   )
