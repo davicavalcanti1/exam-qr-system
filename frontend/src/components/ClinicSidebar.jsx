@@ -25,11 +25,9 @@ export default function ClinicSidebar() {
       {/* Logo */}
       <div className="mb-8 px-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-white">
-            <span className="material-symbols-outlined">health_metrics</span>
-          </div>
+          <img src="/brotopay.png" alt="Brotopay" className="w-11 h-11 object-contain" />
           <div>
-            <h1 className="text-lg font-black text-indigo-700 leading-none">ExameQR</h1>
+            <h1 className="text-lg font-black text-primary leading-none">brotopay</h1>
             <p className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase mt-1">Modo Gestor Clínica</p>
           </div>
         </div>

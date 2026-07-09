@@ -71,7 +71,10 @@ export default function PartnerDetail() {
       <header className="bg-white border-none sticky top-0 z-50">
         <div className="flex justify-between items-center w-full px-8 py-4">
           <div className="flex items-center gap-8">
-            <span className="text-xl font-bold tracking-tighter text-indigo-700">ExameQR</span>
+            <span className="flex items-center gap-2 text-xl font-bold tracking-tighter text-primary">
+              <img src="/brotopay.png" alt="Brotopay" className="w-8 h-8 object-contain" />
+              brotopay
+            </span>
             <nav className="hidden md:flex gap-6 text-sm font-medium">
               <button onClick={() => navigate('/clinic')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Dashboard</button>
               <span className="text-indigo-700 font-semibold border-b-2 border-indigo-600 pb-1">Parceiros</span>

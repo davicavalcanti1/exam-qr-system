@@ -234,9 +234,12 @@ export default function PatientForm() {
 
       {/* Sidebar (xl only) */}
       <aside className="hidden xl:flex h-screen w-64 fixed left-0 top-0 bg-slate-50 flex-col p-4 gap-2 z-40 border-r border-outline-variant/10">
-        <div className="p-4 mb-6">
-          <span className="text-lg font-black text-indigo-700 block">ExameQR</span>
-          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Painel Administrativo</span>
+        <div className="p-4 mb-6 flex items-center gap-2">
+          <img src="/brotopay.png" alt="Brotopay" className="w-9 h-9 object-contain" />
+          <div>
+            <span className="text-lg font-black text-primary block leading-none">brotopay</span>
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Painel Administrativo</span>
+          </div>
         </div>
         <nav className="flex-1 space-y-1">
           <span className="flex items-center gap-3 p-3 text-slate-600 hover:bg-indigo-50 transition-all rounded-lg cursor-pointer">

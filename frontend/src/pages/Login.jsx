@@ -76,10 +76,8 @@ export default function Login() {
       <main className="w-full max-w-[440px]">
         {/* Brand header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-sm mb-4 border border-outline-variant/10">
-            <span className="material-symbols-outlined text-primary" style={{ fontSize: '30px' }}>qr_code_2</span>
-          </div>
-          <h1 className="text-3xl font-black tracking-tighter text-indigo-700">ExameQR</h1>
+          <img src="/brotopay.png" alt="Brotopay" className="w-24 h-24 mx-auto mb-2 object-contain" />
+          <h1 className="text-3xl font-black tracking-tighter text-primary">brotopay</h1>
           <p className="text-on-surface-variant font-medium tracking-tight mt-1 text-sm">Clinical Intelligence &amp; Authorization</p>
         </div>
 
