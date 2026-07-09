@@ -44,7 +44,12 @@ if (!frontendBuilt) {
     res.status(503).send('<h2>Frontend não buildado.</h2><p>Execute <code>npm run build</code> e reinicie.</p>')
   })
 } else {
-  app.use(express.static(frontendDist))
+  // Raiz (/) = landing page de apresentação. O sistema (login/painel) vive nas
+  // demais rotas: /login, /dashboard, /clinic, /scanner, etc.
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'landing.html'))
+  })
+  app.use(express.static(frontendDist, { index: false }))
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Rota não encontrada' })
     res.sendFile(path.join(frontendDist, 'index.html'))
