@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../../api'
+import NotificationsBell from '../../components/NotificationsBell'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -74,16 +75,14 @@ export default function PartnerDetail() {
             <nav className="hidden md:flex gap-6 text-sm font-medium">
               <button onClick={() => navigate('/clinic')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Dashboard</button>
               <span className="text-indigo-700 font-semibold border-b-2 border-indigo-600 pb-1">Parceiros</span>
-              <button onClick={() => alert('Módulo de pacientes globais em desenvolvimento.')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Pacientes</button>
-              <button onClick={() => alert('Módulo de relatórios em desenvolvimento.')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Relatórios</button>
+              <button onClick={() => navigate('/clinic/stats')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Cotas</button>
+              <button onClick={() => navigate('/clinic/finance')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Financeiro</button>
             </nav>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex gap-2">
-              <button className="p-2 hover:bg-slate-50 transition-colors rounded-full">
-                <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
-              </button>
-              <button className="p-2 hover:bg-slate-50 transition-colors rounded-full">
+              <NotificationsBell variant="clinic" />
+              <button onClick={() => navigate('/clinic/support')} title="Suporte e ajuda" className="p-2 hover:bg-slate-50 transition-colors rounded-full">
                 <span className="material-symbols-outlined text-on-surface-variant">settings</span>
               </button>
             </div>
