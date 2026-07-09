@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../../api'
 import { logout } from '../../auth'
+import NotificationsBell from '../../components/NotificationsBell'
 
 const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -96,16 +97,10 @@ export default function ClinicDashboard() {
             <Link to="/clinic/partners/new" className="hover:text-indigo-500 transition-colors">Novo Parceiro</Link>
           </div>
           <div className="flex items-center gap-3 border-l border-outline-variant/20 pl-6">
+            <NotificationsBell variant="clinic" />
             <button
-              title="Notificações"
-              onClick={() => alert('Nenhuma notificação no momento.')}
-              className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <button
-              title="Configurações"
-              onClick={() => alert('Configurações da clínica disponíveis em breve.')}
+              title="Suporte e ajuda"
+              onClick={() => navigate('/clinic/support')}
               className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors"
             >
               <span className="material-symbols-outlined">settings</span>

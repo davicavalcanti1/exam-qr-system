@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { logout, getUser, isCoordenador } from '../auth'
+import NotificationsBell from './NotificationsBell'
 
 export default function PartnerNavbar() {
   const navigate = useNavigate()
@@ -32,13 +33,7 @@ export default function PartnerNavbar() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <button
-              title="Notificações"
-              onClick={() => alert('Nenhuma notificação no momento.')}
-              className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors relative"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
+            <NotificationsBell variant="partner" />
             <button
               title="Configurações"
               onClick={() => navigate('/settings')}

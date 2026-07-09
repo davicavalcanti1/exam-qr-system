@@ -2,7 +2,45 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 
+const SUPPORT_EMAIL = 'suporte@exameqr.com.br'
+
+const MODALS = {
+  forgot: {
+    title: 'Esqueceu a senha?',
+    body: [
+      'Por segurança, a redefinição de senha é feita pela clínica.',
+      'Peça ao administrador da clínica — ou, se você for funcionário, ao coordenador do seu parceiro — para gerar uma nova senha de acesso.',
+    ],
+    action: { label: 'Falar com o suporte', href: `mailto:${SUPPORT_EMAIL}?subject=Redefinição de senha` },
+  },
+  access: {
+    title: 'Solicitar acesso de parceiro',
+    body: [
+      'As credenciais de parceiro são criadas pela clínica.',
+      'Entre em contato informando o nome da instituição e um e-mail para receber seu acesso de coordenador.',
+    ],
+    action: { label: 'Solicitar por e-mail', href: `mailto:${SUPPORT_EMAIL}?subject=Solicitação de acesso de parceiro` },
+  },
+  privacidade: {
+    title: 'Política de Privacidade',
+    body: [
+      'O ExameQR coleta apenas os dados necessários ao controle de exames por parceria: nome e CPF do paciente, exames autorizados e informações da conta do parceiro.',
+      'Os dados são usados exclusivamente para gerar e validar as autorizações (QR Code) e para o controle financeiro entre a clínica e seus parceiros. Não compartilhamos dados com terceiros para fins de marketing.',
+      'O QR Code contém apenas um token de autorização criptografado — nenhum dado sensível trafega nele. Para exercer direitos sobre seus dados (acesso, correção ou exclusão), fale com a clínica responsável.',
+    ],
+  },
+  termos: {
+    title: 'Termos de Uso',
+    body: [
+      'O acesso ao ExameQR é concedido pela clínica aos seus parceiros e destina-se ao registro e à autorização de exames dentro do teto de crédito acordado.',
+      'O parceiro é responsável pelos dados que registra e pelo uso feito por seus funcionários. A geração e a autorização do QR Code são de responsabilidade do coordenador do parceiro.',
+      'O uso indevido, o compartilhamento de credenciais ou o registro de informações falsas podem levar à suspensão do acesso pela clínica.',
+    ],
+  },
+}
+
 export default function Login() {
+  const [modal, setModal] = useState(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -84,7 +122,7 @@ export default function Login() {
                   </label>
                   <button
                     type="button"
-                    onClick={() => alert('Entre em contato com o administrador da clínica para redefinir sua senha.')}
+                    onClick={() => setModal('forgot')}
                     className="text-xs font-semibold text-primary hover:text-primary-container transition-colors"
                   >
                     Esqueceu a senha?
@@ -144,7 +182,7 @@ export default function Login() {
             <div className="mt-8 pt-6 border-t border-outline-variant/10 flex flex-col items-center gap-4">
               <p className="text-xs text-on-surface-variant">Ainda não tem acesso?</p>
               <button
-                onClick={() => alert('Fale com o administrador da clínica para solicitar credenciais de acesso de parceiro.')}
+                onClick={() => setModal('access')}
                 className="text-sm font-bold text-on-surface hover:text-primary transition-colors flex items-center gap-2"
               >
                 Solicitar acesso para parceiro
@@ -157,8 +195,8 @@ export default function Login() {
         {/* Footer */}
         <footer className="mt-8 flex justify-between items-center px-2">
           <div className="flex gap-4">
-            <button onClick={() => alert('Política de privacidade disponível em breve.')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Privacidade</button>
-            <button onClick={() => alert('Termos de uso disponíveis em breve.')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Termos</button>
+            <button onClick={() => setModal('privacidade')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Privacidade</button>
+            <button onClick={() => setModal('termos')} className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/60 hover:text-primary transition-colors">Termos</button>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim" />
@@ -166,6 +204,34 @@ export default function Login() {
           </div>
         </footer>
       </main>
+
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setModal(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10">
+              <h3 className="text-lg font-bold">{MODALS[modal].title}</h3>
+              <button onClick={() => setModal(null)} className="p-1 text-on-surface-variant hover:text-on-surface rounded-full transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-3">
+              {MODALS[modal].body.map((p, i) => (
+                <p key={i} className="text-sm text-on-surface-variant leading-relaxed">{p}</p>
+              ))}
+            </div>
+            <div className="px-6 py-4 border-t border-outline-variant/10 flex justify-end gap-3">
+              {MODALS[modal].action && (
+                <a href={MODALS[modal].action.href} className="px-4 py-2 rounded-lg signature-gradient text-white text-sm font-bold hover:opacity-90 transition-opacity">
+                  {MODALS[modal].action.label}
+                </a>
+              )}
+              <button onClick={() => setModal(null)} className="px-4 py-2 rounded-lg border border-outline-variant text-sm font-semibold text-on-surface hover:bg-surface-container transition-colors">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
