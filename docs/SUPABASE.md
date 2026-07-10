@@ -13,16 +13,26 @@ supabase link --project-ref <PROJECT_REF>
 supabase db push
 ```
 
-## Criar o OWNER (primeiro usuário)
-Não há signup público — usuários são criados por convite/admin. Pro primeiro (owner):
+## Login — modelo
+- **Owner (você):** e-mail real + senha à sua escolha (login normal).
+- **Demais usuários:** login por **`nome.sobrenome`** → e-mail sintético
+  `nome.sobrenome@exameqr.app`; **senha padrão** no cadastro + `must_change_password=true`
+  (o sistema força a troca no 1º acesso). Criados por admin (backend service role).
+- Tela de login: `/entrar`. Painel pós-login: `/painel`.
 
-1. Supabase Dashboard → **Authentication → Users → Add user** (email + senha).
-2. Copie o `id` (UUID) do usuário criado.
-3. SQL Editor:
+## Criar o OWNER (primeiro usuário) — via Dashboard
+1. **Authentication → Users → Add user**: seu **e-mail real** + senha à sua escolha.
+   Marque **Auto Confirm User** (senão o login exige confirmação por e-mail).
+2. Copie o `id` (UUID) do usuário.
+3. **SQL Editor**:
 ```sql
-insert into profiles (id, nome, email, role, empresa_id, parceiro_id)
-values ('<UUID_DO_AUTH_USER>', 'Dono', '<email>', 'owner', null, null);
+insert into profiles (id, nome, email, role, empresa_id, parceiro_id, must_change_password)
+values ('<UUID_DO_AUTH_USER>', 'Seu Nome', '<seu-email>', 'owner', null, null, false);
 ```
+4. Acesse `/entrar` com seu e-mail e senha → cai no `/painel` (área do owner: criar empresas).
+
+> Dica: se o login falhar por confirmação de e-mail, vá em **Authentication → Providers →
+> Email** e desative "Confirm email" (os e-mails sintéticos dos demais usuários não existem).
 
 ## Variáveis de ambiente
 Frontend (Vite):

@@ -15,6 +15,10 @@ import PartnerStaff from './pages/PartnerStaff'
 import AgendaPage from './pages/AgendaPage'
 import PartnerNavbar from './components/PartnerNavbar'
 
+// v2 (Supabase Auth / multi-tenant)
+import Entrar from './pages/v2/Entrar'
+import Painel from './pages/v2/Painel'
+
 // Clinic pages
 import ClinicDashboard from './pages/clinic/ClinicDashboard'
 import ClinicPartnerForm from './pages/clinic/PartnerForm'
@@ -69,6 +73,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/entrar" element={<Entrar />} />
+        <Route path="/painel" element={<Painel />} />
         <Route path="/scanner" element={<Scanner />} />
         <Route path="/history" element={<ScannerHistory />} />
         <Route path="/" element={<RootRedirect />} />
