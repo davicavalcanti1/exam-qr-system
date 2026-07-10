@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import SchedulePicker from '../components/SchedulePicker'
 
 const EXAM_OPTIONS = [
   { label: 'Ressonância Magnética', price: 500 },
@@ -19,6 +20,7 @@ export default function PatientForm() {
   const [name, setName] = useState('')
   const [cpf, setCpf] = useState('')
   const [exams, setExams] = useState([newExam()])
+  const [schedIdx, setSchedIdx] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [quota, setQuota] = useState(null)
@@ -146,15 +148,20 @@ export default function PatientForm() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className={labelCls}>Data do exame</label>
-                    <input className={inputCls} type="date" value={exam.date} onChange={e => setExamField(i, 'date', e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelCls}>Horário</label>
-                    <input className={inputCls} type="time" value={exam.time} onChange={e => setExamField(i, 'time', e.target.value)} />
-                  </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Data e horário</label>
+                  <button
+                    type="button"
+                    onClick={() => setSchedIdx(i)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-surface-container hover:ring-2 hover:ring-primary text-on-surface transition text-left"
+                  >
+                    <span className={exam.date ? 'font-semibold tabular-nums' : 'text-on-surface-variant'}>
+                      {exam.date
+                        ? `${new Date(exam.date + 'T00:00').toLocaleDateString('pt-BR')}${exam.time ? ' · ' + exam.time : ''}`
+                        : 'Agendar data e horário'}
+                    </span>
+                    <span className="material-symbols-outlined text-primary">calendar_month</span>
+                  </button>
                 </div>
 
                 <div className="pt-4 border-t border-outline-variant/10 flex justify-between items-center">
@@ -166,6 +173,17 @@ export default function PatientForm() {
           </div>
         </form>
       </main>
+
+      <SchedulePicker
+        open={schedIdx !== null}
+        examLabel={schedIdx !== null ? EXAM_OPTIONS[exams[schedIdx].type]?.label : ''}
+        value={schedIdx !== null ? { date: exams[schedIdx].date, time: exams[schedIdx].time } : null}
+        onClose={() => setSchedIdx(null)}
+        onConfirm={(date, time) => {
+          setExams(prev => prev.map((e, idx) => idx === schedIdx ? { ...e, date, time } : e))
+          setSchedIdx(null)
+        }}
+      />
 
       {/* Bottom Submission Bar */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant/10 px-8 py-5 z-50">
