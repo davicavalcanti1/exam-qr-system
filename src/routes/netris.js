@@ -54,6 +54,30 @@ router.post('/confirmar-exame', requireAuth, async (req, res) => {
   }
 })
 
+// Horários disponíveis (agrupados por data). Repassa a query pro NetRis.
+// Params esperados: dataBusca, dataFinalBusca, idFilial, idUnidade, idConvenio,
+// idPlanoConvenio, listIdProcedimento, idMedico, limit, page (ver Swagger NetRis).
+// Obs.: o NetRis exige ao menos listIdProcedimento (+ convênio) — sem isso dá 500.
+router.get('/horarios', requireAuth, async (req, res) => {
+  try {
+    const query = req.originalUrl.split('?')[1] || ''
+    const r = await netrisRequest({ method: 'GET', path: 'netris/api/horarios-agrupados', query })
+    res.status(r.status).type(r.contentType).send(r.body)
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao consultar horários no NetRis', detail: err.message })
+  }
+})
+
+// Cria o agendamento (encaixe) no NetRis.
+router.post('/horarios/encaixe', requireAuth, async (req, res) => {
+  try {
+    const r = await netrisRequest({ method: 'POST', path: 'netris/api/horarios/encaixe', body: req.body })
+    res.status(r.status).type(r.contentType).send(r.body)
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao criar encaixe no NetRis', detail: err.message })
+  }
+})
+
 // Proxy genérico autenticado — porta de entrada pra QUALQUER endpoint do NetRis
 // sob netris/api/ (inclusive o de horários/vagas disponíveis quando definirmos
 // o path). Ex.: GET /api/netris/proxy/netris/api/<endpoint>?<query>
