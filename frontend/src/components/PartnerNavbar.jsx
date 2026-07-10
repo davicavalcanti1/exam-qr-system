@@ -30,6 +30,7 @@ export default function PartnerNavbar() {
           <div className="hidden md:flex gap-6 items-center">
             <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>
             <Link to="/patients/new" className={linkClass('/patients')}>Pacientes</Link>
+            <Link to="/agenda" className={linkClass('/agenda')}>Agenda</Link>
             <Link to="/scanner" className={linkClass('/scanner')}>Scanner</Link>
             {isCoordenador() && <Link to="/staff" className={linkClass('/staff')}>Funcionários</Link>}
           </div>

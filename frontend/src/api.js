@@ -43,6 +43,7 @@ export const api = {
 
   // Partner — patients
   getPatients: () => request('GET', '/patients'),
+  getAgenda: () => request('GET', '/patients/agenda'),
   getPatient: (id) => request('GET', `/patients/${id}`),
   createPatient: (data) => request('POST', '/patients', data),
   deletePatient: (id) => request('DELETE', `/patients/${id}`),

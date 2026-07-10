@@ -99,5 +99,8 @@ export function initDB() {
     );
   `)
 
+  // Migração leve: data/hora agendada do exame (agenda do parceiro).
+  try { db.exec('ALTER TABLE exams ADD COLUMN scheduled_at DATETIME') } catch { /* coluna já existe */ }
+
   console.log('Database initialized at', DB_PATH)
 }

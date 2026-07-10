@@ -26,6 +26,23 @@ router.get('/', (req, res) => {
   res.json(patients)
 })
 
+// Agenda de exames do parceiro (exames com data/hora marcada)
+router.get('/agenda', (req, res) => {
+  const db = getDB()
+  const rows = db.prepare(`
+    SELECT
+      e.id, e.exam_name, e.exam_type, e.value, e.scheduled_at,
+      p.id as patient_id, p.name as patient_name, p.cpf,
+      qr.status as qr_status
+    FROM exams e
+    JOIN patients p ON p.id = e.patient_id
+    LEFT JOIN qr_codes qr ON qr.patient_id = p.id
+    WHERE p.partner_id = ? AND e.scheduled_at IS NOT NULL
+    ORDER BY e.scheduled_at ASC
+  `).all(req.user.partnerId)
+  res.json(rows)
+})
+
 router.get('/:id', (req, res) => {
   const db = getDB()
   const patient = db.prepare(
@@ -57,8 +74,8 @@ router.post('/', (req, res) => {
   if (cleanCpf.length !== 11) {
     return res.status(400).json({ error: 'CPF inválido' })
   }
-  if (!Array.isArray(exams) || exams.length < 1 || exams.length > 2) {
-    return res.status(400).json({ error: 'Informe 1 ou 2 exames' })
+  if (!Array.isArray(exams) || exams.length < 1 || exams.length > 20) {
+    return res.status(400).json({ error: 'Informe ao menos um exame' })
   }
   for (const exam of exams) {
     if (!exam.exam_name || !exam.exam_type || !exam.value || exam.value <= 0) {
@@ -77,9 +94,10 @@ router.post('/', (req, res) => {
     ).run(partnerId, name.trim(), cleanCpf)
     const pid = result.lastInsertRowid
     for (const exam of exams) {
+      const scheduledAt = exam.scheduled_at ? String(exam.scheduled_at).trim() : null
       db.prepare(
-        'INSERT INTO exams (patient_id, exam_name, exam_type, value) VALUES (?, ?, ?, ?)'
-      ).run(pid, exam.exam_name.trim(), exam.exam_type.trim(), parseFloat(exam.value))
+        'INSERT INTO exams (patient_id, exam_name, exam_type, value, scheduled_at) VALUES (?, ?, ?, ?, ?)'
+      ).run(pid, exam.exam_name.trim(), exam.exam_type.trim(), parseFloat(exam.value), scheduledAt)
     }
     return pid
   })
