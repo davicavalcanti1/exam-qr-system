@@ -33,12 +33,14 @@ empresa. Toda tabela carrega `empresa_id`; toda query é filtrada por ele. O Own
 Permissões dos funcionários = **matriz configurável** pelo coordenador (fase posterior;
 começar com um conjunto fixo + flag de "pode autorizar").
 
-## 3. Autenticação (login próprio)
+## 3. Autenticação (Supabase Auth)
 
-- Uma tabela `users` unificada: `id, empresa_id (null p/ owner), parceiro_id (null exceto funcionários/coordenador), name, email (único), password_hash, role, ativo`.
-- Login único → JWT com `{ userId, role, empresaId, parceiroId }`.
-- Middleware resolve tenant a partir do token; toda rota filtra por `empresa_id`.
-- Substitui o auth atual (clínica via env + partners + partner_users).
+- **Supabase Auth** cuida de login/senha/sessão (JWT do Supabase).
+- Tabela `profiles` (1:1 com `auth.users`): `empresa_id (null p/ owner), parceiro_id, nome, role, ativo`.
+- Criação de usuários é **por convite/admin** (sem signup público): owner cria empresa_admin;
+  empresa cria coordenador do parceiro; coordenador cria funcionários — tudo via
+  `auth.admin.createUser` + insert em `profiles` (service role, no backend).
+- Isolamento por `empresa_id` via **RLS** (funções SECURITY DEFINER, sem subquery recursiva).
 
 ## 4. Modelo de dados (novo, resumido) — tudo com `empresa_id`
 
@@ -105,10 +107,14 @@ Reaproveita o padrão coordenador↔funcionário que já existe, estendido pra e
 - PDF (já usamos `pdfkit`). Template por empresa; numeração sequencial; armazenar/baixar.
 - ❓ Recibo por exame, por agendamento ou por pagamento?
 
-## 11. Cobrança (dinâmica)
+## 11. Cobrança (por lote) — DEFINIDO
 
 - Teto de crédito por parceiro; débito **na confirmação** do exame.
-- ❓ Ciclo de fechamento (fatura mensal? contínuo/pré-pago?). Pagamento libera o teto.
+- **Fechamento por LOTE**: a empresa/parceiro **fecha um lote** delimitando um período
+  (data inicial → data final). O sistema **soma os exames confirmados dos pacientes**
+  daquele período e gera o **valor do lote** (= a fatura/cobrança).
+- O lote vira uma cobrança no **Asaas** (PIX/boleto/cartão); o **webhook** dá baixa e
+  libera o teto. Tabela `lotes` (período, total, status) + `pagamentos` (Asaas).
 
 ## Roadmap por fases
 
@@ -120,6 +126,9 @@ Reaproveita o padrão coordenador↔funcionário que já existe, estendido pra e
 - **F5 — Pagamentos + cobrança + recibos** (gateway + webhook + faturas + PDF).
 - **F6 — Permissões customizáveis + refinos**.
 
-## Decisões que travam o início (§ ver perguntas abertas)
-Banco (SQLite → Postgres?), gateway de pagamento, granularidade do QR, ciclo de cobrança,
-bloqueio por contrato.
+## Decisões confirmadas (10/jul/2026)
+- **Banco + Auth:** Supabase (Postgres + Supabase Auth). Tudo no Supabase por enquanto.
+- **Pagamento:** Asaas.
+- **Cobrança:** por **lote** (fecha período → gera valor dos pacientes confirmados).
+- **QR:** 1 por exame (assumido; confirmar no F3).
+- Fundação (F1) = schema multi-tenant + RLS em `supabase/migrations/`.
