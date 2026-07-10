@@ -183,24 +183,23 @@ export default function PartnerDetail() {
           <div className="lg:col-span-5 bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-outline-variant/10">
             <h3 className="text-xl font-bold text-on-surface tracking-tight mb-6">Histórico de Pagamentos</h3>
             <div className="space-y-4">
-              {[
-                { label: 'Fatura Mensal - Julho', date: '12/07/2023', value: 'R$ 8.940,00' },
-                { label: 'Ajuste de Cota', date: '05/07/2023', value: 'R$ 1.500,00' },
-                { label: 'Fatura Mensal - Junho', date: '12/06/2023', value: 'R$ 11.200,00' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-surface hover:bg-surface-container-low transition-colors">
+              {(partner.paymentHistory || []).slice(0, 3).map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-4 rounded-lg bg-surface hover:bg-surface-container-low transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
                       <span className="material-symbols-outlined">receipt_long</span>
                     </div>
                     <div>
-                      <p className="font-bold text-on-surface">{item.label}</p>
-                      <p className="text-xs text-on-surface-variant tabular-nums">{item.date}</p>
+                      <p className="font-bold text-on-surface capitalize">{item.method}</p>
+                      <p className="text-xs text-on-surface-variant tabular-nums">{new Date(item.paid_at).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
-                  <p className="font-bold text-on-surface tabular-nums">{item.value}</p>
+                  <p className="font-bold text-on-surface tabular-nums">{fmt(item.amount)}</p>
                 </div>
               ))}
+              {(!partner.paymentHistory || partner.paymentHistory.length === 0) && (
+                <p className="text-sm text-on-surface-variant text-center py-6">Nenhum pagamento registrado ainda.</p>
+              )}
             </div>
             <button
               onClick={() => navigate('/clinic/finance')}

@@ -74,7 +74,7 @@ export default function Scanner() {
             setScanning(false)
             const data = await api.validateQr(decodedText, selectedType)
             playSuccessConfirmation()
-            setResult({ success: true, patient: data.patient, protocol: data.protocol })
+            setResult({ success: true, patient: data.patient?.name, protocol: data.qrId })
           } catch (err) {
             setResult({ success: false, error: err.message || 'QR Code inválido ou expirado' })
           }

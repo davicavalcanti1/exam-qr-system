@@ -34,7 +34,7 @@ export default function PatientForm() {
   const activeExams = exams.slice(0, examCount)
   const total = activeExams.reduce((s, e) => s + (EXAM_OPTIONS[e.type]?.price || 0), 0)
 
-  const quotaUsed = quota ? Math.min(Math.round(((quota.committed || 0) / (quota.budgetLimit || 1)) * 100), 100) : 0
+  const quotaUsed = quota ? Math.min(Math.round(((quota.committed || 0) / (quota.limit || 1)) * 100), 100) : 0
 
   async function handleSubmit(e) {
     e.preventDefault()

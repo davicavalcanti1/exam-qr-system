@@ -102,6 +102,7 @@ router.post('/validate', (req, res) => {
 
   res.json({
     valid: true,
+    qrId: qr.id,
     useType,
     useLabel: USE_LABELS[useType],
     patient,
