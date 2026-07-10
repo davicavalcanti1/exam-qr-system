@@ -72,8 +72,8 @@ export default function PartnerDetail() {
         <div className="flex justify-between items-center w-full px-8 py-4">
           <div className="flex items-center gap-8">
             <span className="flex items-center gap-2 text-xl font-bold tracking-tighter text-primary">
-              <img src="/brotopay.png" alt="Brotopay" className="w-8 h-8 object-contain" />
-              brotopay
+              <img src="/brotopay.png" alt="ExameQR" className="w-8 h-8 object-contain" />
+              ExameQR
             </span>
             <nav className="hidden md:flex gap-6 text-sm font-medium">
               <button onClick={() => navigate('/clinic')} className="text-slate-500 hover:text-indigo-500 cursor-pointer transition-colors">Dashboard</button>

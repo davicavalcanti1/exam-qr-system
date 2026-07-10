@@ -24,8 +24,8 @@ export default function PartnerNavbar() {
       <div className="flex justify-between items-center w-full px-8 py-4">
         <div className="flex items-center gap-8">
           <Link to="/dashboard" className="flex items-center gap-2 text-2xl font-bold tracking-tighter text-primary">
-            <img src="/brotopay.png" alt="Brotopay" className="w-11 h-11 object-contain" />
-            brotopay
+            <img src="/brotopay.png" alt="ExameQR" className="w-11 h-11 object-contain" />
+            ExameQR
           </Link>
           <div className="hidden md:flex gap-6 items-center">
             <Link to="/dashboard" className={linkClass('/dashboard')}>Dashboard</Link>

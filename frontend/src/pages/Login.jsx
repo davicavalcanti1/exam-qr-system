@@ -77,8 +77,8 @@ export default function Login() {
       <main className="w-full max-w-[440px]">
         {/* Brand header */}
         <div className="text-center mb-8">
-          <img src="/brotopay.png" alt="Brotopay" className="w-24 h-24 mx-auto mb-2 object-contain" />
-          <h1 className="text-3xl font-black tracking-tighter text-primary">brotopay</h1>
+          <img src="/brotopay.png" alt="ExameQR" className="w-24 h-24 mx-auto mb-2 object-contain" />
+          <h1 className="text-3xl font-black tracking-tighter text-primary">ExameQR</h1>
           <p className="text-on-surface-variant font-medium tracking-tight mt-1 text-sm">Clinical Intelligence &amp; Authorization</p>
         </div>
 
