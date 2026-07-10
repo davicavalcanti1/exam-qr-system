@@ -12,6 +12,7 @@ import scannerRouter from './routes/scanner.js'
 import paymentsRouter from './routes/payments.js'
 import profileRouter from './routes/profile.js'
 import netrisRouter from './routes/netris.js'
+import adminRouter from './routes/admin.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -35,6 +36,7 @@ app.use('/api/scanner', scannerRouter)
 app.use('/api/payments', paymentsRouter)
 app.use('/api/partner', profileRouter)
 app.use('/api/netris', netrisRouter)
+app.use('/api/admin', adminRouter)
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))

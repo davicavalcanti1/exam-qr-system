@@ -9,6 +9,7 @@
     "start:prod": "npm run build && node src/app.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.2",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^12.11.1",
     "dotenv": "^16.4.5",
