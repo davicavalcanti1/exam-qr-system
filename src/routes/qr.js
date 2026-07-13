@@ -50,7 +50,7 @@ router.post('/validar', async (req, res) => {
   if (qr.status !== 'ativo') return res.json({ valid: false, error: 'QR já utilizado ou revogado' })
 
   const { data: exame } = await supabaseAdmin
-    .from('exames').select('id, nome, status, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
+    .from('exames').select('id, nome, valor, status, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
   if (!exame) return res.json({ valid: false, error: 'Exame vinculado ao QR não encontrado' })
 
   const { data: upd, error: exErr } = await supabaseAdmin
@@ -64,7 +64,7 @@ router.post('/validar', async (req, res) => {
     .from('qr_codes').update({ status: 'usado', used_at: new Date().toISOString() }).eq('id', qr.id)
   if (qrErr) return res.status(400).json({ valid: false, error: `Falha ao baixar o QR: ${qrErr.message}` })
 
-  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—' })
+  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', valor: exame?.valor ?? null })
 })
 
 export default router
