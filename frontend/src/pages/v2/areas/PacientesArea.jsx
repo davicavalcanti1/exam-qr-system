@@ -17,7 +17,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const { user, empresaId, parceiroId } = useAuth()
   const [nome, setNome] = useState('')
   const [cpf, setCpf] = useState('')
-  const [exames, setExames] = useState([{ procId: '', indicacao: '' }])
+  const [exames, setExames] = useState([{ procId: '', indicacao: '', data: '', hora: '' }])
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [lista, setLista] = useState([])
@@ -71,11 +71,12 @@ export default function PacientesArea({ escolherParceiro = false }) {
           empresa_id: empresaId, parceiro_id: pid, paciente_id: pac.id,
           procedimento_id: p.id, nome: p.nome, valor: p.valor,
           indicacao: ex.indicacao || null, status: 'aguardando_autorizacao', criado_por: user?.id,
+          scheduled_at: ex.data ? `${ex.data}T${ex.hora || '08:00'}:00` : null,
         }
       })
       const { error: eErr } = await supabase.from('exames').insert(rows)
       if (eErr) throw eErr
-      setNome(''); setCpf(''); setExames([{ procId: '', indicacao: '' }]); setParceiroSel(''); await load()
+      setNome(''); setCpf(''); setExames([{ procId: '', indicacao: '', data: '', hora: '' }]); setParceiroSel(''); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
 
@@ -106,18 +107,24 @@ export default function PacientesArea({ escolherParceiro = false }) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className={label}>Exames</span>
-                <button type="button" onClick={() => setExames(x => [...x, { procId: '', indicacao: '' }])} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span>Adicionar exame</button>
+                <button type="button" onClick={() => setExames(x => [...x, { procId: '', indicacao: '', data: '', hora: '' }])} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span>Adicionar exame</button>
               </div>
               {exames.map((ex, i) => (
-                <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-center bg-surface rounded-lg p-3">
-                  <select className={input} value={ex.procId} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, procId: e.target.value } : y))} required>
-                    <option value="">Selecione o exame…</option>
-                    {catalogo.map(c => <option key={c.id} value={c.id}>{c.nome} ({fmt(c.valor)})</option>)}
-                  </select>
-                  <input className={input} placeholder="Indicação (opcional)" value={ex.indicacao} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, indicacao: e.target.value } : y))} />
-                  {exames.length > 1
-                    ? <button type="button" onClick={() => setExames(x => x.filter((_, idx) => idx !== i))} className="p-2 text-on-surface-variant hover:text-error"><span className="material-symbols-outlined">delete</span></button>
-                    : <span />}
+                <div key={i} className="bg-surface rounded-lg p-3 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-center">
+                    <select className={input} value={ex.procId} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, procId: e.target.value } : y))} required>
+                      <option value="">Selecione o exame…</option>
+                      {catalogo.map(c => <option key={c.id} value={c.id}>{c.nome} ({fmt(c.valor)})</option>)}
+                    </select>
+                    <input className={input} placeholder="Indicação (opcional)" value={ex.indicacao} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, indicacao: e.target.value } : y))} />
+                    {exames.length > 1
+                      ? <button type="button" onClick={() => setExames(x => x.filter((_, idx) => idx !== i))} className="p-2 text-on-surface-variant hover:text-error"><span className="material-symbols-outlined">delete</span></button>
+                      : <span />}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Data (opcional)</label><input type="date" className={input} value={ex.data} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, data: e.target.value } : y))} /></div>
+                    <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Horário</label><input type="time" className={input} value={ex.hora} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, hora: e.target.value } : y))} /></div>
+                  </div>
                 </div>
               ))}
             </div>

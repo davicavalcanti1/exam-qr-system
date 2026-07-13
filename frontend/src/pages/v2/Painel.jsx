@@ -10,6 +10,7 @@ import AutorizacoesArea from './areas/AutorizacoesArea'
 import CatalogoArea from './areas/CatalogoArea'
 import VisaoGeralArea from './areas/VisaoGeralArea'
 import CobrancasArea from './areas/CobrancasArea'
+import AgendaArea from './areas/AgendaArea'
 
 function Spinner() {
   return <div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
@@ -56,6 +57,7 @@ const TITULOS = {
 const COORD_TABS = [
   { k: 'visao', label: 'Visão geral' },
   { k: 'pacientes', label: 'Pacientes' },
+  { k: 'agenda', label: 'Agenda' },
   { k: 'autorizacoes', label: 'Autorizações' },
   { k: 'cobrancas', label: 'Cobranças' },
   { k: 'equipe', label: 'Funcionários' },
@@ -64,6 +66,7 @@ const EMP_TABS = [
   { k: 'visao', label: 'Visão geral' },
   { k: 'parceiros', label: 'Parceiros' },
   { k: 'agendamentos', label: 'Agendamentos' },
+  { k: 'agenda', label: 'Agenda' },
   { k: 'catalogo', label: 'Exames & preços' },
   { k: 'cobrancas', label: 'Cobranças' },
 ]
@@ -114,6 +117,7 @@ export default function Painel() {
               <TabBar tabs={COORD_TABS} sec={sec} onPick={setSecao} />
               {sec === 'visao' && <VisaoGeralArea />}
               {sec === 'pacientes' && <PacientesArea />}
+              {sec === 'agenda' && <AgendaArea />}
               {sec === 'autorizacoes' && <AutorizacoesArea />}
               {sec === 'cobrancas' && <CobrancasArea somenteLeitura />}
               {sec === 'equipe' && <ParceiroArea />}
@@ -129,6 +133,7 @@ export default function Painel() {
               {sec === 'visao' && <VisaoGeralArea />}
               {sec === 'parceiros' && <EmpresaArea />}
               {sec === 'agendamentos' && <PacientesArea escolherParceiro />}
+              {sec === 'agenda' && <AgendaArea />}
               {sec === 'catalogo' && <CatalogoArea />}
               {sec === 'cobrancas' && <CobrancasArea />}
             </>
