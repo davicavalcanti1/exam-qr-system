@@ -18,7 +18,13 @@ export default function Entrar() {
     setLoading(true)
     try {
       const { error } = await signIn(resolveLoginEmail(login), password)
-      if (error) { setError('Usuário ou senha inválidos.'); return }
+      if (error) {
+        const m = (error.message || '').toLowerCase()
+        if (m.includes('not confirmed')) setError('E-mail não confirmado. No Supabase, confirme o usuário (Auto Confirm) ou desative "Confirm email".')
+        else if (m.includes('invalid login')) setError('Usuário ou senha incorretos.')
+        else setError(error.message || 'Não foi possível entrar.')
+        return
+      }
       navigate('/painel')
     } catch {
       setError('Não foi possível entrar. Tente novamente.')
