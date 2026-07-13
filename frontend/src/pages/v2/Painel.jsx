@@ -7,6 +7,7 @@ import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
 import PacientesArea from './areas/PacientesArea'
 import AutorizacoesArea from './areas/AutorizacoesArea'
+import CatalogoArea from './areas/CatalogoArea'
 
 function Spinner() {
   return <div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
@@ -58,6 +59,7 @@ const COORD_TABS = [
 const EMP_TABS = [
   { k: 'parceiros', label: 'Parceiros' },
   { k: 'agendamentos', label: 'Agendamentos' },
+  { k: 'catalogo', label: 'Exames & preços' },
 ]
 
 function TabBar({ tabs, sec, onPick }) {
@@ -118,6 +120,7 @@ export default function Painel() {
               <TabBar tabs={EMP_TABS} sec={sec} onPick={setSecao} />
               {sec === 'parceiros' && <EmpresaArea />}
               {sec === 'agendamentos' && <PacientesArea escolherParceiro />}
+              {sec === 'catalogo' && <CatalogoArea />}
             </>
           )
         })()}
