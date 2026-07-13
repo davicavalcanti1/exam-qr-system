@@ -3,17 +3,15 @@ import express from 'express'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { initDB } from './database/db.js'
-import authRouter from './routes/auth.js'
-import clinicRouter from './routes/clinic.js'
-import patientsRouter from './routes/patients.js'
-import qrcodesRouter from './routes/qrcodes.js'
-import scannerRouter from './routes/scanner.js'
-import paymentsRouter from './routes/payments.js'
-import profileRouter from './routes/profile.js'
 import netrisRouter from './routes/netris.js'
 import adminRouter from './routes/admin.js'
 import qrRouter from './routes/qr.js'
+
+// ── Rotas legadas do MVP (SQLite) desativadas ────────────────────────────────
+// O sistema v2 usa Supabase Auth + RLS direto no frontend e apenas os endpoints
+// de service-role abaixo. Os routers antigos (auth/clinic/patients/qrcodes/
+// scanner/payments/profile) e o initDB do better-sqlite3 ficam fora do ar.
+// Para reativar algum, reimporte o router e remonte a linha app.use(...).
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -29,16 +27,9 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use('/api/auth', authRouter)
-app.use('/api/clinic', clinicRouter)
-app.use('/api/patients', patientsRouter)
-app.use('/api/qrcodes', qrcodesRouter)
-app.use('/api/scanner', scannerRouter)
-app.use('/api/payments', paymentsRouter)
-app.use('/api/partner', profileRouter)
-app.use('/api/netris', netrisRouter)
-app.use('/api/admin', adminRouter)
-app.use('/api/qr', qrRouter)
+app.use('/api/admin', adminRouter)   // criação da hierarquia (service role)
+app.use('/api/qr', qrRouter)         // gerar/validar QR do exame
+app.use('/api/netris', netrisRouter) // integração NetRis (agendamento futuro)
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))
@@ -50,8 +41,7 @@ if (!frontendBuilt) {
     res.status(503).send('<h2>Frontend não buildado.</h2><p>Execute <code>npm run build</code> e reinicie.</p>')
   })
 } else {
-  // Raiz (/) = landing page de apresentação. O sistema (login/painel) vive nas
-  // demais rotas: /login, /dashboard, /clinic, /scanner, etc.
+  // Raiz (/) = landing page de apresentação. O sistema vive em /entrar, /painel, /scan.
   app.get('/', (req, res) => {
     res.sendFile(path.join(frontendDist, 'landing.html'))
   })
@@ -62,7 +52,6 @@ if (!frontendBuilt) {
   })
 }
 
-initDB()
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Servidor rodando na porta ${PORT}`)
 })

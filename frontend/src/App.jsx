@@ -1,69 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { getUser } from './auth'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-import Login from './pages/Login'
-import Scanner from './pages/Scanner'
-import ScannerHistory from './pages/ScannerHistory'
-
-// Partner pages
-import Dashboard from './pages/Dashboard'
-import PatientForm from './pages/PatientForm'
-import PatientDetail from './pages/PatientDetail'
-import Payment from './pages/Payment'
-import PartnerSettings from './pages/PartnerSettings'
-import PartnerStaff from './pages/PartnerStaff'
-import AgendaPage from './pages/AgendaPage'
-import PartnerNavbar from './components/PartnerNavbar'
-
-// v2 (Supabase Auth / multi-tenant)
+// v2 (Supabase Auth / multi-tenant) — único fluxo ativo
 import Entrar from './pages/v2/Entrar'
 import Painel from './pages/v2/Painel'
 import ScanPage from './pages/v2/ScanPage'
-
-// Clinic pages
-import ClinicDashboard from './pages/clinic/ClinicDashboard'
-import ClinicPartnerForm from './pages/clinic/PartnerForm'
-import ClinicPartnerDetail from './pages/clinic/PartnerDetail'
-import ClinicCotas from './pages/clinic/ClinicCotas'
-import ClinicFinanceiro from './pages/clinic/ClinicFinanceiro'
-import ClinicAutorizacoes from './pages/clinic/ClinicAutorizacoes'
-import ClinicSuporte from './pages/clinic/ClinicSuporte'
-import ClinicSidebar from './components/ClinicSidebar'
-
-function ClinicLayout() {
-  const user = getUser()
-  if (!user || user.role !== 'clinic') {
-    localStorage.removeItem('token')
-    return <Navigate to="/login" replace />
-  }
-  return (
-    <div className="min-h-screen bg-surface">
-      <ClinicSidebar />
-      <main className="ml-64 min-h-screen bg-surface">
-        <Outlet />
-      </main>
-    </div>
-  )
-}
-
-function PartnerLayout() {
-  const user = getUser()
-  if (!user || user.role !== 'partner') {
-    localStorage.removeItem('token')
-    return <Navigate to="/login" replace />
-  }
-  return (
-    <div className="min-h-screen bg-surface text-on-surface">
-      <PartnerNavbar />
-      <Outlet />
-    </div>
-  )
-}
-
-function RootRedirect() {
-  // v2: a autenticação agora é Supabase (/entrar → /painel).
-  return <Navigate to="/entrar" replace />
-}
 
 export default function App() {
   return (
@@ -72,35 +12,9 @@ export default function App() {
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/painel" element={<Painel />} />
         <Route path="/scan" element={<ScanPage />} />
-        {/* login antigo (Express) aposentado — redireciona pro Supabase */}
+        {/* rotas legadas (Express/clinic/partner) desativadas — tudo cai no login v2 */}
         <Route path="/login" element={<Navigate to="/entrar" replace />} />
-        <Route path="/scanner" element={<Scanner />} />
-        <Route path="/history" element={<ScannerHistory />} />
-        <Route path="/" element={<RootRedirect />} />
-
-        {/* Clinic routes */}
-        <Route element={<ClinicLayout />}>
-          <Route path="/clinic" element={<ClinicDashboard />} />
-          <Route path="/clinic/stats" element={<ClinicCotas />} />
-          <Route path="/clinic/auth" element={<ClinicAutorizacoes />} />
-          <Route path="/clinic/finance" element={<ClinicFinanceiro />} />
-          <Route path="/clinic/support" element={<ClinicSuporte />} />
-          <Route path="/clinic/partners/new" element={<ClinicPartnerForm />} />
-          <Route path="/clinic/partners/:id" element={<ClinicPartnerDetail />} />
-        </Route>
-
-        {/* Partner routes */}
-        <Route element={<PartnerLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/patients/new" element={<PatientForm />} />
-          <Route path="/patients/:id" element={<PatientDetail />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/settings" element={<PartnerSettings />} />
-          <Route path="/staff" element={<PartnerStaff />} />
-          <Route path="/agenda" element={<AgendaPage />} />
-        </Route>
-
-        <Route path="*" element={<RootRedirect />} />
+        <Route path="*" element={<Navigate to="/entrar" replace />} />
       </Routes>
     </BrowserRouter>
   )
