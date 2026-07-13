@@ -42,14 +42,16 @@ router.post('/users', async (req, res) => {
     email,
     password: senha || DEFAULT_PASSWORD,
     email_confirm: true,
-    user_metadata: { nome },
+    // o trigger handle_new_user cria o profile a partir destes metadados
+    user_metadata: { nome: String(nome).trim(), username: uname, role, empresa_id, parceiro_id, must_change_password: true },
   })
   if (cErr) return res.status(400).json({ error: cErr.message })
 
-  const { error: pErr } = await supabaseAdmin.from('profiles').insert({
+  // upsert reconcilia com a linha que o trigger já criou (garante os valores exatos)
+  const { error: pErr } = await supabaseAdmin.from('profiles').upsert({
     id: created.user.id, nome: String(nome).trim(), username: uname, email,
     role, empresa_id, parceiro_id, must_change_password: true,
-  })
+  }, { onConflict: 'id' })
   if (pErr) {
     // rollback do auth user se o profile falhar
     await supabaseAdmin.auth.admin.deleteUser(created.user.id).catch(() => {})
