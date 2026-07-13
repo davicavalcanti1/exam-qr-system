@@ -60,21 +60,18 @@ function PartnerLayout() {
 }
 
 function RootRedirect() {
-  const user = getUser()
-  if (!user) return <Navigate to="/login" replace />
-  if (user.role === 'clinic') return <Navigate to="/clinic" replace />
-  if (user.role === 'partner') return <Navigate to="/dashboard" replace />
-  localStorage.removeItem('token')
-  return <Navigate to="/login" replace />
+  // v2: a autenticação agora é Supabase (/entrar → /painel).
+  return <Navigate to="/entrar" replace />
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/painel" element={<Painel />} />
+        {/* login antigo (Express) aposentado — redireciona pro Supabase */}
+        <Route path="/login" element={<Navigate to="/entrar" replace />} />
         <Route path="/scanner" element={<Scanner />} />
         <Route path="/history" element={<ScannerHistory />} />
         <Route path="/" element={<RootRedirect />} />
