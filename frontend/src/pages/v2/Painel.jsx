@@ -91,7 +91,7 @@ export default function Painel() {
       <header className="flex justify-between items-center px-8 py-4 bg-white border-b border-outline-variant/10 sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <img src="/brotopay.png" alt="ExameQR" className="w-9 h-9 object-contain" />
-          <span className="text-xl font-black tracking-tighter text-primary">ExameQR</span>
+          <span className="font-display text-2xl font-extrabold tracking-tight text-primary">ExameQR</span>
           <span className="ml-2 text-[10px] font-bold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded-full">{roleLabel}</span>
         </div>
         <div className="flex items-center gap-3">

@@ -38,7 +38,7 @@ export default function Entrar() {
       <main className="w-full max-w-[420px]">
         <div className="text-center mb-8">
           <img src="/brotopay.png" alt="ExameQR" className="w-20 h-20 mx-auto mb-2 object-contain" />
-          <h1 className="text-3xl font-black tracking-tighter text-primary">ExameQR</h1>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-primary">ExameQR</h1>
           <p className="text-on-surface-variant text-sm mt-1">Controle de exames por parceria</p>
         </div>
 
