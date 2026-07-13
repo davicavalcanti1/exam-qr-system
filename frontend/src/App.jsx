@@ -18,6 +18,7 @@ import PartnerNavbar from './components/PartnerNavbar'
 // v2 (Supabase Auth / multi-tenant)
 import Entrar from './pages/v2/Entrar'
 import Painel from './pages/v2/Painel'
+import ScanPage from './pages/v2/ScanPage'
 
 // Clinic pages
 import ClinicDashboard from './pages/clinic/ClinicDashboard'
@@ -70,6 +71,7 @@ export default function App() {
       <Routes>
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/painel" element={<Painel />} />
+        <Route path="/scan" element={<ScanPage />} />
         {/* login antigo (Express) aposentado — redireciona pro Supabase */}
         <Route path="/login" element={<Navigate to="/entrar" replace />} />
         <Route path="/scanner" element={<Scanner />} />

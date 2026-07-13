@@ -13,6 +13,7 @@ import paymentsRouter from './routes/payments.js'
 import profileRouter from './routes/profile.js'
 import netrisRouter from './routes/netris.js'
 import adminRouter from './routes/admin.js'
+import qrRouter from './routes/qr.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -37,6 +38,7 @@ app.use('/api/payments', paymentsRouter)
 app.use('/api/partner', profileRouter)
 app.use('/api/netris', netrisRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/qr', qrRouter)
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))

@@ -20,6 +20,7 @@ async function post(path, body) {
 export const adminApi = {
   createUser: (payload) => post('/api/admin/users', payload),
   createParceiro: (payload) => post('/api/admin/parceiros', payload),
+  gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
 }
 
 // "João da Silva" -> "joao.silva"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
+import QrModal from '../QrModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -24,6 +25,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [catalogo, setCatalogo] = useState([])
   const [parceiros, setParceiros] = useState([])
   const [parceiroSel, setParceiroSel] = useState('')
+  const [qrExame, setQrExame] = useState(null)
 
   useEffect(() => {
     supabase.from('procedimentos').select('id, nome, valor').eq('ativo', true).order('nome')
@@ -137,13 +139,25 @@ export default function PacientesArea({ escolherParceiro = false }) {
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(p.exames || []).map(ex => {
                       const st = STATUS[ex.status] || STATUS.rascunho
-                      return <span key={ex.id} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{ex.nome} · {st.label}</span>
+                      const clicavel = ['autorizado', 'realizado'].includes(ex.status)
+                      return (
+                        <button
+                          key={ex.id}
+                          onClick={() => clicavel && setQrExame(ex)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls} ${clicavel ? 'hover:ring-2 hover:ring-primary/40 cursor-pointer' : 'cursor-default'}`}
+                        >
+                          {ex.nome} · {st.label}
+                          {clicavel && <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>qr_code_2</span>}
+                        </button>
+                      )
                     })}
                   </div>
                 </div>
               ))}
             </div>}
       </section>
+
+      <QrModal exame={qrExame} onClose={() => setQrExame(null)} />
     </div>
   )
 }

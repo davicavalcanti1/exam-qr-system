@@ -8,6 +8,7 @@ import ParceiroArea from './areas/ParceiroArea'
 import PacientesArea from './areas/PacientesArea'
 import AutorizacoesArea from './areas/AutorizacoesArea'
 import CatalogoArea from './areas/CatalogoArea'
+import VisaoGeralArea from './areas/VisaoGeralArea'
 
 function Spinner() {
   return <div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
@@ -52,11 +53,13 @@ const TITULOS = {
 }
 
 const COORD_TABS = [
+  { k: 'visao', label: 'Visão geral' },
   { k: 'pacientes', label: 'Pacientes' },
   { k: 'autorizacoes', label: 'Autorizações' },
   { k: 'equipe', label: 'Funcionários' },
 ]
 const EMP_TABS = [
+  { k: 'visao', label: 'Visão geral' },
   { k: 'parceiros', label: 'Parceiros' },
   { k: 'agendamentos', label: 'Agendamentos' },
   { k: 'catalogo', label: 'Exames & preços' },
@@ -102,10 +105,11 @@ export default function Painel() {
 
       <main className="p-8 max-w-5xl mx-auto">
         {role === 'parceiro_coordenador' && (() => {
-          const sec = COORD_TABS.some(t => t.k === secao) ? secao : 'pacientes'
+          const sec = COORD_TABS.some(t => t.k === secao) ? secao : 'visao'
           return (
             <>
               <TabBar tabs={COORD_TABS} sec={sec} onPick={setSecao} />
+              {sec === 'visao' && <VisaoGeralArea />}
               {sec === 'pacientes' && <PacientesArea />}
               {sec === 'autorizacoes' && <AutorizacoesArea />}
               {sec === 'equipe' && <ParceiroArea />}
@@ -114,10 +118,11 @@ export default function Painel() {
         })()}
 
         {role === 'empresa_admin' && (() => {
-          const sec = EMP_TABS.some(t => t.k === secao) ? secao : 'parceiros'
+          const sec = EMP_TABS.some(t => t.k === secao) ? secao : 'visao'
           return (
             <>
               <TabBar tabs={EMP_TABS} sec={sec} onPick={setSecao} />
+              {sec === 'visao' && <VisaoGeralArea />}
               {sec === 'parceiros' && <EmpresaArea />}
               {sec === 'agendamentos' && <PacientesArea escolherParceiro />}
               {sec === 'catalogo' && <CatalogoArea />}
