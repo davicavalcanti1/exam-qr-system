@@ -1,0 +1,166 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../../../lib/supabase'
+import { useAuth } from '../../../auth/AuthContext'
+import ReciboModal from '../ReciboModal'
+
+const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const hoje = () => new Date().toISOString().slice(0, 10)
+const primeiroDia = () => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10) }
+
+const ST = {
+  aberta: { label: 'Aberta', cls: 'bg-yellow-50 text-yellow-700' },
+  paga: { label: 'Paga', cls: 'bg-primary/10 text-primary' },
+  cancelada: { label: 'Cancelada', cls: 'bg-error-container/40 text-on-error-container' },
+}
+
+export default function CobrancasArea({ somenteLeitura = false }) {
+  const { user, empresaId } = useAuth()
+  const [parceiros, setParceiros] = useState([])
+  const [parceiroSel, setParceiroSel] = useState('')
+  const [ini, setIni] = useState(primeiroDia())
+  const [fim, setFim] = useState(hoje())
+  const [preview, setPreview] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const [lista, setLista] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [recibo, setRecibo] = useState(null)
+
+  useEffect(() => {
+    supabase.from('parceiros').select('id, nome').order('nome').then(({ data }) => setParceiros(data || []))
+  }, [])
+
+  async function load() {
+    const { data } = await supabase
+      .from('cobrancas')
+      .select('id, periodo_inicio, periodo_fim, valor_total, qtd_exames, status, created_at, parceiros(nome)')
+      .order('created_at', { ascending: false })
+    setLista(data || []); setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  async function calcular() {
+    setErr(''); setPreview(null)
+    if (!parceiroSel) return setErr('Selecione o parceiro.')
+    const { data, error } = await supabase
+      .from('exames')
+      .select('id, nome, valor, realizado_at, pacientes(nome)')
+      .eq('parceiro_id', parceiroSel)
+      .eq('status', 'realizado')
+      .is('cobranca_id', null)
+      .gte('realizado_at', `${ini}T00:00:00`)
+      .lte('realizado_at', `${fim}T23:59:59`)
+      .order('realizado_at')
+    if (error) return setErr(error.message)
+    const total = (data || []).reduce((s, e) => s + Number(e.valor || 0), 0)
+    setPreview({ itens: data || [], total })
+  }
+
+  async function fechar() {
+    if (!preview || preview.itens.length === 0) return
+    setBusy(true); setErr('')
+    try {
+      const { data: cob, error: cErr } = await supabase.from('cobrancas').insert({
+        empresa_id: empresaId, parceiro_id: parceiroSel,
+        periodo_inicio: ini, periodo_fim: fim,
+        valor_total: preview.total, qtd_exames: preview.itens.length,
+        status: 'aberta', criada_por: user?.id,
+      }).select('id').single()
+      if (cErr) throw cErr
+      const ids = preview.itens.map(i => i.id)
+      const { error: eErr } = await supabase.from('exames').update({ cobranca_id: cob.id }).in('id', ids)
+      if (eErr) throw eErr
+      setPreview(null); setParceiroSel(''); await load()
+    } catch (e) { setErr(e.message) } finally { setBusy(false) }
+  }
+
+  async function marcarPaga(id) {
+    await supabase.from('cobrancas').update({ status: 'paga', paga_at: new Date().toISOString() }).eq('id', id)
+    await load()
+  }
+
+  async function cancelar(id) {
+    // libera os exames do lote de volta para cobrança
+    await supabase.from('exames').update({ cobranca_id: null }).eq('cobranca_id', id)
+    await supabase.from('cobrancas').update({ status: 'cancelada' }).eq('id', id)
+    await load()
+  }
+
+  const input = 'w-full px-3 py-2.5 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
+  const label = 'text-[11px] font-bold uppercase tracking-widest text-on-surface-variant'
+
+  return (
+    <div className="space-y-8">
+      {!somenteLeitura && (
+      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+        <h3 className="text-lg font-semibold mb-1">Fechar lote de cobrança</h3>
+        <p className="text-sm text-on-surface-variant mb-4">Soma os exames <b>realizados</b> (débito no scan) do parceiro no período, ainda não faturados.</p>
+        <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr_auto] gap-3 items-end">
+          <div>
+            <label className={label}>Parceiro</label>
+            <select className={input} value={parceiroSel} onChange={e => { setParceiroSel(e.target.value); setPreview(null) }}>
+              <option value="">Selecione…</option>
+              {parceiros.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            </select>
+          </div>
+          <div><label className={label}>De</label><input type="date" className={input} value={ini} onChange={e => { setIni(e.target.value); setPreview(null) }} /></div>
+          <div><label className={label}>Até</label><input type="date" className={input} value={fim} onChange={e => { setFim(e.target.value); setPreview(null) }} /></div>
+          <button onClick={calcular} className="px-4 py-2.5 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition">Calcular</button>
+        </div>
+        {err && <div className="mt-3 text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
+
+        {preview && (
+          <div className="mt-5 border-t border-outline-variant/10 pt-5">
+            {preview.itens.length === 0
+              ? <p className="text-sm text-on-surface-variant">Nenhum exame realizado e não faturado nesse período.</p>
+              : <>
+                  <div className="space-y-1 max-h-52 overflow-y-auto mb-4">
+                    {preview.itens.map(i => (
+                      <div key={i.id} className="flex justify-between text-sm py-1.5 border-b border-outline-variant/5">
+                        <span className="truncate">{i.pacientes?.nome || '—'} · <span className="text-on-surface-variant">{i.nome}</span></span>
+                        <span className="tabular-nums flex-none ml-3">{fmt(i.valor)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-on-surface-variant">{preview.itens.length} exame(s) · Total <b className="text-on-surface tabular-nums">{fmt(preview.total)}</b></span>
+                    <button disabled={busy} onClick={fechar} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{busy ? 'Fechando…' : 'Fechar lote'}</button>
+                  </div>
+                </>}
+          </div>
+        )}
+      </section>
+      )}
+
+      <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+        <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">{somenteLeitura ? 'Suas cobranças' : 'Lotes'} ({lista.length})</h3></div>
+        {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
+          : lista.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum lote fechado ainda.</p>
+          : <div className="divide-y divide-outline-variant/10">
+              {lista.map(c => {
+                const st = ST[c.status] || ST.aberta
+                return (
+                  <div key={c.id} className="flex items-center justify-between gap-4 px-6 py-4">
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{c.parceiros?.nome || '—'}</p>
+                      <p className="text-[11px] text-on-surface-variant tabular-nums">{c.periodo_inicio} → {c.periodo_fim} · {c.qtd_exames} exame(s)</p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-none">
+                      <span className="tabular-nums font-semibold">{fmt(c.valor_total)}</span>
+                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
+                      <button onClick={() => setRecibo(c.id)} className="p-2 text-on-surface-variant hover:text-primary" title="Recibo"><span className="material-symbols-outlined">receipt_long</span></button>
+                      {!somenteLeitura && c.status === 'aberta' && <>
+                        <button onClick={() => marcarPaga(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-white rounded-md hover:bg-primary-container transition">Marcar paga</button>
+                        <button onClick={() => cancelar(c.id)} className="p-2 text-on-surface-variant hover:text-error" title="Cancelar lote"><span className="material-symbols-outlined">close</span></button>
+                      </>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>}
+      </section>
+
+      {recibo && <ReciboModal cobrancaId={recibo} onClose={() => setRecibo(null)} />}
+    </div>
+  )
+}

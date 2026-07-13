@@ -27,6 +27,10 @@ export default function VisaoGeralArea() {
         if (by[e.status] !== undefined) by[e.status]++
         if (e.status === 'realizado') realizado += Number(e.valor || 0)
       }
+      const { data: cobs } = await supabase.from('cobrancas').select('valor_total, status')
+      let aReceber = 0
+      for (const cb of cobs || []) if (cb.status === 'aberta') aReceber += Number(cb.valor_total || 0)
+
       let teto = null, parceiros = null
       if (role === 'parceiro_coordenador' && parceiroId) {
         const { data: p } = await supabase.from('parceiros').select('teto').eq('id', parceiroId).maybeSingle()
@@ -36,7 +40,7 @@ export default function VisaoGeralArea() {
         const { count } = await supabase.from('parceiros').select('id', { count: 'exact', head: true })
         parceiros = count
       }
-      setD({ pacientes: pacientes || 0, by, realizado, teto, parceiros })
+      setD({ pacientes: pacientes || 0, by, realizado, teto, parceiros, aReceber })
     })()
   }, [role, parceiroId])
 
@@ -60,7 +64,9 @@ export default function VisaoGeralArea() {
             <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Valor realizado (dívida)</span>
             <div className="text-3xl font-extrabold tracking-tight tabular-nums mt-1 text-yellow-600">{fmt(d.realizado)}</div>
           </div>
-          {d.teto != null && <div className="text-right text-sm text-on-surface-variant">Teto do parceiro<br /><b className="text-on-surface tabular-nums">{fmt(d.teto)}</b></div>}
+          {d.teto != null
+            ? <div className="text-right text-sm text-on-surface-variant">Teto do parceiro<br /><b className="text-on-surface tabular-nums">{fmt(d.teto)}</b></div>
+            : <div className="text-right text-sm text-on-surface-variant">A receber (lotes abertos)<br /><b className="text-on-surface tabular-nums">{fmt(d.aReceber)}</b></div>}
         </div>
         {pct != null && (
           <div className="mt-4">

@@ -54,7 +54,7 @@ router.post('/validar', async (req, res) => {
   if (!exame) return res.json({ valid: false, error: 'Exame vinculado ao QR não encontrado' })
 
   const { data: upd, error: exErr } = await supabaseAdmin
-    .from('exames').update({ status: 'realizado' }).eq('id', qr.exame_id).select('id')
+    .from('exames').update({ status: 'realizado', realizado_at: new Date().toISOString() }).eq('id', qr.exame_id).select('id')
   if (exErr) return res.status(400).json({ valid: false, error: `Falha ao marcar realizado: ${exErr.message}` })
   if (!upd || upd.length === 0) {
     return res.status(500).json({ valid: false, error: 'Nenhuma linha atualizada — verifique se SUPABASE_SERVICE_ROLE_KEY (backend) é a chave service_role real, não a anon.' })
