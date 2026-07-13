@@ -5,6 +5,8 @@ import { supabase } from '../../lib/supabase'
 import OwnerArea from './areas/OwnerArea'
 import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
+import PacientesArea from './areas/PacientesArea'
+import AutorizacoesArea from './areas/AutorizacoesArea'
 
 function Spinner() {
   return <div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
@@ -45,10 +47,18 @@ const TITULOS = {
   owner: 'Empresas & administradores',
   empresa_admin: 'Parceiros & coordenadores',
   parceiro_coordenador: 'Funcionários',
+  parceiro_funcionario: 'Pacientes',
 }
+
+const COORD_TABS = [
+  { k: 'pacientes', label: 'Pacientes' },
+  { k: 'autorizacoes', label: 'Autorizações' },
+  { k: 'equipe', label: 'Funcionários' },
+]
 
 export default function Painel() {
   const { ready, loading, session, profile, role, signOut, reloadProfile } = useAuth()
+  const [secao, setSecao] = useState('pacientes')
 
   if (!ready) return <div className="p-10 text-center text-on-surface-variant">Supabase não configurado.</div>
   if (loading) return <Spinner />
@@ -72,19 +82,32 @@ export default function Painel() {
       </header>
 
       <main className="p-8 max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold tracking-tight mb-6">{TITULOS[role] || 'Painel'}</h1>
-        {role === 'owner' && <OwnerArea />}
-        {role === 'empresa_admin' && <EmpresaArea />}
-        {role === 'parceiro_coordenador' && <ParceiroArea />}
-        {role === 'parceiro_funcionario' && (
-          <div className="bg-surface-container-lowest p-8 rounded-xl shadow-card text-center text-on-surface-variant">
-            Você é funcionário. A gestão de usuários é feita pelo coordenador — seus módulos (pacientes/agenda) vêm nas próximas etapas.
-          </div>
-        )}
-        {!role && (
-          <div className="bg-surface-container-lowest p-8 rounded-xl shadow-card text-center text-on-surface-variant">
-            Seu perfil ainda não tem um papel definido. Fale com o administrador.
-          </div>
+        {role === 'parceiro_coordenador' ? (
+          <>
+            <div className="flex gap-1 mb-6 bg-surface-container rounded-xl p-1 w-fit">
+              {COORD_TABS.map(t => (
+                <button key={t.k} onClick={() => setSecao(t.k)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition ${secao === t.k ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {secao === 'pacientes' && <PacientesArea />}
+            {secao === 'autorizacoes' && <AutorizacoesArea />}
+            {secao === 'equipe' && <ParceiroArea />}
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold tracking-tight mb-6">{TITULOS[role] || 'Painel'}</h1>
+            {role === 'owner' && <OwnerArea />}
+            {role === 'empresa_admin' && <EmpresaArea />}
+            {role === 'parceiro_funcionario' && <PacientesArea />}
+            {!role && (
+              <div className="bg-surface-container-lowest p-8 rounded-xl shadow-card text-center text-on-surface-variant">
+                Seu perfil ainda não tem um papel definido. Fale com o administrador.
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
