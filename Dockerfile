@@ -1,4 +1,4 @@
-FROM node:20-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -20,7 +20,7 @@ ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 RUN npm run build
 
 # ─────────────────────────────────────────────
-FROM node:20-alpine AS backend
+FROM node:22-alpine AS backend
 
 WORKDIR /app
 
