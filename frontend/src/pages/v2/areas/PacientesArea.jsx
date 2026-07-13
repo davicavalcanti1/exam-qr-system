@@ -47,6 +47,11 @@ export default function PacientesArea({ escolherParceiro = false }) {
     setLista(data || []); setLoading(false)
   }
   useEffect(() => { load() }, [])
+  useEffect(() => {
+    const onFocus = () => load()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [])
 
   async function submit(e) {
     e.preventDefault(); setErr('')
@@ -157,7 +162,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
             </div>}
       </section>
 
-      <QrModal exame={qrExame} onClose={() => setQrExame(null)} />
+      <QrModal exame={qrExame} onClose={() => { setQrExame(null); load() }} />
     </div>
   )
 }

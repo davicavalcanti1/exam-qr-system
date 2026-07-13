@@ -10,6 +10,17 @@ export const supabaseAdmin = url && serviceKey
 
 export function supabaseConfigured() { return Boolean(supabaseAdmin) }
 
+// Sanidade: a chave do backend PRECISA ser a service_role (bypassa RLS).
+// Se alguém colar a anon por engano, os updates falham silenciosamente (0 linhas).
+if (serviceKey) {
+  try {
+    const payload = JSON.parse(Buffer.from(serviceKey.split('.')[1], 'base64').toString())
+    if (payload.role !== 'service_role') {
+      console.warn(`[supabaseAdmin] ATENÇÃO: SUPABASE_SERVICE_ROLE_KEY tem role="${payload.role}" (esperado "service_role"). Escritas/validação de QR vão falhar por RLS.`)
+    }
+  } catch { /* chave não-JWT: ignora */ }
+}
+
 // Valida o token do Supabase (Bearer) e carrega o profile de quem chama.
 export async function getCaller(req) {
   if (!supabaseConfigured()) return { status: 503, error: 'Supabase não configurado no servidor' }

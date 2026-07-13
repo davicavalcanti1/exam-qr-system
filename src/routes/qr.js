@@ -50,10 +50,19 @@ router.post('/validar', async (req, res) => {
   if (qr.status !== 'ativo') return res.json({ valid: false, error: 'QR já utilizado ou revogado' })
 
   const { data: exame } = await supabaseAdmin
-    .from('exames').select('id, nome, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
+    .from('exames').select('id, nome, status, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
+  if (!exame) return res.json({ valid: false, error: 'Exame vinculado ao QR não encontrado' })
 
-  await supabaseAdmin.from('qr_codes').update({ status: 'usado', used_at: new Date().toISOString() }).eq('id', qr.id)
-  await supabaseAdmin.from('exames').update({ status: 'realizado' }).eq('id', qr.exame_id)
+  const { data: upd, error: exErr } = await supabaseAdmin
+    .from('exames').update({ status: 'realizado' }).eq('id', qr.exame_id).select('id')
+  if (exErr) return res.status(400).json({ valid: false, error: `Falha ao marcar realizado: ${exErr.message}` })
+  if (!upd || upd.length === 0) {
+    return res.status(500).json({ valid: false, error: 'Nenhuma linha atualizada — verifique se SUPABASE_SERVICE_ROLE_KEY (backend) é a chave service_role real, não a anon.' })
+  }
+
+  const { error: qrErr } = await supabaseAdmin
+    .from('qr_codes').update({ status: 'usado', used_at: new Date().toISOString() }).eq('id', qr.id)
+  if (qrErr) return res.status(400).json({ valid: false, error: `Falha ao baixar o QR: ${qrErr.message}` })
 
   res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—' })
 })
