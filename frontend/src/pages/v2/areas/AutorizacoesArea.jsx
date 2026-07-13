@@ -5,10 +5,12 @@ import { useAuth } from '../../../auth/AuthContext'
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function AutorizacoesArea() {
-  const { user } = useAuth()
+  const { user, parceiroId } = useAuth()
   const [itens, setItens] = useState([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(null)
+  const [teto, setTeto] = useState(null)
+  const [comprometido, setComprometido] = useState(0)
 
   async function load() {
     const { data } = await supabase
@@ -17,8 +19,20 @@ export default function AutorizacoesArea() {
       .eq('status', 'aguardando_autorizacao')
       .order('created_at', { ascending: true })
     setItens(data || []); setLoading(false)
+
+    if (parceiroId) {
+      const { data: p } = await supabase.from('parceiros').select('teto').eq('id', parceiroId).maybeSingle()
+      setTeto(p?.teto ?? null)
+      // comprometido = exames realizados que ainda não estão num lote PAGO
+      const { data: real } = await supabase.from('exames').select('valor, cobranca_id').eq('status', 'realizado')
+      const { data: pagas } = await supabase.from('cobrancas').select('id').eq('status', 'paga')
+      const pagasSet = new Set((pagas || []).map(c => c.id))
+      let soma = 0
+      for (const e of real || []) if (!e.cobranca_id || !pagasSet.has(e.cobranca_id)) soma += Number(e.valor || 0)
+      setComprometido(soma)
+    }
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [parceiroId])
 
   async function decidir(id, aprovar) {
     setBusy(id)
@@ -31,7 +45,23 @@ export default function AutorizacoesArea() {
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
 
+  const disponivel = teto != null ? teto - comprometido : null
+  const pct = teto ? Math.min(Math.round((comprometido / teto) * 100), 100) : 0
+
   return (
+    <div className="space-y-6">
+    {teto != null && (
+      <div className="bg-surface-container-lowest p-5 rounded-xl shadow-card">
+        <div className="flex items-end justify-between mb-2">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Teto do parceiro</span>
+          <span className="text-sm text-on-surface-variant">Disponível <b className={`tabular-nums ${disponivel < 0 ? 'text-error' : 'text-primary'}`}>{fmt(disponivel)}</b></span>
+        </div>
+        <div className="h-2 bg-surface-container rounded-full overflow-hidden">
+          <div className={`h-full rounded-full ${pct >= 100 ? 'bg-error' : pct >= 70 ? 'bg-yellow-400' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
+        </div>
+        <p className="text-xs text-on-surface-variant mt-1 tabular-nums">Comprometido {fmt(comprometido)} de {fmt(teto)} ({pct}%)</p>
+      </div>
+    )}
     <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
       <div className="p-6 border-b border-outline-variant/10">
         <h3 className="text-lg font-semibold">Aguardando sua autorização ({itens.length})</h3>
@@ -54,5 +84,6 @@ export default function AutorizacoesArea() {
             ))}
           </div>}
     </section>
+    </div>
   )
 }
