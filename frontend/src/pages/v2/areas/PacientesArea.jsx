@@ -21,7 +21,7 @@ const STATUS = {
   cancelado: { label: 'Cancelado', cls: 'bg-error-container/40 text-on-error-container' },
 }
 
-export default function PacientesArea() {
+export default function PacientesArea({ escolherParceiro = false }) {
   const { user, empresaId, parceiroId } = useAuth()
   const [nome, setNome] = useState('')
   const [cpf, setCpf] = useState('')
@@ -30,6 +30,16 @@ export default function PacientesArea() {
   const [err, setErr] = useState('')
   const [lista, setLista] = useState([])
   const [loading, setLoading] = useState(true)
+  const [parceiros, setParceiros] = useState([])
+  const [parceiroSel, setParceiroSel] = useState('')
+
+  useEffect(() => {
+    if (!escolherParceiro) return
+    supabase.from('parceiros').select('id, nome').order('nome').then(({ data }) => setParceiros(data || []))
+  }, [escolherParceiro])
+
+  // parceiro efetivo: escolhido (admin da empresa) ou o do próprio usuário
+  const pid = escolherParceiro ? parceiroSel : parceiroId
 
   async function load() {
     const { data } = await supabase
@@ -43,16 +53,18 @@ export default function PacientesArea() {
   const total = exames.reduce((s, e) => s + (CATALOGO[e.idx]?.valor || 0), 0)
 
   async function submit(e) {
-    e.preventDefault(); setErr(''); setSaving(true)
+    e.preventDefault(); setErr('')
+    if (escolherParceiro && !pid) { setErr('Selecione o parceiro.'); return }
+    setSaving(true)
     try {
       const cpfLimpo = cpf.replace(/\D/g, '')
       const { data: pac, error: pErr } = await supabase
         .from('pacientes')
-        .insert({ empresa_id: empresaId, parceiro_id: parceiroId, nome: nome.trim(), cpf: cpfLimpo })
+        .insert({ empresa_id: empresaId, parceiro_id: pid, nome: nome.trim(), cpf: cpfLimpo })
         .select('id').single()
       if (pErr) throw pErr
       const rows = exames.map(ex => ({
-        empresa_id: empresaId, parceiro_id: parceiroId, paciente_id: pac.id,
+        empresa_id: empresaId, parceiro_id: pid, paciente_id: pac.id,
         nome: CATALOGO[ex.idx].nome, valor: CATALOGO[ex.idx].valor,
         indicacao: ex.indicacao || null, status: 'aguardando_autorizacao', criado_por: user?.id,
       }))
@@ -70,6 +82,15 @@ export default function PacientesArea() {
       <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
         <h3 className="text-lg font-semibold mb-4">Novo paciente</h3>
         <form onSubmit={submit} className="space-y-5">
+          {escolherParceiro && (
+            <div>
+              <label className={label}>Parceiro</label>
+              <select className={input} value={parceiroSel} onChange={e => setParceiroSel(e.target.value)} required>
+                <option value="">Selecione o parceiro…</option>
+                {parceiros.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><label className={label}>Nome</label><input className={input} value={nome} onChange={e => setNome(e.target.value)} required /></div>
             <div><label className={label}>CPF</label><input className={input} value={cpf} onChange={e => setCpf(e.target.value)} required /></div>

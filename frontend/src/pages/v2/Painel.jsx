@@ -55,6 +55,23 @@ const COORD_TABS = [
   { k: 'autorizacoes', label: 'Autorizações' },
   { k: 'equipe', label: 'Funcionários' },
 ]
+const EMP_TABS = [
+  { k: 'parceiros', label: 'Parceiros' },
+  { k: 'agendamentos', label: 'Agendamentos' },
+]
+
+function TabBar({ tabs, sec, onPick }) {
+  return (
+    <div className="flex gap-1 mb-6 bg-surface-container rounded-xl p-1 w-fit">
+      {tabs.map(t => (
+        <button key={t.k} onClick={() => onPick(t.k)}
+          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${sec === t.k ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export default function Painel() {
   const { ready, loading, session, profile, role, signOut, reloadProfile } = useAuth()
@@ -82,32 +99,35 @@ export default function Painel() {
       </header>
 
       <main className="p-8 max-w-5xl mx-auto">
-        {role === 'parceiro_coordenador' ? (
-          <>
-            <div className="flex gap-1 mb-6 bg-surface-container rounded-xl p-1 w-fit">
-              {COORD_TABS.map(t => (
-                <button key={t.k} onClick={() => setSecao(t.k)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition ${secao === t.k ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            {secao === 'pacientes' && <PacientesArea />}
-            {secao === 'autorizacoes' && <AutorizacoesArea />}
-            {secao === 'equipe' && <ParceiroArea />}
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold tracking-tight mb-6">{TITULOS[role] || 'Painel'}</h1>
-            {role === 'owner' && <OwnerArea />}
-            {role === 'empresa_admin' && <EmpresaArea />}
-            {role === 'parceiro_funcionario' && <PacientesArea />}
-            {!role && (
-              <div className="bg-surface-container-lowest p-8 rounded-xl shadow-card text-center text-on-surface-variant">
-                Seu perfil ainda não tem um papel definido. Fale com o administrador.
-              </div>
-            )}
-          </>
+        {role === 'parceiro_coordenador' && (() => {
+          const sec = COORD_TABS.some(t => t.k === secao) ? secao : 'pacientes'
+          return (
+            <>
+              <TabBar tabs={COORD_TABS} sec={sec} onPick={setSecao} />
+              {sec === 'pacientes' && <PacientesArea />}
+              {sec === 'autorizacoes' && <AutorizacoesArea />}
+              {sec === 'equipe' && <ParceiroArea />}
+            </>
+          )
+        })()}
+
+        {role === 'empresa_admin' && (() => {
+          const sec = EMP_TABS.some(t => t.k === secao) ? secao : 'parceiros'
+          return (
+            <>
+              <TabBar tabs={EMP_TABS} sec={sec} onPick={setSecao} />
+              {sec === 'parceiros' && <EmpresaArea />}
+              {sec === 'agendamentos' && <PacientesArea escolherParceiro />}
+            </>
+          )
+        })()}
+
+        {role === 'owner' && (<><h1 className="text-2xl font-bold tracking-tight mb-6">Empresas & administradores</h1><OwnerArea /></>)}
+        {role === 'parceiro_funcionario' && (<><h1 className="text-2xl font-bold tracking-tight mb-6">Pacientes</h1><PacientesArea /></>)}
+        {!role && (
+          <div className="bg-surface-container-lowest p-8 rounded-xl shadow-card text-center text-on-surface-variant">
+            Seu perfil ainda não tem um papel definido. Fale com o administrador.
+          </div>
         )}
       </main>
     </div>
