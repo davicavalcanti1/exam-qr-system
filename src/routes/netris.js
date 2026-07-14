@@ -144,6 +144,40 @@ router.get('/horarios-exame', async (req, res) => {
   }
 })
 
+// Preview de horários no cadastro (antes do exame existir): resolve procedimento
+// (catálogo) + plano/convênio (parceiro) e lista os slots para um idPaciente.
+router.get('/horarios-catalogo', async (req, res) => {
+  const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
+  const { procedimentoId, parceiroId, idPaciente, pesoPaciente, dataInicial, dataFinal } = req.query
+  if (!procedimentoId || !parceiroId || !idPaciente) return res.status(400).json({ error: 'procedimentoId, parceiroId e idPaciente são obrigatórios' })
+  if (!DATE_RE.test(dataInicial || '')) return res.status(400).json({ error: 'dataInicial em YYYY-MM-DD' })
+  const empresaId = c.profile.role === 'owner' ? req.query.empresaId : c.profile.empresa_id
+  const client = await netrisParaEmpresa(empresaId)
+  if (!client) return res.status(400).json({ error: 'NetRis não está ativo para esta empresa.' })
+
+  const { data: proc } = await supabaseAdmin.from('procedimentos').select('netris_procedimento_id').eq('id', procedimentoId).maybeSingle()
+  const { data: parc } = await supabaseAdmin.from('parceiros').select('netris_id_plano_convenio, netris_id_convenio, netris_id_unidade').eq('id', parceiroId).maybeSingle()
+  const faltando = []
+  if (!proc?.netris_procedimento_id) faltando.push('exame sem procedimento NetRis')
+  if (!parc?.netris_id_plano_convenio) faltando.push('parceiro sem plano-convênio')
+  if (!parc?.netris_id_convenio) faltando.push('parceiro sem convênio')
+  if (faltando.length) return res.status(400).json({ error: 'Mapeamento incompleto: ' + faltando.join('; ') })
+
+  try {
+    const params = {
+      buscaInteligente: 'true', dataBusca: isoToBR(dataInicial), dataFinalBusca: isoToBR(dataFinal || dataInicial),
+      idConvenio: parc.netris_id_convenio, idPlanoConvenio: parc.netris_id_plano_convenio,
+      idFilial: 1, idPaciente, listIdProcedimento: proc.netris_procedimento_id, pesoPaciente: pesoPaciente || 70, limit: 30,
+      ...(parc.netris_id_unidade ? { idUnidade: parc.netris_id_unidade } : {}),
+    }
+    const r = await client.horariosAgrupados(params)
+    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou os horários', upstream: r.body })
+    res.json({ slots: normalizeHorarios(JSON.parse(r.body || '[]')) })
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao consultar horários', detail: err.message })
+  }
+})
+
 // Agenda de fato um exame num slot escolhido e grava o retorno no exame.
 router.post('/agendar-exame', async (req, res) => {
   const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })

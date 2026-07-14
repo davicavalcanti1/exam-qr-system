@@ -37,6 +37,8 @@ export const adminApi = {
   netrisProcedimentos: (page = 1, idPlanoConvenio) => req('GET', `/api/netris/procedimentos?page=${page}${idPlanoConvenio ? `&idPlanoConvenio=${idPlanoConvenio}` : ''}`),
   // agendamento no fluxo do exame
   netrisHorariosExame: (exameId, dataInicial, dataFinal) => req('GET', `/api/netris/horarios-exame?exameId=${exameId}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
+  netrisHorariosCatalogo: ({ procedimentoId, parceiroId, idPaciente, pesoPaciente, dataInicial, dataFinal }) =>
+    req('GET', `/api/netris/horarios-catalogo?procedimentoId=${procedimentoId}&parceiroId=${parceiroId}&idPaciente=${idPaciente}&pesoPaciente=${pesoPaciente || 70}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
   netrisAgendarExame: (exameId, slot) => post('/api/netris/agendar-exame', { exameId, slot }),
 }
 
