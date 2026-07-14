@@ -34,6 +34,9 @@ export const adminApi = {
   updateParceiroNetris: (id, payload) => req('PUT', `/api/admin/parceiros/${id}/netris`, payload),
   netrisPlanos: (page = 1) => req('GET', `/api/netris/planos?page=${page}`),
   netrisProcedimentos: (page = 1, idPlanoConvenio) => req('GET', `/api/netris/procedimentos?page=${page}${idPlanoConvenio ? `&idPlanoConvenio=${idPlanoConvenio}` : ''}`),
+  // agendamento no fluxo do exame
+  netrisHorariosExame: (exameId, dataInicial, dataFinal) => req('GET', `/api/netris/horarios-exame?exameId=${exameId}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
+  netrisAgendarExame: (exameId, slot) => post('/api/netris/agendar-exame', { exameId, slot }),
 }
 
 // carrega todas as páginas de uma listagem NetRis (planos/procedimentos)

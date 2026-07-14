@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import QrModal from '../QrModal'
+import AgendarModal from '../AgendarModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -26,6 +27,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [parceiros, setParceiros] = useState([])
   const [parceiroSel, setParceiroSel] = useState('')
   const [qrExame, setQrExame] = useState(null)
+  const [agExame, setAgExame] = useState(null)
 
   useEffect(() => {
     supabase.from('procedimentos').select('id, nome, valor').eq('ativo', true).order('nome')
@@ -42,7 +44,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   async function load() {
     const { data } = await supabase
       .from('pacientes')
-      .select('id, nome, cpf, created_at, exames(id, nome, valor, status)')
+      .select('id, nome, cpf, created_at, exames(id, nome, valor, status, scheduled_at, netris_atendimento_id)')
       .order('created_at', { ascending: false })
     setLista(data || []); setLoading(false)
   }
@@ -151,16 +153,23 @@ export default function PacientesArea({ escolherParceiro = false }) {
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(p.exames || []).map(ex => {
                       const st = STATUS[ex.status] || STATUS.rascunho
-                      const clicavel = ['autorizado', 'realizado'].includes(ex.status)
+                      const temQr = ['autorizado', 'realizado'].includes(ex.status)
+                      const podeAgendar = ex.status === 'autorizado'
+                      const agendado = Boolean(ex.netris_atendimento_id)
                       return (
-                        <button
-                          key={ex.id}
-                          onClick={() => clicavel && setQrExame(ex)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls} ${clicavel ? 'hover:ring-2 hover:ring-primary/40 cursor-pointer' : 'cursor-default'}`}
-                        >
+                        <span key={ex.id} className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>
                           {ex.nome} · {st.label}
-                          {clicavel && <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>qr_code_2</span>}
-                        </button>
+                          {temQr && (
+                            <button onClick={() => setQrExame(ex)} title="Ver QR" className="p-0.5 rounded hover:bg-black/10">
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>qr_code_2</span>
+                            </button>
+                          )}
+                          {podeAgendar && (
+                            <button onClick={() => setAgExame(ex)} title={agendado ? 'Reagendar no NetRis' : 'Agendar no NetRis'} className="p-0.5 rounded hover:bg-black/10">
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{agendado ? 'event_available' : 'calendar_add_on'}</span>
+                            </button>
+                          )}
+                        </span>
                       )
                     })}
                   </div>
@@ -170,6 +179,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
       </section>
 
       <QrModal exame={qrExame} onClose={() => { setQrExame(null); load() }} />
+      {agExame && <AgendarModal exame={agExame} onClose={() => setAgExame(null)} onDone={load} />}
     </div>
   )
 }
