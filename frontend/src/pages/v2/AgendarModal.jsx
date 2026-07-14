@@ -16,6 +16,9 @@ export default function AgendarModal({ exame, onClose, onDone }) {
   const [erro, setErro] = useState('')
   const [agendando, setAgendando] = useState(null)
   const [ok, setOk] = useState(null)
+  const [cancelando, setCancelando] = useState(false)
+  const [cancelado, setCancelado] = useState(false)
+  const jaAgendado = Boolean(exame?.netris_atendimento_id) && !cancelado
 
   async function buscar() {
     setErro(''); setGrupos(null); setOk(null); setLoading(true)
@@ -25,6 +28,14 @@ export default function AgendarModal({ exame, onClose, onDone }) {
       for (const s of r.slots || []) (map[s.data] ||= []).push(s)
       setGrupos(Object.entries(map).map(([data, slots]) => ({ data, slots })))
     } catch (e) { setErro(e.message) } finally { setLoading(false) }
+  }
+
+  async function cancelar() {
+    setCancelando(true); setErro('')
+    try {
+      await adminApi.netrisCancelarExame(exame.id)
+      setCancelado(true); onDone?.()
+    } catch (e) { setErro(e.message) } finally { setCancelando(false) }
   }
 
   async function agendar(slot) {
@@ -59,8 +70,24 @@ export default function AgendarModal({ exame, onClose, onDone }) {
             <p className="text-[11px] text-on-surface-variant">Protocolo NetRis: {ok.agendamentoId || '—'}</p>
             <button onClick={() => { onDone?.(); onClose() }} className="mt-2 px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition">Concluir</button>
           </div>
+        ) : cancelado ? (
+          <div className="p-8 text-center space-y-3">
+            <span className="material-symbols-outlined text-6xl text-error" style={{ fontVariationSettings: "'FILL' 1" }}>event_busy</span>
+            <h2 className="text-xl font-bold">Agendamento cancelado</h2>
+            <p className="text-sm text-on-surface-variant">O horário foi liberado no NetRis.</p>
+            <button onClick={() => { onClose() }} className="mt-2 px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition">Concluir</button>
+          </div>
         ) : (
           <>
+            {jaAgendado && (
+              <div className="m-5 mb-0 p-4 rounded-lg bg-primary/10 flex items-center justify-between gap-3">
+                <div className="text-sm">
+                  <span className="font-bold text-primary flex items-center gap-1.5"><span className="material-symbols-outlined text-base">event_available</span>Agendado no NetRis</span>
+                  {exame?.scheduled_at && <span className="text-on-surface-variant">{new Date(exame.scheduled_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>}
+                </div>
+                <button onClick={cancelar} disabled={cancelando} className="px-3 py-1.5 text-[11px] font-bold bg-error-container/50 text-on-error-container rounded-md hover:bg-error-container/70 transition disabled:opacity-50 flex-none">{cancelando ? 'Cancelando…' : 'Cancelar agendamento'}</button>
+              </div>
+            )}
             <div className="p-5 flex items-end gap-2 border-b border-outline-variant/10">
               <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">De</label><input type="date" className={input} value={ini} onChange={e => setIni(e.target.value)} /></div>
               <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Até</label><input type="date" className={input} value={fim} onChange={e => setFim(e.target.value)} /></div>

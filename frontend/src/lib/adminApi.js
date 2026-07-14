@@ -40,6 +40,7 @@ export const adminApi = {
   netrisHorariosCatalogo: ({ procedimentoId, parceiroId, idPaciente, pesoPaciente, dataInicial, dataFinal }) =>
     req('GET', `/api/netris/horarios-catalogo?procedimentoId=${procedimentoId}&parceiroId=${parceiroId}&idPaciente=${idPaciente}&pesoPaciente=${pesoPaciente || 70}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
   netrisAgendarExame: (exameId, slot) => post('/api/netris/agendar-exame', { exameId, slot }),
+  netrisCancelarExame: (exameId) => post('/api/netris/cancelar-exame', { exameId }),
 }
 
 // carrega todas as páginas de uma listagem NetRis (planos/procedimentos)

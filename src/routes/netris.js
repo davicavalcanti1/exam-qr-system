@@ -208,6 +208,27 @@ router.post('/agendar-exame', async (req, res) => {
   }
 })
 
+// Cancela o agendamento do exame no NetRis (situação CANCELADO) e limpa o vínculo.
+router.post('/cancelar-exame', async (req, res) => {
+  const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
+  const { exameId } = req.body || {}
+  if (!exameId) return res.status(400).json({ error: 'exameId é obrigatório' })
+  const { data: ex } = await supabaseAdmin
+    .from('exames').select('empresa_id, netris_atendimento_id').eq('id', exameId).maybeSingle()
+  if (!ex) return res.status(404).json({ error: 'Exame não encontrado' })
+  if (!ex.netris_atendimento_id) return res.status(400).json({ error: 'Este exame não tem agendamento no NetRis' })
+  const client = await netrisParaEmpresa(ex.empresa_id)
+  if (!client) return res.status(400).json({ error: 'NetRis não está ativo para esta empresa' })
+  try {
+    const r = await client.alterarSituacao(ex.netris_atendimento_id, SITUACAO.CANCELADO)
+    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o cancelamento', upstream: r.body })
+    await supabaseAdmin.from('exames').update({ netris_atendimento_id: null, netris_agendamento_id: null, scheduled_at: null }).eq('id', exameId)
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao cancelar no NetRis', detail: err.message })
+  }
+})
+
 // Listagens para o mapeamento (UI de Desenvolvedor): planos-convênio e procedimentos.
 router.get('/planos', async (req, res) => {
   const ctx = await comNetris(req, res); if (!ctx) return
