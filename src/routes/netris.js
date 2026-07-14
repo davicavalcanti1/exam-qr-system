@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { getCaller } from '../lib/supabaseAdmin.js'
 import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
-import { SITUACAO } from '../lib/netris.js'
+import { SITUACAO, normalizePaciente } from '../lib/netris.js'
 
 const router = Router()
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -41,11 +41,16 @@ router.get('/atendimentos', async (req, res) => {
   }
 })
 
-// Busca paciente por CPF.
+// Etapa 2.1 — Busca paciente por CPF.
+// ?raw=1 devolve o payload cru do NetRis (só para validação/depuração do shape).
 router.get('/pacientes/cpf/:cpf', async (req, res) => {
   const ctx = await comNetris(req, res); if (!ctx) return
+  const cpfDigits = String(req.params.cpf).replace(/\D/g, '')
+  if (cpfDigits.length !== 11) return res.status(400).json({ error: 'CPF deve ter 11 dígitos' })
   try {
-    res.json({ paciente: await ctx.client.searchPacienteByCpf(req.params.cpf) })
+    const raw = await ctx.client.searchPacienteByCpf(cpfDigits)
+    if (req.query.raw === '1') return res.json({ encontrado: Boolean(raw), raw })
+    res.json({ encontrado: Boolean(raw), paciente: raw ? normalizePaciente(raw) : null })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao buscar paciente no NetRis', detail: err.message })
   }

@@ -25,6 +25,51 @@ function isoToBR(iso) {
   return `${d}/${m}/${y}`
 }
 
+// Primeiro valor não-vazio entre várias chaves candidatas de um objeto.
+function pick(obj, keys) {
+  for (const k of keys) {
+    const v = obj?.[k]
+    if (v !== undefined && v !== null && v !== '') return v
+  }
+  return null
+}
+
+// Data BR (dd/mm/aaaa) ou ISO → ISO (yyyy-mm-dd). Retorna null se não parsear.
+function normalizarData(v) {
+  if (!v) return null
+  const s = String(v).trim()
+  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)      // 31/12/2026
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/)             // 2026-12-31[...]
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`
+  return null
+}
+
+function normalizarSexo(v) {
+  if (v === null || v === undefined) return null
+  const s = String(v).trim().toUpperCase()
+  if (['M', 'MASCULINO', '1', 'MALE'].includes(s)) return 'M'
+  if (['F', 'FEMININO', '2', 'FEMALE'].includes(s)) return 'F'
+  return null
+}
+
+// Normaliza um paciente cru do NetRis para o shape estável do ExameQR.
+// Tolerante a variações de nome de campo; guarda o cru em `_raw` para depuração.
+export function normalizePaciente(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const cpf = pick(raw, ['cpf', 'numeroCpf', 'nrCpf', 'documento', 'cpfPaciente'])
+  const tel = pick(raw, ['celular', 'telefoneCelular', 'telefone', 'fone', 'telefone1'])
+  return {
+    netrisId: pick(raw, ['id', 'idPaciente', 'codigo', 'codigoPaciente', 'idPessoa']),
+    nome: pick(raw, ['nome', 'nomePaciente', 'nomeCompleto', 'nomePessoa']),
+    cpf: cpf ? String(cpf).replace(/\D/g, '') : null,
+    nascimento: normalizarData(pick(raw, ['dataNascimento', 'nascimento', 'dtNascimento', 'dataNasc'])),
+    sexo: normalizarSexo(pick(raw, ['sexo', 'genero', 'sexoPaciente'])),
+    telefone: tel ? String(tel).replace(/\D/g, '') : null,
+    email: pick(raw, ['email', 'emailPaciente']),
+  }
+}
+
 function unwrapList(data) {
   if (Array.isArray(data)) return data
   if (data && typeof data === 'object') {
