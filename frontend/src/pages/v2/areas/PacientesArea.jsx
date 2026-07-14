@@ -43,6 +43,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [parceiroSel, setParceiroSel] = useState('')
   const [qrExame, setQrExame] = useState(null)
   const [agExame, setAgExame] = useState(null)
+  const [cancelandoId, setCancelandoId] = useState(null)
 
   useEffect(() => {
     adminApi.netrisStatus().then(s => setNetrisAtivo(!!s.ativo)).catch(() => setNetrisAtivo(false))
@@ -136,6 +137,14 @@ export default function PacientesArea({ escolherParceiro = false }) {
     // guarda o slot num formato pronto pro agendar-exame
     const slot = { data: s.data, dataString: s.dataString, horarioString: s.horaInicial, idMedico: s.idMedico, idSala: s.idSala, nomeMedico: s.nomeMedico }
     setExames(x => x.map((y, idx) => idx === i ? { ...y, slot } : y))
+  }
+
+  async function cancelarAgendamento(ex) {
+    if (!window.confirm(`Cancelar o agendamento de ${ex.nome} no NetRis?`)) return
+    setCancelandoId(ex.id)
+    try { await adminApi.netrisCancelarExame(ex.id); await load() }
+    catch (e) { alert('Falha ao cancelar: ' + e.message) }
+    finally { setCancelandoId(null) }
   }
 
   async function submit(e) {
@@ -327,8 +336,13 @@ export default function PacientesArea({ escolherParceiro = false }) {
                             </button>
                           )}
                           {podeAgendar && (
-                            <button onClick={() => setAgExame(ex)} title={agendado ? 'Reagendar no NetRis' : 'Agendar no NetRis'} className="p-0.5 rounded hover:bg-black/10">
+                            <button onClick={() => setAgExame(ex)} title={agendado ? 'Ver / reagendar no NetRis' : 'Agendar no NetRis'} className="p-0.5 rounded hover:bg-black/10">
                               <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{agendado ? 'event_available' : 'calendar_add_on'}</span>
+                            </button>
+                          )}
+                          {agendado && (
+                            <button onClick={() => cancelarAgendamento(ex)} disabled={cancelandoId === ex.id} title="Cancelar agendamento no NetRis" className="p-0.5 rounded hover:bg-black/10 text-error disabled:opacity-40">
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{cancelandoId === ex.id ? 'hourglass_empty' : 'event_busy'}</span>
                             </button>
                           )}
                         </span>
