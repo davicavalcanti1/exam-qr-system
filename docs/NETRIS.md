@@ -92,18 +92,37 @@ Refletir no NetRis mudanças que já acontecem no ExameQR.
 
 ---
 
-## Fase 4 — Agendamento (escrita real) ⛔ BLOQUEADA
+## Fase 4 — Agendamento (escrita real) ✅ PROVADO NA API (14/07/2026)
 
 Criar o agendamento (encaixe) no NetRis a partir de um exame do ExameQR.
+**Testado com sucesso**: mamografia marcada de verdade (idAtendimento 688681,
+retorno `{"status":"OK","message":"Agendamento realizado com sucesso. ID: 959253"}`).
 
-- [x] `POST /api/netris/agendar` chama `criarEncaixe` (completa `idPlanoConvenio`/`idUnidade`).
-- [ ] **Shape exato do body do encaixe** (campos obrigatórios, formatos de data/hora).
-- [ ] Mapa **procedimento (catálogo ExameQR) → `idProcedimento` (NetRis)**
-      (guardar em `procedimentos.netris_procedimento_id`, que já existe).
+Fluxo que funcionou (2 chamadas):
+
+1. `GET /netris/api/horarios-agrupados` com **todos os obrigatórios**:
+   `buscaInteligente=true&dataBusca=DD/MM/AAAA&dataFinalBusca=DD/MM/AAAA&idConvenio=94&idFilial=1&idPaciente=<id>&idPlanoConvenio=224&listIdProcedimento=147&pesoPaciente=<n>`
+   → devolve dias → `unidades[].medicos[].horarios[]` com `horaInicial, idSala, idEscala, procedimento`.
+
+2. `POST /netris/api/horarios/encaixe` com body **array de EncaixeModel**:
+   ```json
+   [{
+     "dataString": "2026-07-15",      // ISO (YYYY-MM-DD)
+     "horarioString": "09:30",         // HH:MM do slot
+     "encaixe": true,
+     "envioMensagemOrientacao": false, // não dispara msg pro paciente
+     "idConvenio": 94, "idPlanoConvenio": 224, "idProcedimento": 147,
+     "idMedico": 11, "idSala": 16, "idPaciente": 36343
+   }]
+   ```
+
+- [x] Shape exato do body do encaixe (acima) e dos horários confirmados.
+- [ ] Mapa **procedimento (catálogo ExameQR) → `idProcedimento`** (`procedimentos.netris_procedimento_id`).
+- [ ] Mapa **parceiro → `idPlanoConvenio` + `idConvenio`** (`parceiros.netris_*`).
+- [ ] Atualizar `criarEncaixe` no backend para montar este EncaixeModel por slot.
 - [ ] Gravar o `netris_atendimento_id` retornado em `exames` (fecha o ciclo com a Fase 3).
 
-**Precisa de você:** um exemplo de requisição de `horarios-agrupados` **e** de
-`horarios/encaixe` que retorne 200 na IMAGO (com os parâmetros reais).
+> Obs.: `horaInicial` nos atendimentos vem em ms-de-dia UTC (09:30 BRT = 45000000).
 
 ---
 
