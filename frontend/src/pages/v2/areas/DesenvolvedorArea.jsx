@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../../lib/adminApi'
 import NetrisConsole from './NetrisConsole'
+import NetrisMapeamento from './NetrisMapeamento'
 
 export default function DesenvolvedorArea() {
   const [providers, setProviders] = useState({})
@@ -117,6 +118,7 @@ export default function DesenvolvedorArea() {
       </div>
 
       {provider === 'netris' && <NetrisConsole key={ativo ? 'on' : 'off'} />}
+      {provider === 'netris' && ativo && <NetrisMapeamento key={ativo ? 'map-on' : 'map-off'} />}
     </div>
   )
 }

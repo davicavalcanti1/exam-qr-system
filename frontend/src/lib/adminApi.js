@@ -30,6 +30,22 @@ export const adminApi = {
   // console NetRis (dentro do sistema)
   netrisStatus: () => req('GET', '/api/netris/status'),
   netrisPaciente: (cpf, raw = false) => req('GET', `/api/netris/pacientes/cpf/${encodeURIComponent(cpf)}${raw ? '?raw=1' : ''}`),
+  // mapeamento (Fase 4)
+  updateParceiroNetris: (id, payload) => req('PUT', `/api/admin/parceiros/${id}/netris`, payload),
+  netrisPlanos: (page = 1) => req('GET', `/api/netris/planos?page=${page}`),
+  netrisProcedimentos: (page = 1, idPlanoConvenio) => req('GET', `/api/netris/procedimentos?page=${page}${idPlanoConvenio ? `&idPlanoConvenio=${idPlanoConvenio}` : ''}`),
+}
+
+// carrega todas as páginas de uma listagem NetRis (planos/procedimentos)
+export async function carregarTudo(fetchPage, chave) {
+  const acc = []
+  for (let page = 1; page <= 30; page++) {
+    const r = await fetchPage(page)
+    const arr = r[chave] || []
+    acc.push(...arr)
+    if (arr.length < 100) break
+  }
+  return acc
 }
 
 // "João da Silva" -> "joao.silva"

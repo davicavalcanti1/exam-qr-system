@@ -80,4 +80,28 @@ router.post('/parceiros', async (req, res) => {
   res.status(201).json({ id: data.id })
 })
 
+// Atualiza o mapeamento NetRis de um parceiro (plano-convênio/convênio/unidade).
+router.put('/parceiros/:id/netris', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  const p = c.profile
+  if (!['owner', 'empresa_admin'].includes(p.role)) return res.status(403).json({ error: 'Sem permissão' })
+
+  const { idPlanoConvenio, idConvenio, idUnidade } = req.body || {}
+  const num = (v) => (v === null || v === undefined || v === '' ? null : Number(v))
+
+  // garante que o parceiro é da empresa do caller (owner pode tudo)
+  const { data: parc } = await supabaseAdmin.from('parceiros').select('id, empresa_id').eq('id', req.params.id).maybeSingle()
+  if (!parc) return res.status(404).json({ error: 'Parceiro não encontrado' })
+  if (p.role !== 'owner' && parc.empresa_id !== p.empresa_id) return res.status(403).json({ error: 'Parceiro de outra empresa' })
+
+  const { error } = await supabaseAdmin.from('parceiros').update({
+    netris_id_plano_convenio: num(idPlanoConvenio),
+    netris_id_convenio: num(idConvenio),
+    netris_id_unidade: num(idUnidade),
+  }).eq('id', req.params.id)
+  if (error) return res.status(400).json({ error: error.message })
+  res.json({ ok: true })
+})
+
 export default router
