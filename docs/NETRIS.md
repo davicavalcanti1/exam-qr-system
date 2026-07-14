@@ -38,15 +38,43 @@ Config esperada por empresa: `baseUrl`, `token`, `idPlanoConvenio`, `idUnidade`
 
 ## Fase 2 — Leitura (read-only, sem efeitos colaterais) 🔜 PRÓXIMA
 
-Endpoints que só **leem** do NetRis — seguros pra validar sem risco.
+Endpoints que só **leem** do NetRis — seguros pra validar sem risco. Quebrada em
+três etapas independentes, da mais simples pra mais complexa. Fazemos e validamos
+uma de cada vez.
 
-- [x] `GET /api/netris/pacientes/cpf/:cpf` — busca paciente.
-- [x] `GET /api/netris/atendimentos?dataInicial&dataFinal` — agenda de um período.
-- [x] `GET /api/netris/horarios?...` — horários disponíveis (injeta `idPlanoConvenio`/`idFilial` da config).
-- [ ] **Validar o shape real de cada resposta** contra o NetRis da IMAGO e ajustar `unwrapList`/campos.
+### Etapa 2.1 — Paciente por CPF (mais simples)
 
-**Precisa de você:** um retorno real (JSON) de cada endpoint pra confirmar os campos.
-**Pendência conhecida:** `/horarios` exige `listIdProcedimento` (+ convênio) — sem isso o NetRis dá 500. Precisamos do mapeamento procedimento→ID do NetRis (ver Fase 4).
+Recurso pontual, poucos parâmetros — ideal pra confirmar que auth + baseUrl + o
+parsing básico estão certos ponta a ponta.
+
+- [x] `GET /api/netris/pacientes/cpf/:cpf`.
+- [ ] Validar o JSON real e mapear os campos que vamos usar (nome, nascimento, id do NetRis).
+- [ ] Normalizar o retorno num shape estável do ExameQR (não vazar o cru do NetRis).
+
+**Precisa de você:** um JSON real de busca por CPF (pode anonimizar os dados).
+
+### Etapa 2.2 — Atendimentos / agenda do período (lista paginada)
+
+Sobe um degrau: lista, paginação e `unwrapList` (o NetRis embrulha em `aaData`/`content`/…).
+
+- [x] `GET /api/netris/atendimentos?dataInicial&dataFinal` (paginado, formato de data BR).
+- [ ] Confirmar a chave de embrulho real e o campo de data/hora e situação de cada item.
+- [ ] Confirmar `filialId`/`idUnidade` corretos e o limite de páginas.
+
+**Precisa de você:** um JSON real de um período curto (1–2 dias) com alguns atendimentos.
+
+### Etapa 2.3 — Horários disponíveis (a mais complexa)
+
+Depende de convênio + procedimento; é o pré-requisito de leitura pro agendamento (Fase 4).
+
+- [x] `GET /api/netris/horarios` (injeta `idPlanoConvenio`/`idFilial` da config).
+- [ ] Descobrir os parâmetros obrigatórios reais (`listIdProcedimento`, convênio, período).
+- [ ] Mapear procedimento (catálogo ExameQR) → `idProcedimento` do NetRis
+      (`procedimentos.netris_procedimento_id`, já existe) — compartilhado com a Fase 4.
+
+**Precisa de você:** uma chamada de `horarios-agrupados` que retorne 200 na IMAGO,
+com os parâmetros reais.
+**Pendência conhecida:** sem `listIdProcedimento` (+ convênio) o NetRis dá 500.
 
 ---
 
