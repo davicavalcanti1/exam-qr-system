@@ -87,12 +87,13 @@ function normalizarSexo(v) {
 export function normalizePaciente(raw) {
   if (!raw || typeof raw !== 'object') return null
   const cpf = pick(raw, ['cpf', 'numeroCpf', 'nrCpf', 'documento', 'cpfPaciente'])
-  const tel = pick(raw, ['celular', 'telefoneCelular', 'telefone', 'fone', 'telefone1'])
+  const tel = pick(raw, ['telefone_celular', 'celular', 'telefoneCelular', 'telefone', 'telefone_paciente', 'fone', 'telefone1'])
   return {
-    netrisId: pick(raw, ['id', 'idPaciente', 'codigo', 'codigoPaciente', 'idPessoa']),
-    nome: pick(raw, ['nome', 'nomePaciente', 'nomeCompleto', 'nomePessoa']),
+    // busca vem em snake_case (id_paciente); POST/outros vêm camelCase (idPaciente)
+    netrisId: pick(raw, ['id_paciente', 'idPaciente', 'id', 'codigo_paciente', 'codigo', 'codigoPaciente', 'id_pessoa', 'idPessoa']),
+    nome: pick(raw, ['nome', 'nomePaciente', 'nome_paciente', 'nomeCompleto', 'nomePessoa']),
     cpf: cpf ? String(cpf).replace(/\D/g, '') : null,
-    nascimento: normalizarData(pick(raw, ['dataNascimento', 'nascimento', 'dtNascimento', 'dataNasc'])),
+    nascimento: normalizarData(pick(raw, ['data_nascimento', 'dataNascimento', 'nascimento', 'dtNascimento', 'dataNasc'])),
     sexo: normalizarSexo(pick(raw, ['sexo', 'genero', 'sexoPaciente'])),
     telefone: tel ? String(tel).replace(/\D/g, '') : null,
     email: pick(raw, ['email', 'emailPaciente']),
