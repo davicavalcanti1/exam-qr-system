@@ -27,6 +27,9 @@ export const adminApi = {
   getIntegracao: () => req('GET', '/api/integracao'),
   salvarIntegracao: (payload) => req('PUT', '/api/integracao', payload),
   testarIntegracao: (payload) => post('/api/integracao/testar', payload || {}),
+  // console NetRis (dentro do sistema)
+  netrisStatus: () => req('GET', '/api/netris/status'),
+  netrisPaciente: (cpf, raw = false) => req('GET', `/api/netris/pacientes/cpf/${encodeURIComponent(cpf)}${raw ? '?raw=1' : ''}`),
 }
 
 // "João da Silva" -> "joao.silva"

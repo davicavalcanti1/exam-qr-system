@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../../lib/adminApi'
+import NetrisConsole from './NetrisConsole'
 
 export default function DesenvolvedorArea() {
   const [providers, setProviders] = useState({})
@@ -114,6 +115,8 @@ export default function DesenvolvedorArea() {
         <button disabled={saving} onClick={salvar} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Salvando…' : 'Salvar'}</button>
         {provider !== 'manual' && <button disabled={testando} onClick={testar} className="px-5 py-2.5 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition disabled:opacity-50">{testando ? 'Testando…' : 'Testar conexão'}</button>}
       </div>
+
+      {provider === 'netris' && <NetrisConsole key={ativo ? 'on' : 'off'} />}
     </div>
   )
 }
