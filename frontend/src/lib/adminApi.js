@@ -5,22 +5,28 @@ async function token() {
   return data.session?.access_token
 }
 
-async function post(path, body) {
+async function req(method, path, body) {
   const t = await token()
   const res = await fetch(path, {
-    method: 'POST',
+    method,
     headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
-    body: JSON.stringify(body),
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || 'Erro na requisição')
   return data
 }
+const post = (path, body) => req('POST', path, body)
 
 export const adminApi = {
   createUser: (payload) => post('/api/admin/users', payload),
   createParceiro: (payload) => post('/api/admin/parceiros', payload),
   gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
+  // integrações de agendamento
+  listarProviders: () => req('GET', '/api/integracao/providers'),
+  getIntegracao: () => req('GET', '/api/integracao'),
+  salvarIntegracao: (payload) => req('PUT', '/api/integracao', payload),
+  testarIntegracao: (payload) => post('/api/integracao/testar', payload || {}),
 }
 
 // "João da Silva" -> "joao.silva"
