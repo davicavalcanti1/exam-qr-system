@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
+import { adminApi } from '../../../lib/adminApi'
 import QrModal from '../QrModal'
 import AgendarModal from '../AgendarModal'
 
@@ -18,6 +19,13 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const { user, empresaId, parceiroId } = useAuth()
   const [nome, setNome] = useState('')
   const [cpf, setCpf] = useState('')
+  const [sexo, setSexo] = useState('')
+  const [nascimento, setNascimento] = useState('')
+  const [telefone, setTelefone] = useState('')
+  const [netrisAtivo, setNetrisAtivo] = useState(false)
+  const [netrisId, setNetrisId] = useState(null)
+  const [buscandoNetris, setBuscandoNetris] = useState(false)
+  const [netrisMsg, setNetrisMsg] = useState('')
   const [exames, setExames] = useState([{ procId: '', indicacao: '', data: '', hora: '' }])
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -30,6 +38,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [agExame, setAgExame] = useState(null)
 
   useEffect(() => {
+    adminApi.netrisStatus().then(s => setNetrisAtivo(!!s.ativo)).catch(() => setNetrisAtivo(false))
     supabase.from('procedimentos').select('id, nome, valor').eq('ativo', true).order('nome')
       .then(({ data }) => setCatalogo(data || []))
     if (escolherParceiro) {
@@ -55,16 +64,54 @@ export default function PacientesArea({ escolherParceiro = false }) {
     return () => window.removeEventListener('focus', onFocus)
   }, [])
 
+  async function buscarNetris() {
+    const cpfLimpo = cpf.replace(/\D/g, '')
+    if (cpfLimpo.length !== 11) { setNetrisMsg('Informe um CPF com 11 dígitos.'); return }
+    setBuscandoNetris(true); setNetrisMsg(''); setNetrisId(null)
+    try {
+      const r = await adminApi.netrisPaciente(cpfLimpo)
+      if (r.encontrado && r.paciente) {
+        const p = r.paciente
+        setNetrisId(p.netrisId)
+        if (p.nome) setNome(p.nome)
+        if (p.sexo) setSexo(p.sexo)
+        if (p.nascimento) setNascimento(p.nascimento)
+        if (p.telefone) setTelefone(p.telefone)
+        setNetrisMsg(`✓ Encontrado no NetRis (ID ${p.netrisId}). Dados preenchidos.`)
+      } else {
+        setNetrisMsg('Não encontrado no NetRis — preencha os dados abaixo para cadastrar ao salvar.')
+      }
+    } catch (e) { setNetrisMsg('Erro na busca: ' + e.message) } finally { setBuscandoNetris(false) }
+  }
+
   async function submit(e) {
     e.preventDefault(); setErr('')
     if (escolherParceiro && !pid) { setErr('Selecione o parceiro.'); return }
     if (exames.some(x => !x.procId)) { setErr('Selecione o exame em cada item.'); return }
+    const cpfLimpo = cpf.replace(/\D/g, '')
     setSaving(true)
     try {
-      const cpfLimpo = cpf.replace(/\D/g, '')
+      // Integração NetRis: garante o paciente lá (busca/cria) antes de salvar aqui.
+      let idNetris = netrisId
+      if (netrisAtivo) {
+        if (!idNetris && cpfLimpo.length === 11) {
+          const busca = await adminApi.netrisPaciente(cpfLimpo).catch(() => null)
+          if (busca?.encontrado) idNetris = busca.paciente?.netrisId
+        }
+        if (!idNetris) {
+          if (!sexo || !nascimento) throw new Error('Para cadastrar no NetRis, informe sexo e data de nascimento.')
+          const criado = await adminApi.netrisCriarPaciente({ nome: nome.trim(), cpf: cpfLimpo, sexo, dataNascimento: nascimento, telefone })
+          idNetris = criado?.paciente?.netrisId
+          if (!idNetris) throw new Error('NetRis não retornou o ID do paciente criado.')
+        }
+      }
       const { data: pac, error: pErr } = await supabase
         .from('pacientes')
-        .insert({ empresa_id: empresaId, parceiro_id: pid, nome: nome.trim(), cpf: cpfLimpo })
+        .insert({
+          empresa_id: empresaId, parceiro_id: pid, nome: nome.trim(), cpf: cpfLimpo,
+          netris_id_paciente: idNetris || null, sexo: sexo || null,
+          data_nascimento: nascimento || null, telefone: telefone || null,
+        })
         .select('id').single()
       if (pErr) throw pErr
       const rows = exames.map(ex => {
@@ -78,7 +125,8 @@ export default function PacientesArea({ escolherParceiro = false }) {
       })
       const { error: eErr } = await supabase.from('exames').insert(rows)
       if (eErr) throw eErr
-      setNome(''); setCpf(''); setExames([{ procId: '', indicacao: '', data: '', hora: '' }]); setParceiroSel(''); await load()
+      setNome(''); setCpf(''); setSexo(''); setNascimento(''); setTelefone(''); setNetrisId(null); setNetrisMsg('')
+      setExames([{ procId: '', indicacao: '', data: '', hora: '' }]); setParceiroSel(''); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
 
@@ -104,8 +152,35 @@ export default function PacientesArea({ escolherParceiro = false }) {
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><label className={label}>Nome</label><input className={input} value={nome} onChange={e => setNome(e.target.value)} required /></div>
-              <div><label className={label}>CPF</label><input className={input} value={cpf} onChange={e => setCpf(e.target.value)} required /></div>
+              <div>
+                <label className={label}>CPF</label>
+                <div className="flex gap-2">
+                  <input className={input} value={cpf} onChange={e => { setCpf(e.target.value); setNetrisId(null) }} required />
+                  {netrisAtivo && (
+                    <button type="button" onClick={buscarNetris} disabled={buscandoNetris}
+                      className="px-3 py-2.5 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition disabled:opacity-50 flex-none whitespace-nowrap">
+                      {buscandoNetris ? '…' : 'Buscar NetRis'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
+            {netrisAtivo && (
+              <>
+                {netrisMsg && <p className={`text-sm ${netrisId ? 'text-primary' : 'text-on-surface-variant'}`}>{netrisMsg}</p>}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className={label}>Sexo{!netrisId && <span className="text-error"> *</span>}</label>
+                    <select className={input} value={sexo} onChange={e => setSexo(e.target.value)}>
+                      <option value="">—</option><option value="F">Feminino</option><option value="M">Masculino</option>
+                    </select>
+                  </div>
+                  <div><label className={label}>Nascimento{!netrisId && <span className="text-error"> *</span>}</label><input type="date" className={input} value={nascimento} onChange={e => setNascimento(e.target.value)} /></div>
+                  <div><label className={label}>Telefone</label><input className={input} value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(83) 9…" /></div>
+                </div>
+                <p className="text-[11px] text-on-surface-variant">Com o NetRis ativo, o paciente é vinculado (ou criado) lá automaticamente ao salvar. Use “Buscar NetRis” para puxar quem já existe.</p>
+              </>
+            )}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className={label}>Exames</span>

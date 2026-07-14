@@ -166,6 +166,28 @@ export function createNetrisClient({ baseUrl, token, idPlanoConvenio = '', idUni
     return unwrapList(raw)[0] || null
   }
 
+  // Cria paciente no NetRis. dataNascimento em ISO (yyyy-mm-dd) -> dd/MM/yyyy.
+  // telefonePaciente é obrigatório no validador; se só houver celular, duplica.
+  async function criarPaciente(d = {}) {
+    const body = { nomePaciente: String(d.nome || '').trim() }
+    if (!body.nomePaciente) throw new Error('nome é obrigatório')
+    if (d.cpf) body.cpf = String(d.cpf).replace(/\D/g, '')
+    if (d.sexo) body.sexoPaciente = d.sexo
+    const m = String(d.dataNascimento || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (m) body.dataNascimentoPaciente = `${m[3]}/${m[2]}/${m[1]}`
+    const cel = d.telefone ? String(d.telefone).replace(/\D/g, '') : ''
+    if (cel) { body.telefoneCelular = cel; body.telefonePaciente = cel }
+    if (d.peso) { body.pesoPaciente = Number(d.peso); body.peso_paciente = Number(d.peso) }
+    if (d.email) body.email = String(d.email).trim()
+    if (d.nomeMae) body.nomeMae = String(d.nomeMae).trim()
+
+    const url = `${BASE}/netris/api/pacientes`
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })
+    const text = await res.text().catch(() => '')
+    let parsed = null; if (text) { try { parsed = JSON.parse(text) } catch { parsed = text } }
+    return { status: res.status, ok: res.ok, body: parsed }
+  }
+
   async function alterarSituacao(atendimentoId, idSituacao) {
     const url = `${BASE}/netris/api/atendimentos/${encodeURIComponent(atendimentoId)}/alterar-situacao`
     const res = await fetch(url, { method: 'PATCH', headers, body: JSON.stringify({ idSituacao }) })
@@ -199,5 +221,5 @@ export function createNetrisClient({ baseUrl, token, idPlanoConvenio = '', idUni
     return request({ method: 'POST', path: 'netris/api/horarios/encaixe', body: [m] })
   }
 
-  return { config: cfg, get, request, fetchAtendimentos, searchPacienteByCpf, alterarSituacao, horariosAgrupados, criarEncaixe }
+  return { config: cfg, get, request, fetchAtendimentos, searchPacienteByCpf, criarPaciente, alterarSituacao, horariosAgrupados, criarEncaixe }
 }

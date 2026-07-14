@@ -58,6 +58,26 @@ router.get('/pacientes/cpf/:cpf', async (req, res) => {
   }
 })
 
+// Etapa 2.1b — Cria paciente no NetRis (quando não existe pelo CPF).
+router.post('/pacientes', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
+  const { nome, cpf, sexo, dataNascimento, telefone, peso, email, nomeMae } = req.body || {}
+  if (!nome) return res.status(400).json({ error: 'nome é obrigatório' })
+  try {
+    const r = await ctx.client.criarPaciente({ nome, cpf, sexo, dataNascimento, telefone, peso, email, nomeMae })
+    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o cadastro', upstream: r.body })
+    // rebusca pelo CPF para obter o registro normalizado com idPaciente
+    let normalizado = normalizePaciente(r.body)
+    if (cpf && (!normalizado || !normalizado.netrisId)) {
+      const rb = await ctx.client.searchPacienteByCpf(cpf)
+      if (rb) normalizado = normalizePaciente(rb)
+    }
+    res.status(201).json({ ok: true, paciente: normalizado, raw: r.body })
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao criar paciente no NetRis', detail: err.message })
+  }
+})
+
 // Horários disponíveis (agrupados). A config completa idPlanoConvenio/idFilial.
 router.get('/horarios', async (req, res) => {
   const ctx = await comNetris(req, res); if (!ctx) return

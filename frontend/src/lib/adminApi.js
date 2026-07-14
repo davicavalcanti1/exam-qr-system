@@ -30,6 +30,7 @@ export const adminApi = {
   // console NetRis (dentro do sistema)
   netrisStatus: () => req('GET', '/api/netris/status'),
   netrisPaciente: (cpf, raw = false) => req('GET', `/api/netris/pacientes/cpf/${encodeURIComponent(cpf)}${raw ? '?raw=1' : ''}`),
+  netrisCriarPaciente: (dados) => post('/api/netris/pacientes', dados),
   // mapeamento (Fase 4)
   updateParceiroNetris: (id, payload) => req('PUT', `/api/admin/parceiros/${id}/netris`, payload),
   netrisPlanos: (page = 1) => req('GET', `/api/netris/planos?page=${page}`),
