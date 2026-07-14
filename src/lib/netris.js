@@ -111,7 +111,9 @@ function unwrapList(data) {
 
 // Cria um cliente NetRis a partir da config de UMA empresa.
 export function createNetrisClient({ baseUrl, token, idPlanoConvenio = '', idUnidade = '', idConvenio = '' } = {}) {
-  const BASE = String(baseUrl || '').replace(/\/$/, '')
+  // Normaliza: tira barra final e força https (em http o NetRis redireciona e
+  // o header Authorization é descartado no redirect -> 403).
+  const BASE = String(baseUrl || '').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
   if (!BASE || !token) throw new Error('NetRis: baseUrl e token são obrigatórios')
   const headers = { 'Content-Type': 'application/json', Authorization: token }
   const cfg = { idPlanoConvenio, idUnidade, idConvenio }

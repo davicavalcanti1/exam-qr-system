@@ -82,7 +82,7 @@ router.post('/testar', async (req, res) => {
   if (data.provider === 'manual') return res.json({ ok: true, mensagem: 'Método manual — nenhuma conexão externa necessária.' })
 
   if (data.provider === 'netris') {
-    const base = (data.config?.baseUrl || '').replace(/\/$/, '')
+    const base = (data.config?.baseUrl || '').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
     const token = data.config?.token
     if (!base) return res.json({ ok: false, mensagem: 'URL base não configurada.' })
     try {
