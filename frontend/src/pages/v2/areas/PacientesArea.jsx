@@ -6,6 +6,12 @@ import QrModal from '../QrModal'
 import AgendarModal from '../AgendarModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const diaCurto = (br) => String(br || '').slice(0, 5) // "15/07/2026" -> "15/07"
+const diaLongo = (br) => {
+  const [d, m, y] = String(br).split('/')
+  if (!y) return br
+  return new Date(`${y}-${m}-${d}T12:00:00`).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
+}
 
 const STATUS = {
   rascunho: { label: 'Rascunho', cls: 'bg-surface-container text-on-surface-variant' },
@@ -26,6 +32,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [netrisId, setNetrisId] = useState(null)
   const [buscandoNetris, setBuscandoNetris] = useState(false)
   const [netrisMsg, setNetrisMsg] = useState('')
+  const [slotsPorItem, setSlotsPorItem] = useState({})
   const [exames, setExames] = useState([{ procId: '', indicacao: '', data: '', hora: '' }])
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -106,6 +113,31 @@ export default function PacientesArea({ escolherParceiro = false }) {
     return id
   }
 
+  // Carrega os horários do NetRis para o exame do item i (só pra ESCOLHER;
+  // o agendamento real só é enviado quando o coordenador autoriza).
+  async function carregarHorarios(i) {
+    const ex = exames[i]
+    if (!ex.procId) { setErr('Selecione o exame primeiro.'); return }
+    if (escolherParceiro && !pid) { setErr('Selecione o parceiro primeiro.'); return }
+    setErr(''); setSlotsPorItem(s => ({ ...s, [i]: { loading: true } }))
+    try {
+      const idPac = await garantirPacienteNetris()
+      const hoje = new Date().toISOString().slice(0, 10)
+      const fim = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10)
+      const r = await adminApi.netrisHorariosCatalogo({ procedimentoId: ex.procId, parceiroId: pid, idPaciente: idPac, dataInicial: hoje, dataFinal: fim })
+      const map = {}
+      for (const s of r.slots || []) (map[s.data] ||= []).push(s)
+      const grupos = Object.entries(map).map(([data, slots]) => ({ data, slots }))
+      setSlotsPorItem(s => ({ ...s, [i]: { grupos } }))
+    } catch (e) { setSlotsPorItem(s => ({ ...s, [i]: { erro: e.message } })) }
+  }
+
+  function escolherSlot(i, s) {
+    // guarda o slot num formato pronto pro agendar-exame
+    const slot = { data: s.data, dataString: s.dataString, horarioString: s.horaInicial, idMedico: s.idMedico, idSala: s.idSala, nomeMedico: s.nomeMedico }
+    setExames(x => x.map((y, idx) => idx === i ? { ...y, slot } : y))
+  }
+
   async function submit(e) {
     e.preventDefault(); setErr('')
     if (escolherParceiro && !pid) { setErr('Selecione o parceiro.'); return }
@@ -128,18 +160,20 @@ export default function PacientesArea({ escolherParceiro = false }) {
       if (pErr) throw pErr
       const rows = exames.map(ex => {
         const p = procById(ex.procId)
+        const slot = ex.slot
         return {
           empresa_id: empresaId, parceiro_id: pid, paciente_id: pac.id,
           procedimento_id: p.id, nome: p.nome, valor: p.valor,
           indicacao: ex.indicacao || null, status: 'aguardando_autorizacao', criado_por: user?.id,
-          // agendamento no NetRis é feito só após a autorização (pelo botão de agenda)
-          scheduled_at: (!netrisAtivo && ex.data) ? `${ex.data}T${ex.hora || '08:00'}:00` : null,
+          // horário escolhido fica PENDENTE em netris_slot; só vai ao NetRis na autorização
+          netris_slot: slot || null,
+          scheduled_at: slot ? `${slot.dataString}T${slot.horarioString}:00` : (ex.data ? `${ex.data}T${ex.hora || '08:00'}:00` : null),
         }
       })
       const { error: eErr } = await supabase.from('exames').insert(rows)
       if (eErr) throw eErr
       setNome(''); setCpf(''); setSexo(''); setNascimento(''); setTelefone(''); setNetrisId(null); setNetrisMsg('')
-      setExames([{ procId: '', indicacao: '', data: '', hora: '' }]); setParceiroSel(''); await load()
+      setExames([{ procId: '', indicacao: '', data: '', hora: '' }]); setParceiroSel(''); setSlotsPorItem({}); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
 
@@ -211,10 +245,42 @@ export default function PacientesArea({ escolherParceiro = false }) {
                       ? <button type="button" onClick={() => setExames(x => x.filter((_, idx) => idx !== i))} className="p-2 text-on-surface-variant hover:text-error"><span className="material-symbols-outlined">delete</span></button>
                       : <span />}
                   </div>
-                  {!netrisAtivo && (
+                  {!netrisAtivo ? (
                     <div className="grid grid-cols-2 gap-3">
                       <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Data (opcional)</label><input type="date" className={input} value={ex.data} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, data: e.target.value } : y))} /></div>
                       <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Horário</label><input type="time" className={input} value={ex.hora} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, hora: e.target.value } : y))} /></div>
+                    </div>
+                  ) : ex.procId && (
+                    <div className="pt-1">
+                      {ex.slot ? (
+                        <div className="flex items-center justify-between gap-2 bg-primary/10 text-primary rounded-lg px-3 py-2">
+                          <span className="text-sm font-bold flex items-center gap-1.5"><span className="material-symbols-outlined text-base">schedule</span>{diaCurto(ex.slot.data)} · {ex.slot.horarioString} · {ex.slot.nomeMedico}</span>
+                          <button type="button" onClick={() => setExames(x => x.map((y, idx) => idx === i ? { ...y, slot: null } : y))} className="text-xs font-bold hover:underline">trocar</button>
+                        </div>
+                      ) : (() => {
+                        const st = slotsPorItem[i]
+                        if (!st) return <button type="button" onClick={() => carregarHorarios(i)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">calendar_month</span>Ver horários no NetRis</button>
+                        if (st.loading) return <p className="text-xs text-on-surface-variant flex items-center gap-2"><span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />Buscando horários…</p>
+                        if (st.erro) return <p className="text-xs text-on-error-container bg-error-container/40 rounded px-2 py-1">{st.erro} <button type="button" onClick={() => carregarHorarios(i)} className="font-bold underline ml-1">tentar de novo</button></p>
+                        if (!st.grupos?.length) return <p className="text-xs text-on-surface-variant">Nenhum horário disponível nos próximos 30 dias.</p>
+                        return (
+                          <div className="space-y-2 max-h-56 overflow-y-auto">
+                            {st.grupos.map(g => (
+                              <div key={g.data}>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1 capitalize">{diaLongo(g.data)}</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {g.slots.map((s, k) => (
+                                    <button key={k} type="button" title={`${s.nomeMedico} · ${s.sala}`} onClick={() => escolherSlot(i, s)}
+                                      className="px-2.5 py-1 rounded-md text-xs font-bold bg-surface-container-lowest ring-1 ring-outline-variant/30 hover:ring-2 hover:ring-primary hover:text-primary transition">
+                                      {s.horaInicial}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
                     </div>
                   )}
                 </div>
@@ -222,7 +288,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
               {netrisAtivo && (
                 <p className="text-[11px] text-on-surface-variant flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-sm">info</span>
-                  O horário no NetRis é escolhido <b>após a autorização</b> do coordenador (pelo botão de agenda no exame).
+                  O horário escolhido fica <b>pendente</b>; a marcação no NetRis é enviada quando o coordenador <b>autorizar</b>.
                 </p>
               )}
             </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
+import { adminApi } from '../../../lib/adminApi'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -11,11 +12,12 @@ export default function AutorizacoesArea() {
   const [busy, setBusy] = useState(null)
   const [teto, setTeto] = useState(null)
   const [comprometido, setComprometido] = useState(0)
+  const [aviso, setAviso] = useState('')
 
   async function load() {
     const { data } = await supabase
       .from('exames')
-      .select('id, nome, valor, indicacao, status, created_at, pacientes(nome, cpf)')
+      .select('id, nome, valor, indicacao, status, created_at, netris_slot, pacientes(nome, cpf)')
       .eq('status', 'aguardando_autorizacao')
       .order('created_at', { ascending: true })
     setItens(data || []); setLoading(false)
@@ -34,12 +36,21 @@ export default function AutorizacoesArea() {
   }
   useEffect(() => { load() }, [parceiroId])
 
-  async function decidir(id, aprovar) {
-    setBusy(id)
+  async function decidir(ex, aprovar) {
+    setBusy(ex.id); setAviso('')
     const patch = aprovar
       ? { status: 'autorizado', autorizado_por: user?.id }
       : { status: 'cancelado' }
-    await supabase.from('exames').update(patch).eq('id', id)
+    await supabase.from('exames').update(patch).eq('id', ex.id)
+    // ao autorizar, se houver horário pendente, envia o agendamento ao NetRis
+    if (aprovar && ex.netris_slot) {
+      try {
+        const r = await adminApi.netrisAgendarExame(ex.id, ex.netris_slot)
+        setAviso(`✓ ${ex.pacientes?.nome || 'Paciente'} autorizado e agendado no NetRis (protocolo ${r.agendamentoId || '—'}).`)
+      } catch (e) {
+        setAviso(`⚠ Autorizado, mas o agendamento no NetRis falhou: ${e.message}. Use o botão de agenda no exame para tentar de novo.`)
+      }
+    }
     setBusy(null); await load()
   }
 
@@ -62,6 +73,7 @@ export default function AutorizacoesArea() {
         <p className="text-xs text-on-surface-variant mt-1 tabular-nums">Comprometido {fmt(comprometido)} de {fmt(teto)} ({pct}%)</p>
       </div>
     )}
+    {aviso && <div className="text-sm px-4 py-3 rounded-xl bg-surface-container-lowest shadow-card">{aviso}</div>}
     <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
       <div className="p-6 border-b border-outline-variant/10">
         <h3 className="text-lg font-semibold">Aguardando sua autorização ({itens.length})</h3>
@@ -75,10 +87,11 @@ export default function AutorizacoesArea() {
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{ex.pacientes?.nome || '—'}</p>
                   <p className="text-sm text-on-surface-variant truncate">{ex.nome}{ex.indicacao ? ` · ${ex.indicacao}` : ''} · <span className="tabular-nums">{fmt(ex.valor)}</span></p>
+                  {ex.netris_slot && <p className="text-[11px] text-primary font-bold flex items-center gap-1 mt-0.5"><span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>NetRis: {String(ex.netris_slot.data || '').slice(0, 5)} {ex.netris_slot.horarioString} (agenda ao autorizar)</p>}
                 </div>
                 <div className="flex gap-2 flex-none">
-                  <button disabled={busy === ex.id} onClick={() => decidir(ex.id, true)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-white rounded-md hover:bg-primary-container transition disabled:opacity-50">Autorizar</button>
-                  <button disabled={busy === ex.id} onClick={() => decidir(ex.id, false)} className="px-3 py-1.5 text-[11px] font-bold bg-error-container/40 text-on-error-container rounded-md hover:bg-error-container/70 transition disabled:opacity-50">Recusar</button>
+                  <button disabled={busy === ex.id} onClick={() => decidir(ex, true)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-white rounded-md hover:bg-primary-container transition disabled:opacity-50">{busy === ex.id ? '…' : 'Autorizar'}</button>
+                  <button disabled={busy === ex.id} onClick={() => decidir(ex, false)} className="px-3 py-1.5 text-[11px] font-bold bg-error-container/40 text-on-error-container rounded-md hover:bg-error-container/70 transition disabled:opacity-50">Recusar</button>
                 </div>
               </div>
             ))}
