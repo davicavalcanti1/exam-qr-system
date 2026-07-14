@@ -25,6 +25,35 @@ function isoToBR(iso) {
   return `${d}/${m}/${y}`
 }
 
+// "15/07/2026" -> "2026-07-15"
+function brToISO(br) {
+  const m = String(br || '').match(/^(\d{2})\/(\d{2})\/(\d{4})/)
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : String(br || '')
+}
+
+// Achata a resposta de horarios-agrupados (dias → unidades → medicos → horarios)
+// numa lista simples de slots — o shape estável que o ExameQR consome.
+export function normalizeHorarios(raw) {
+  const dias = Array.isArray(raw) ? raw : []
+  const slots = []
+  for (const d of dias) {
+    for (const u of d.unidades || []) {
+      for (const med of u.medicos || []) {
+        for (const h of med.horarios || []) {
+          slots.push({
+            data: d.data, dataString: brToISO(d.data),
+            horaInicial: h.horaInicial, idUnidade: u.idUnidade,
+            idMedico: med.idMedico, nomeMedico: med.nomeMedico,
+            idSala: h.idSala, sala: h.sala, idEscala: h.idEscala,
+            idHorario: h.idHorario ?? null, procedimento: h.procedimento, duracao: h.duracao,
+          })
+        }
+      }
+    }
+  }
+  return slots
+}
+
 // Primeiro valor não-vazio entre várias chaves candidatas de um objeto.
 function pick(obj, keys) {
   for (const k of keys) {
@@ -152,20 +181,22 @@ export function createNetrisClient({ baseUrl, token, idPlanoConvenio = '', idUni
     const q = new URLSearchParams(typeof params === 'string' ? params : params)
     if (!q.has('idPlanoConvenio') && idPlanoConvenio) q.set('idPlanoConvenio', String(idPlanoConvenio))
     if (!q.has('idConvenio') && idConvenio) q.set('idConvenio', String(idConvenio))
-    if (!q.has('idFilial') && idUnidade) q.set('idFilial', String(idUnidade))
     if (!q.has('idUnidade') && idUnidade) q.set('idUnidade', String(idUnidade))
     return request({ method: 'GET', path: 'netris/api/horarios-agrupados', query: q.toString() })
   }
 
-  // Cria o agendamento (encaixe). Completa idPlanoConvenio/idUnidade da config.
-  async function criarEncaixe(body = {}) {
-    const payload = {
-      ...(idPlanoConvenio ? { idPlanoConvenio } : {}),
-      ...(idConvenio ? { idConvenio } : {}),
-      ...(idUnidade ? { idUnidade } : {}),
-      ...body,
+  // Cria o agendamento (encaixe). O NetRis espera um ARRAY de EncaixeModel.
+  // Defaults: encaixe=true, envioMensagemOrientacao=false. Campos do plano/convênio
+  // da config são usados só se o model não trouxer os seus (o caller manda por parceiro).
+  async function criarEncaixe(model = {}) {
+    const m = {
+      encaixe: true,
+      envioMensagemOrientacao: false,
+      ...(idPlanoConvenio ? { idPlanoConvenio: Number(idPlanoConvenio) } : {}),
+      ...(idConvenio ? { idConvenio: Number(idConvenio) } : {}),
+      ...model,
     }
-    return request({ method: 'POST', path: 'netris/api/horarios/encaixe', body: payload })
+    return request({ method: 'POST', path: 'netris/api/horarios/encaixe', body: [m] })
   }
 
   return { config: cfg, get, request, fetchAtendimentos, searchPacienteByCpf, alterarSituacao, horariosAgrupados, criarEncaixe }

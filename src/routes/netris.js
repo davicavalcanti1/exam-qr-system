@@ -1,10 +1,12 @@
 import { Router } from 'express'
-import { getCaller } from '../lib/supabaseAdmin.js'
+import { getCaller, supabaseAdmin } from '../lib/supabaseAdmin.js'
 import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
-import { SITUACAO, normalizePaciente } from '../lib/netris.js'
+import { resolverContextoExame } from '../lib/netrisAgendamento.js'
+import { SITUACAO, normalizePaciente, normalizeHorarios } from '../lib/netris.js'
 
 const router = Router()
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+const isoToBR = (iso) => { const [y, m, d] = String(iso).split('-'); return `${d}/${m}/${y}` }
 
 // Resolve o caller (Supabase) e o cliente NetRis da empresa dele.
 async function comNetris(req, res) {
@@ -91,6 +93,92 @@ router.post('/confirmar-exame', async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: 'Erro ao alterar situação no NetRis', detail: err.message })
   }
+})
+
+// ── Fase 4 — Agendamento online a partir de um exame do ExameQR ──────────────
+
+// Horários disponíveis para um exame (resolve parceiro/procedimento/paciente).
+router.get('/horarios-exame', async (req, res) => {
+  const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
+  const { exameId, dataInicial, dataFinal } = req.query
+  if (!exameId) return res.status(400).json({ error: 'exameId é obrigatório' })
+  if (!DATE_RE.test(dataInicial || '')) return res.status(400).json({ error: 'dataInicial em YYYY-MM-DD' })
+  const ctx = await resolverContextoExame(exameId)
+  if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
+  try {
+    const params = {
+      buscaInteligente: 'true',
+      dataBusca: isoToBR(dataInicial),
+      dataFinalBusca: isoToBR(dataFinal || dataInicial),
+      idConvenio: ctx.idConvenio, idPlanoConvenio: ctx.idPlanoConvenio,
+      idFilial: 1, idPaciente: ctx.idPaciente,
+      listIdProcedimento: ctx.idProcedimento, pesoPaciente: ctx.peso, limit: 30,
+      ...(ctx.idUnidade ? { idUnidade: ctx.idUnidade } : {}),
+    }
+    const r = await ctx.client.horariosAgrupados(params)
+    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou os horários', upstream: r.body })
+    const slots = normalizeHorarios(JSON.parse(r.body || '[]'))
+    res.json({ exame: ctx.exame.nome, paciente: ctx.exame.pacientes?.nome, total: slots.length, slots })
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao consultar horários no NetRis', detail: err.message })
+  }
+})
+
+// Agenda de fato um exame num slot escolhido e grava o retorno no exame.
+router.post('/agendar-exame', async (req, res) => {
+  const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
+  const { exameId, slot } = req.body || {}
+  if (!exameId || !slot?.dataString || !slot?.horarioString || !slot?.idMedico || !slot?.idSala) {
+    return res.status(400).json({ error: 'exameId e slot {dataString, horarioString, idMedico, idSala} são obrigatórios' })
+  }
+  const ctx = await resolverContextoExame(exameId)
+  if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
+  try {
+    const r = await ctx.client.criarEncaixe({
+      dataString: slot.dataString, horarioString: slot.horarioString,
+      idConvenio: ctx.idConvenio, idPlanoConvenio: ctx.idPlanoConvenio,
+      idProcedimento: ctx.idProcedimento, idPaciente: ctx.idPaciente,
+      idMedico: Number(slot.idMedico), idSala: Number(slot.idSala),
+    })
+    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o agendamento', upstream: r.body })
+    let parsed = null; try { parsed = JSON.parse(r.body) } catch { parsed = r.body }
+    const agId = parsed?.message?.match?.(/ID:\s*(\d+)/)?.[1] || parsed?.id || null
+    // fecha o ciclo: grava no exame o vínculo e o horário
+    await supabaseAdmin.from('exames').update({
+      netris_atendimento_id: agId, netris_agendamento_id: agId,
+      scheduled_at: `${slot.dataString}T${slot.horarioString}:00`,
+    }).eq('id', exameId)
+    res.json({ ok: true, agendamentoId: agId, upstream: parsed })
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao agendar no NetRis', detail: err.message })
+  }
+})
+
+// Listagens para o mapeamento (UI de Desenvolvedor): planos-convênio e procedimentos.
+router.get('/planos', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
+  try {
+    const raw = await ctx.client.get(`/netris/api/plano-convenios?limit=100${req.query.page ? `&page=${encodeURIComponent(req.query.page)}` : ''}`)
+    const list = (Array.isArray(raw) ? raw : []).map(p => ({ idPlanoConvenio: p.id_plano_convenio, idConvenio: p.id_convenio, nome: p.nome }))
+    res.json({ total: list.length, planos: list })
+  } catch (err) { res.status(502).json({ error: 'Erro ao listar planos', detail: err.message }) }
+})
+
+router.get('/procedimentos', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
+  try {
+    // por plano (recomendado) ou lista geral paginada
+    const path = req.query.idPlanoConvenio
+      ? `/netris/api/procedimentos/planoConvenio/${encodeURIComponent(req.query.idPlanoConvenio)}`
+      : `/netris/api/procedimentos?limit=100${req.query.page ? `&page=${encodeURIComponent(req.query.page)}` : ''}`
+    const raw = await ctx.client.get(path)
+    const list = (Array.isArray(raw) ? raw : []).map(p => ({
+      idProcedimento: p.idProcedimento ?? p.id_procedimento,
+      idModalidade: p.idModalidade ?? p.id_modalidade,
+      nome: p.nome,
+    }))
+    res.json({ total: list.length, procedimentos: list })
+  } catch (err) { res.status(502).json({ error: 'Erro ao listar procedimentos', detail: err.message }) }
 })
 
 // Proxy genérico autenticado — qualquer endpoint sob netris/api/.
