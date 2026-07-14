@@ -1,67 +1,62 @@
 import { Router } from 'express'
-import { requireAuth } from '../middleware/auth.js'
-import {
-  isConfigured,
-  fetchAtendimentos,
-  searchPacienteByCpf,
-  alterarSituacao,
-  netrisRequest,
-  SITUACAO,
-  NETRIS_FILIAL,
-} from '../lib/netris.js'
+import { getCaller } from '../lib/supabaseAdmin.js'
+import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
+import { SITUACAO } from '../lib/netris.js'
 
 const router = Router()
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
-router.get('/status', requireAuth, (req, res) => {
-  res.json({ configured: isConfigured() })
+// Resolve o caller (Supabase) e o cliente NetRis da empresa dele.
+async function comNetris(req, res) {
+  const c = await getCaller(req)
+  if (c.error) { res.status(c.status).json({ error: c.error }); return null }
+  const empresaId = c.profile.role === 'owner' ? (req.query.empresaId || req.body?.empresaId) : c.profile.empresa_id
+  if (!empresaId) { res.status(400).json({ error: 'empresaId ausente' }); return null }
+  const client = await netrisParaEmpresa(empresaId)
+  if (!client) { res.status(400).json({ error: 'NetRis não está ativo para esta empresa. Configure em Desenvolvedor.' }); return null }
+  return { caller: c, empresaId, client }
+}
+
+// Status da integração para a empresa do caller.
+router.get('/status', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  const empresaId = c.profile.role === 'owner' ? (req.query.empresaId || null) : c.profile.empresa_id
+  const client = empresaId ? await netrisParaEmpresa(empresaId) : null
+  res.json({ ativo: Boolean(client) })
 })
 
-// Atendimentos (agendados) de um período — a "agenda real" do NetRis.
-router.get('/atendimentos', requireAuth, async (req, res) => {
+// Atendimentos (agenda real) de um período.
+router.get('/atendimentos', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
   const { dataInicial, dataFinal, filialId } = req.query
   if (!DATE_RE.test(dataInicial || '') || !DATE_RE.test(dataFinal || '')) {
     return res.status(400).json({ error: 'dataInicial e dataFinal devem estar em YYYY-MM-DD' })
   }
   try {
-    const data = await fetchAtendimentos({ dataInicial, dataFinal, filialId: filialId || NETRIS_FILIAL })
+    const data = await ctx.client.fetchAtendimentos({ dataInicial, dataFinal, filialId })
     res.json({ data })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao consultar atendimentos no NetRis', detail: err.message })
   }
 })
 
-// Busca paciente por CPF no NetRis.
-router.get('/pacientes/cpf/:cpf', requireAuth, async (req, res) => {
+// Busca paciente por CPF.
+router.get('/pacientes/cpf/:cpf', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
   try {
-    const paciente = await searchPacienteByCpf(req.params.cpf)
-    res.json({ paciente })
+    res.json({ paciente: await ctx.client.searchPacienteByCpf(req.params.cpf) })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao buscar paciente no NetRis', detail: err.message })
   }
 })
 
-// Marca um atendimento como EXAME_REALIZADO (ou outra situação) no NetRis.
-router.post('/confirmar-exame', requireAuth, async (req, res) => {
-  const { atendimentoId, situacao } = req.body || {}
-  if (!atendimentoId) return res.status(400).json({ error: 'atendimentoId é obrigatório' })
-  try {
-    const result = await alterarSituacao(atendimentoId, situacao || SITUACAO.EXAME_REALIZADO)
-    if (!result.ok) return res.status(result.status >= 500 ? 502 : result.status).json({ error: 'NetRis recusou', upstream: result.body })
-    res.json({ ok: true, body: result.body })
-  } catch (err) {
-    res.status(502).json({ error: 'Erro ao alterar situação no NetRis', detail: err.message })
-  }
-})
-
-// Horários disponíveis (agrupados por data). Repassa a query pro NetRis.
-// Params esperados: dataBusca, dataFinalBusca, idFilial, idUnidade, idConvenio,
-// idPlanoConvenio, listIdProcedimento, idMedico, limit, page (ver Swagger NetRis).
-// Obs.: o NetRis exige ao menos listIdProcedimento (+ convênio) — sem isso dá 500.
-router.get('/horarios', requireAuth, async (req, res) => {
+// Horários disponíveis (agrupados). A config completa idPlanoConvenio/idFilial.
+router.get('/horarios', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
   try {
     const query = req.originalUrl.split('?')[1] || ''
-    const r = await netrisRequest({ method: 'GET', path: 'netris/api/horarios-agrupados', query })
+    const r = await ctx.client.horariosAgrupados(query)
     res.status(r.status).type(r.contentType).send(r.body)
   } catch (err) {
     res.status(502).json({ error: 'Erro ao consultar horários no NetRis', detail: err.message })
@@ -69,29 +64,41 @@ router.get('/horarios', requireAuth, async (req, res) => {
 })
 
 // Cria o agendamento (encaixe) no NetRis.
-router.post('/horarios/encaixe', requireAuth, async (req, res) => {
+router.post('/agendar', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
   try {
-    const r = await netrisRequest({ method: 'POST', path: 'netris/api/horarios/encaixe', body: req.body })
+    const r = await ctx.client.criarEncaixe(req.body || {})
     res.status(r.status).type(r.contentType).send(r.body)
   } catch (err) {
-    res.status(502).json({ error: 'Erro ao criar encaixe no NetRis', detail: err.message })
+    res.status(502).json({ error: 'Erro ao criar agendamento no NetRis', detail: err.message })
   }
 })
 
-// Proxy genérico autenticado — porta de entrada pra QUALQUER endpoint do NetRis
-// sob netris/api/ (inclusive o de horários/vagas disponíveis quando definirmos
-// o path). Ex.: GET /api/netris/proxy/netris/api/<endpoint>?<query>
-router.all('/proxy/*', requireAuth, async (req, res) => {
+// Marca um atendimento como EXAME_REALIZADO (ou outra situação).
+router.post('/confirmar-exame', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
+  const { atendimentoId, situacao } = req.body || {}
+  if (!atendimentoId) return res.status(400).json({ error: 'atendimentoId é obrigatório' })
+  try {
+    const r = await ctx.client.alterarSituacao(atendimentoId, situacao || SITUACAO.EXAME_REALIZADO)
+    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou', upstream: r.body })
+    res.json({ ok: true, body: r.body })
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao alterar situação no NetRis', detail: err.message })
+  }
+})
+
+// Proxy genérico autenticado — qualquer endpoint sob netris/api/.
+router.all('/proxy/*', async (req, res) => {
+  const ctx = await comNetris(req, res); if (!ctx) return
   try {
     const path = req.params[0] || ''
     const query = req.originalUrl.split('?')[1] || ''
-    const result = await netrisRequest({
-      method: req.method,
-      path,
-      query,
+    const r = await ctx.client.request({
+      method: req.method, path, query,
       body: ['POST', 'PATCH', 'PUT'].includes(req.method) ? req.body : undefined,
     })
-    res.status(result.status).type(result.contentType).send(result.body)
+    res.status(r.status).type(r.contentType).send(r.body)
   } catch (err) {
     res.status(502).json({ error: 'Erro no proxy NetRis', detail: err.message })
   }

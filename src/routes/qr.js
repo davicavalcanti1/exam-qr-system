@@ -2,6 +2,8 @@ import { Router } from 'express'
 import QRCode from 'qrcode'
 import crypto from 'crypto'
 import { supabaseAdmin, supabaseConfigured, getCaller } from '../lib/supabaseAdmin.js'
+import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
+import { SITUACAO } from '../lib/netris.js'
 
 const router = Router()
 
@@ -50,7 +52,7 @@ router.post('/validar', async (req, res) => {
   if (qr.status !== 'ativo') return res.json({ valid: false, error: 'QR já utilizado ou revogado' })
 
   const { data: exame } = await supabaseAdmin
-    .from('exames').select('id, nome, valor, status, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
+    .from('exames').select('id, nome, valor, status, empresa_id, netris_atendimento_id, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
   if (!exame) return res.json({ valid: false, error: 'Exame vinculado ao QR não encontrado' })
 
   const { data: upd, error: exErr } = await supabaseAdmin
@@ -64,7 +66,19 @@ router.post('/validar', async (req, res) => {
     .from('qr_codes').update({ status: 'usado', used_at: new Date().toISOString() }).eq('id', qr.id)
   if (qrErr) return res.status(400).json({ valid: false, error: `Falha ao baixar o QR: ${qrErr.message}` })
 
-  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', valor: exame?.valor ?? null })
+  // Best-effort: reflete a realização no NetRis, se a empresa usa e há atendimento vinculado.
+  let netris = null
+  if (exame.netris_atendimento_id) {
+    try {
+      const client = await netrisParaEmpresa(exame.empresa_id)
+      if (client) {
+        const r = await client.alterarSituacao(exame.netris_atendimento_id, SITUACAO.EXAME_REALIZADO)
+        netris = r.ok ? 'confirmado' : 'falhou'
+      }
+    } catch { netris = 'falhou' }
+  }
+
+  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', valor: exame?.valor ?? null, netris })
 })
 
 export default router
