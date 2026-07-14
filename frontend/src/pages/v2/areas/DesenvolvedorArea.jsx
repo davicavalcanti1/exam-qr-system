@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { adminApi } from '../../../lib/adminApi'
 import NetrisConsole from './NetrisConsole'
 import NetrisMapeamento from './NetrisMapeamento'
@@ -60,9 +61,14 @@ export default function DesenvolvedorArea() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Desenvolvedor</h2>
-        <p className="text-sm text-on-surface-variant mt-1">Escolha como esta empresa marca os exames. As credenciais ficam guardadas no servidor — nunca chegam ao navegador.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Desenvolvedor</h2>
+          <p className="text-sm text-on-surface-variant mt-1">Escolha como esta empresa marca os exames. As credenciais ficam guardadas no servidor — nunca chegam ao navegador.</p>
+        </div>
+        <Link to="/integracao-netris" className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition whitespace-nowrap">
+          <span className="material-symbols-outlined text-base">help</span>Como funciona
+        </Link>
       </div>
 
       {/* Seleção do método */}

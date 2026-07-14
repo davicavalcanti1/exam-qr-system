@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Entrar from './pages/v2/Entrar'
 import Painel from './pages/v2/Painel'
 import ScanPage from './pages/v2/ScanPage'
+import IntegracaoNetris from './pages/v2/IntegracaoNetris'
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/painel" element={<Painel />} />
         <Route path="/scan" element={<ScanPage />} />
+        <Route path="/integracao-netris" element={<IntegracaoNetris />} />
         {/* rotas legadas (Express/clinic/partner) desativadas — tudo cai no login v2 */}
         <Route path="/login" element={<Navigate to="/entrar" replace />} />
         <Route path="*" element={<Navigate to="/entrar" replace />} />

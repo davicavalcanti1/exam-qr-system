@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { useAuth } from '../../../auth/AuthContext'
 import { adminApi, carregarTudo } from '../../../lib/adminApi'
 
 const parseId = (v) => { const m = String(v || '').match(/^\s*(\d+)/); return m ? Number(m[1]) : null }
+const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function NetrisMapeamento() {
+  const { empresaId } = useAuth()
+  const [novo, setNovo] = useState({ nome: '', valor: '', proc: '' })
+  const [criando, setCriando] = useState(false)
   const [planos, setPlanos] = useState([])
   const [procs, setProcs] = useState([])
   const [parceiros, setParceiros] = useState([])
@@ -43,6 +48,20 @@ export default function NetrisMapeamento() {
       setParceiros(list => list.map(x => x.id === parc.id ? { ...x, netris_id_plano_convenio: idPlano, netris_id_convenio: plano?.idConvenio ?? null } : x))
       marca(parc.id, 'ok')
     } catch { marca(parc.id, 'erro') }
+  }
+
+  async function criarExame() {
+    if (!novo.nome.trim()) return
+    setCriando(true)
+    const idProc = parseId(novo.proc)
+    const { data, error } = await supabase.from('procedimentos').insert({
+      empresa_id: empresaId, nome: novo.nome.trim(), valor: Number(novo.valor || 0),
+      netris_procedimento_id: idProc ? String(idProc) : null, ativo: true,
+    }).select('id, nome, netris_procedimento_id').single()
+    setCriando(false)
+    if (error) return
+    setCatalogo(list => [...list, data].sort((a, b) => a.nome.localeCompare(b.nome)))
+    setNovo({ nome: '', valor: '', proc: '' })
   }
 
   async function salvarProc(cat, valor) {
@@ -92,6 +111,14 @@ export default function NetrisMapeamento() {
       <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
         <h3 className="text-lg font-semibold mb-1">Exames → procedimento NetRis</h3>
         <p className="text-sm text-on-surface-variant mb-4">Vincule cada item do catálogo ao procedimento do NetRis ({procs.length} procedimentos). Ex.: “Mamografia” → 1397 MAMOGRAFIA MARCADA ONLINE.</p>
+
+        {/* criar exame já atribuindo o procedimento */}
+        <div className="bg-surface rounded-lg p-3 mb-4 grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1.4fr_auto] gap-2 items-center">
+          <input className="px-3 py-2 text-sm rounded-lg bg-surface-container-lowest ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" placeholder="Novo exame (nome)" value={novo.nome} onChange={e => setNovo(n => ({ ...n, nome: e.target.value }))} />
+          <input className="px-3 py-2 text-sm rounded-lg bg-surface-container-lowest ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" placeholder="Valor" inputMode="decimal" value={novo.valor} onChange={e => setNovo(n => ({ ...n, valor: e.target.value }))} />
+          <input className="px-3 py-2 text-sm rounded-lg bg-surface-container-lowest ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" list="dl-procs" placeholder="Procedimento NetRis (opcional)" value={novo.proc} onChange={e => setNovo(n => ({ ...n, proc: e.target.value }))} />
+          <button type="button" onClick={criarExame} disabled={criando || !novo.nome.trim()} className="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50 flex-none">{criando ? '…' : 'Criar'}</button>
+        </div>
         {catalogo.length === 0 ? <p className="text-sm text-on-surface-variant">Nenhum exame no catálogo.</p> : (
           <div className="space-y-3">
             {catalogo.map(c => (
