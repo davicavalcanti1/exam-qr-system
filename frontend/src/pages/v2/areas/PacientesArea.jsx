@@ -2,10 +2,20 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
+import { useToast, EmptyState } from '../../../components/ui'
 import QrModal from '../QrModal'
 import AgendarModal from '../AgendarModal'
+import ExameEditModal from '../ExameEditModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+function cpfValido(cpf) {
+  const c = String(cpf).replace(/\D/g, '')
+  if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false
+  let s = 0; for (let i = 0; i < 9; i++) s += +c[i] * (10 - i)
+  let d1 = (s * 10) % 11; if (d1 === 10) d1 = 0; if (d1 !== +c[9]) return false
+  s = 0; for (let i = 0; i < 10; i++) s += +c[i] * (11 - i)
+  let d2 = (s * 10) % 11; if (d2 === 10) d2 = 0; return d2 === +c[10]
+}
 const diaCurto = (br) => String(br || '').slice(0, 5) // "15/07/2026" -> "15/07"
 const diaLongo = (br) => {
   const [d, m, y] = String(br).split('/')
@@ -23,6 +33,7 @@ const STATUS = {
 
 export default function PacientesArea({ escolherParceiro = false }) {
   const { user, empresaId, parceiroId } = useAuth()
+  const toast = useToast()
   const [nome, setNome] = useState('')
   const [cpf, setCpf] = useState('')
   const [sexo, setSexo] = useState('')
@@ -44,6 +55,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [qrExame, setQrExame] = useState(null)
   const [agExame, setAgExame] = useState(null)
   const [cancelandoId, setCancelandoId] = useState(null)
+  const [edExame, setEdExame] = useState(null)
   const [consentimento, setConsentimento] = useState(false)
 
   useEffect(() => {
@@ -62,7 +74,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   async function load() {
     const { data } = await supabase
       .from('pacientes')
-      .select('id, nome, cpf, created_at, exames(id, nome, valor, status, scheduled_at, netris_atendimento_id)')
+      .select('id, nome, cpf, created_at, exames(id, nome, valor, status, indicacao, scheduled_at, netris_atendimento_id)')
       .order('created_at', { ascending: false })
     setLista(data || []); setLoading(false)
   }
@@ -149,8 +161,8 @@ export default function PacientesArea({ escolherParceiro = false }) {
   async function cancelarAgendamento(ex) {
     if (!window.confirm(`Cancelar o agendamento de ${ex.nome} no NetRis?`)) return
     setCancelandoId(ex.id)
-    try { await adminApi.netrisCancelarExame(ex.id); await load() }
-    catch (e) { alert('Falha ao cancelar: ' + e.message) }
+    try { await adminApi.netrisCancelarExame(ex.id); toast.success('Agendamento cancelado.'); await load() }
+    catch (e) { toast.error('Falha ao cancelar: ' + e.message) }
     finally { setCancelandoId(null) }
   }
 
@@ -160,6 +172,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
     if (exames.some(x => !x.procId)) { setErr('Selecione o exame em cada item.'); return }
     if (!consentimento) { setErr('É necessário o consentimento do paciente (LGPD) para prosseguir.'); return }
     const cpfLimpo = cpf.replace(/\D/g, '')
+    if (!cpfValido(cpfLimpo)) { setErr('CPF inválido. Confira os números.'); return }
     setSaving(true)
     try {
       // Integração NetRis: garante o paciente lá (busca/cria) antes de salvar aqui.
@@ -326,7 +339,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Pacientes ({lista.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
-          : lista.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum paciente ainda.</p>
+          : lista.length === 0 ? <EmptyState icon="groups" title="Nenhum paciente ainda" hint="Cadastre o primeiro paciente no formulário acima." />
           : <div className="divide-y divide-outline-variant/10">
               {lista.map(p => (
                 <div key={p.id} className="px-6 py-4">
@@ -340,6 +353,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
                       const temQr = ['autorizado', 'realizado'].includes(ex.status)
                       const podeAgendar = ex.status === 'autorizado'
                       const agendado = Boolean(ex.netris_atendimento_id)
+                      const podeEditar = !['realizado', 'cancelado'].includes(ex.status)
                       return (
                         <span key={ex.id} className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>
                           {ex.nome} · {st.label}
@@ -358,6 +372,11 @@ export default function PacientesArea({ escolherParceiro = false }) {
                               <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{cancelandoId === ex.id ? 'hourglass_empty' : 'event_busy'}</span>
                             </button>
                           )}
+                          {podeEditar && (
+                            <button onClick={() => setEdExame(ex)} title="Editar / cancelar exame" className="p-0.5 rounded hover:bg-black/10">
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>edit</span>
+                            </button>
+                          )}
                         </span>
                       )
                     })}
@@ -369,6 +388,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
 
       <QrModal exame={qrExame} onClose={() => { setQrExame(null); load() }} />
       {agExame && <AgendarModal exame={agExame} onClose={() => setAgExame(null)} onDone={load} />}
+      {edExame && <ExameEditModal exame={edExame} onClose={() => setEdExame(null)} onSaved={load} />}
     </div>
   )
 }
