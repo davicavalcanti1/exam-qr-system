@@ -84,7 +84,7 @@ export default function ContratosArea() {
   return (
     <div className="space-y-8">
       {/* Modelo */}
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card space-y-3">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card space-y-3">
         <h3 className="text-lg font-semibold">Modelo do contrato</h3>
         <p className="text-sm text-on-surface-variant">Use os campos entre chaves — eles são preenchidos ao gerar: <code className="text-xs bg-surface-container px-1 rounded">{'{{parceiro_nome}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{parceiro_cnpj}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{teto}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{empresa_nome}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{data}}'}</code></p>
         <div><label className={label}>Título</label><input className={input} value={modelo.titulo} onChange={e => setModelo(m => ({ ...m, titulo: e.target.value }))} /></div>
@@ -96,7 +96,7 @@ export default function ContratosArea() {
       </section>
 
       {/* Contratos por parceiro */}
-      <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+      <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Contratos por parceiro ({parceiros.length})</h3></div>
         {parceiros.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum parceiro cadastrado.</p>
           : <div className="divide-y divide-outline-variant/10">

@@ -72,7 +72,7 @@ export default function DesenvolvedorArea() {
       </div>
 
       {/* Seleção do método */}
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <span className={label}>Método de agendamento</span>
         <div className="grid gap-3 mt-3 sm:grid-cols-2">
           {Object.entries(providers).map(([k, v]) => (
@@ -90,7 +90,7 @@ export default function DesenvolvedorArea() {
 
       {/* Config do provedor selecionado */}
       {def.fields.length > 0 && (
-        <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card space-y-4">
+        <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card space-y-4">
           <div className="flex items-center justify-between">
             <span className={label}>Configuração — {def.label}</span>
             <label className="flex items-center gap-2 text-sm font-bold cursor-pointer">

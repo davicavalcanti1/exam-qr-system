@@ -32,7 +32,7 @@ export default function ReciboModal({ cobrancaId, onClose }) {
         #recibo-print { position: absolute; inset: 0; margin: 0; box-shadow: none; border-radius: 0; max-height: none; }
         .no-print { display: none !important; }
       }`}</style>
-      <div className="bg-white rounded-xl shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         {!c ? <div className="p-10 text-center text-on-surface-variant text-sm">Carregando…</div> : (
           <>
             <div id="recibo-print" className="p-8">

@@ -95,7 +95,7 @@ export default function CobrancasArea({ somenteLeitura = false }) {
   return (
     <div className="space-y-8">
       {!somenteLeitura && (
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-1">Fechar lote de cobrança</h3>
         <p className="text-sm text-on-surface-variant mb-4">Soma os exames <b>realizados</b> (débito no scan) do parceiro no período, ainda não faturados.</p>
         <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr_auto] gap-3 items-end">
@@ -135,7 +135,7 @@ export default function CobrancasArea({ somenteLeitura = false }) {
       </section>
       )}
 
-      <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+      <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">{somenteLeitura ? 'Suas cobranças' : 'Lotes'} ({lista.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
           : lista.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum lote fechado ainda.</p>

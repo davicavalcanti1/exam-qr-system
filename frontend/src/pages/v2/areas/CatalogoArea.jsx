@@ -48,7 +48,7 @@ export default function CatalogoArea() {
 
   return (
     <div className="space-y-8">
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-4">Novo exame</h3>
         <form onSubmit={criar} className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 items-end">
           <div><label className={label}>Nome do exame</label><input className={input} value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Mamografia Parceiro" required /></div>
@@ -58,7 +58,7 @@ export default function CatalogoArea() {
         </form>
       </section>
 
-      <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+      <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Exames oferecidos ({itens.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
           : itens.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum exame cadastrado. Adicione acima.</p>

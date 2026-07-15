@@ -87,8 +87,8 @@ export default function NetrisMapeamento() {
     marca(cat.id, 'ok')
   }
 
-  if (loading) return <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card"><div className="flex items-center gap-2 text-sm text-on-surface-variant"><div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />Carregando listas do NetRis…</div></section>
-  if (erro) return <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card"><p className="text-sm text-on-error-container">Não foi possível carregar do NetRis: {erro}</p></section>
+  if (loading) return <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card"><div className="flex items-center gap-2 text-sm text-on-surface-variant"><div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />Carregando listas do NetRis…</div></section>
+  if (erro) return <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card"><p className="text-sm text-on-error-container">Não foi possível carregar do NetRis: {erro}</p></section>
 
   const Selo = ({ id }) => salvo[id] === 'salvando' ? <span className="text-[11px] text-on-surface-variant">salvando…</span>
     : salvo[id] === 'ok' ? <span className="text-[11px] text-primary font-bold">✓ salvo</span>
@@ -103,7 +103,7 @@ export default function NetrisMapeamento() {
       <datalist id="dl-planos">{planos.map(p => <option key={p.idPlanoConvenio} value={`${p.idPlanoConvenio} — ${p.nome}`} />)}</datalist>
       <datalist id="dl-procs">{procs.map(p => <option key={p.idProcedimento} value={`${p.idProcedimento} — ${p.nome}`} />)}</datalist>
 
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-1">Parceiros → plano-convênio NetRis</h3>
         <p className="text-sm text-on-surface-variant mb-4">Vincule cada parceiro ao plano-convênio dele no NetRis ({planos.length} planos). O convênio é preenchido junto.</p>
         {parceiros.length === 0 ? <p className="text-sm text-on-surface-variant">Nenhum parceiro cadastrado.</p> : (
@@ -121,7 +121,7 @@ export default function NetrisMapeamento() {
         )}
       </section>
 
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-1">Exames → procedimento NetRis</h3>
         <p className="text-sm text-on-surface-variant mb-3">Vincule cada exame do catálogo a um procedimento do plano abaixo. Só aparecem procedimentos <b>desse plano</b> — isso garante que o agendamento vai funcionar (evita o erro de mismatch).</p>
         <div className="flex items-center gap-2 mb-4">

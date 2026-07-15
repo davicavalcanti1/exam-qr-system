@@ -68,7 +68,7 @@ export default function EmpresaArea() {
 
   return (
     <div className="space-y-8">
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-4">Novo parceiro</h3>
         <form onSubmit={createParceiro} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div><label className={label}>Nome</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required /></div>
@@ -79,7 +79,7 @@ export default function EmpresaArea() {
         </form>
       </section>
 
-      <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+      <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Parceiros ({parceiros.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
           : parceiros.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum parceiro ainda.</p>

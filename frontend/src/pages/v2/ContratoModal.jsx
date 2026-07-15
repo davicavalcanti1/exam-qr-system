@@ -41,7 +41,7 @@ export default function ContratoModal({ contrato, podeAssinar = false, onClose, 
         #contrato-print { position: absolute; inset: 0; margin: 0; max-height: none; }
         .no-print { display: none !important; }
       }`}</style>
-      <div className="bg-white rounded-xl shadow-card w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl shadow-card w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="p-5 border-b border-outline-variant/10 flex items-center justify-between no-print">
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold">{contrato.titulo}</h3>

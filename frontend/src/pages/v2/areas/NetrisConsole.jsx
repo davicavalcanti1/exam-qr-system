@@ -48,7 +48,7 @@ export default function NetrisConsole() {
   const input = 'w-full px-3 py-2.5 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
 
   return (
-    <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card space-y-4">
+    <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card space-y-4">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-primary">terminal</span>
         <h3 className="text-lg font-semibold">Console NetRis</h3>

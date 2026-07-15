@@ -32,7 +32,7 @@ export default function ParceiroArea() {
 
   return (
     <div className="space-y-6">
-      <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+      <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10 flex items-center justify-between">
           <h3 className="text-lg font-semibold">Funcionários ({funcs.length})</h3>
           <button onClick={() => setModal(true)} className="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1">

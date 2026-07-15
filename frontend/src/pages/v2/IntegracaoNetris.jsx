@@ -48,7 +48,7 @@ export default function IntegracaoNetris() {
                   <div className="relative z-10 flex-none w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm">
                     <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>{p.icon}</span>
                   </div>
-                  <div className="bg-surface-container-lowest rounded-xl shadow-card p-4 flex-1">
+                  <div className="bg-surface-container-lowest rounded-2xl shadow-card p-4 flex-1">
                     <div className="flex items-baseline gap-2">
                       <span className="text-[11px] font-bold text-primary tabular-nums">{String(i + 1).padStart(2, '0')}</span>
                       <h3 className="font-bold">{p.titulo}</h3>
@@ -78,7 +78,7 @@ export default function IntegracaoNetris() {
         {/* Endpoints */}
         <section>
           <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">Endpoints do backend</h2>
-          <div className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+          <div className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <tbody className="divide-y divide-outline-variant/10">

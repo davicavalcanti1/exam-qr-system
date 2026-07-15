@@ -37,7 +37,7 @@ export default function AuditoriaArea() {
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
 
   return (
-    <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+    <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
       <div className="p-6 border-b border-outline-variant/10">
         <h3 className="text-lg font-semibold">Auditoria</h3>
         <p className="text-sm text-on-surface-variant mt-1">Trilha das ações sensíveis (clínicas e financeiras) da sua empresa.</p>

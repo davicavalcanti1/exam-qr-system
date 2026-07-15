@@ -27,14 +27,14 @@ export default function ContratoArea() {
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
 
   if (contratos.length === 0)
-    return <div className="bg-surface-container-lowest p-10 rounded-xl shadow-card text-center text-on-surface-variant text-sm">Nenhum contrato disponível ainda. A empresa gera o contrato da parceria para você assinar.</div>
+    return <div className="bg-surface-container-lowest p-10 rounded-2xl shadow-card text-center text-on-surface-variant text-sm">Nenhum contrato disponível ainda. A empresa gera o contrato da parceria para você assinar.</div>
 
   return (
     <div className="space-y-4">
       {contratos.map(c => {
         const st = ST[c.status] || ST.pendente
         return (
-          <section key={c.id} className="bg-surface-container-lowest rounded-xl shadow-card p-6">
+          <section key={c.id} className="bg-surface-container-lowest rounded-2xl shadow-card p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-lg font-semibold">{c.titulo}</h3>
