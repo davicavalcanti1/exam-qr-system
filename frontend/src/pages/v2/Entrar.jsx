@@ -39,9 +39,9 @@ export default function Entrar() {
     <div className="min-h-screen flex">
       {/* Painel de marca (esquerda, desktop) */}
       <aside className="hidden lg:flex w-1/2 flex-col justify-between p-12 text-white relative overflow-hidden signature-gradient">
-        <div className="flex items-center gap-2">
-          <img src="/brotopay.png" alt="ExameQR" className="w-10 h-10 object-contain" />
-          <span className="font-display text-2xl font-extrabold tracking-tight">ExameQR</span>
+        <div className="flex items-center gap-3">
+          <img src="/brotopay.png" alt="ExameQR" className="w-16 h-16 object-contain" />
+          <span className="font-display text-4xl font-extrabold tracking-tight">ExameQR</span>
         </div>
         <div className="max-w-md">
           <h1 className="font-display text-4xl font-extrabold tracking-tight leading-tight">Controle de exames por parceria, do jeito certo.</h1>
@@ -62,8 +62,8 @@ export default function Entrar() {
       <main className="flex-1 flex items-center justify-center p-6 bg-surface">
         <div className="w-full max-w-sm">
           <div className="lg:hidden text-center mb-8">
-            <img src="/brotopay.png" alt="ExameQR" className="w-16 h-16 mx-auto mb-2 object-contain" />
-            <h1 className="font-display text-2xl font-extrabold tracking-tight text-primary">ExameQR</h1>
+            <img src="/brotopay.png" alt="ExameQR" className="w-24 h-24 mx-auto mb-2 object-contain" />
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-primary">ExameQR</h1>
           </div>
 
           <h2 className="font-display text-2xl font-extrabold tracking-tight">Acesse sua conta</h2>
