@@ -200,7 +200,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
 
   return (
     <div className="space-y-8">
-      <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
+      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-4">Novo paciente</h3>
         {catalogo.length === 0 ? (
           <p className="text-sm text-on-surface-variant py-4">Nenhum exame no catálogo. Peça ao administrador da empresa para cadastrar os exames em <b>Exames &amp; preços</b>.</p>
@@ -323,7 +323,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
         )}
       </section>
 
-      <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+      <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Pacientes ({lista.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
           : lista.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum paciente ainda.</p>
