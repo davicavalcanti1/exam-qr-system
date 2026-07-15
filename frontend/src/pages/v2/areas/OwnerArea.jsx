@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { adminApi } from '../../../lib/adminApi'
 import { useToast } from '../../../components/ui'
+import { buscarCnpj as consultarCnpj } from '../../../integrations/brasilapi/cnpj'
 import CreateUserModal from '../CreateUserModal'
 
 export default function OwnerArea() {
@@ -37,7 +37,7 @@ export default function OwnerArea() {
     if (c.length !== 14) return toast.error('Informe um CNPJ com 14 dígitos.')
     setBuscando(true)
     try {
-      const d = await adminApi.buscarCnpj(c)
+      const d = await consultarCnpj(c)
       setForm(f => ({ ...f, nome: d.razaoSocial || f.nome, nomeFantasia: d.nomeFantasia, endereco: d.endereco, telefone: d.telefone, email: d.email }))
       toast.success(`${d.razaoSocial}${d.situacao ? ' · ' + d.situacao : ''}`)
     } catch (e) { toast.error(e.message) } finally { setBuscando(false) }

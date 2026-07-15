@@ -14,11 +14,16 @@ src/integrations/
 ```
 As rotas são montadas em `src/app.js` (`app.use('/api/...', <router>)`).
 
-## Existentes
+## Existentes (backend)
 - **netris/** — agendamento/atendimentos NetRis (Netpacs). `client.js` (factory por
   empresa), `empresa.js` (monta o cliente da config salva), `agendamento.js`
   (resolve exame→plano/procedimento/paciente), `routes.js` (`/api/netris/*`).
-- **brasilapi/cnpj/** — consulta de empresa por CNPJ. `routes.js` (`/api/cnpj/:cnpj`).
+
+## Integrações no frontend
+Serviços públicos, sem chave e com CORS (não precisam do backend) vivem em
+`frontend/src/integrations/<provedor>/`:
+- **brasilapi/cnpj.js** — consulta de empresa por CNPJ direto do navegador
+  (evita egress do servidor). Usada no cadastro de empresa/parceiro.
 
 ## Ao adicionar uma integração nova
 1. Crie `src/integrations/<provedor>/`.
