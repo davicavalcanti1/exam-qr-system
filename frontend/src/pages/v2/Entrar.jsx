@@ -2,6 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { resolveLoginEmail } from '../../lib/supabase'
+import { Button, Field, Input } from '../../components/ui'
+
+const DESTAQUES = [
+  { icon: 'qr_code_2', txt: 'QR único por paciente — o exame só debita o teto no scan' },
+  { icon: 'event_available', txt: 'Agendamento real, integrado ao NetRis' },
+  { icon: 'receipt_long', txt: 'Cobrança por lote, com recibo e contrato' },
+]
 
 export default function Entrar() {
   const { ready, signIn } = useAuth()
@@ -13,80 +20,73 @@ export default function Entrar() {
   const navigate = useNavigate()
 
   async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault(); setError(''); setLoading(true)
     try {
       const { error } = await signIn(resolveLoginEmail(login), password)
       if (error) {
         const m = (error.message || '').toLowerCase()
-        if (m.includes('not confirmed')) setError('E-mail não confirmado. No Supabase, confirme o usuário (Auto Confirm) ou desative "Confirm email".')
+        if (m.includes('not confirmed')) setError('E-mail não confirmado no Supabase (ative Auto Confirm).')
         else if (m.includes('invalid login')) setError('Usuário ou senha incorretos.')
         else setError(error.message || 'Não foi possível entrar.')
         return
       }
       navigate('/painel')
-    } catch {
-      setError('Não foi possível entrar. Tente novamente.')
-    } finally {
-      setLoading(false)
-    }
+    } catch { setError('Não foi possível entrar. Tente novamente.') }
+    finally { setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen soft-bg-gradient flex items-center justify-center p-4">
-      <main className="w-full max-w-[420px]">
-        <div className="text-center mb-8">
-          <img src="/brotopay.png" alt="ExameQR" className="w-20 h-20 mx-auto mb-2 object-contain" />
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-primary">ExameQR</h1>
-          <p className="text-on-surface-variant text-sm mt-1">Controle de exames por parceria</p>
+    <div className="min-h-screen flex">
+      {/* Painel de marca (esquerda, desktop) */}
+      <aside className="hidden lg:flex w-1/2 flex-col justify-between p-12 text-white relative overflow-hidden signature-gradient">
+        <div className="flex items-center gap-2">
+          <img src="/brotopay.png" alt="ExameQR" className="w-10 h-10 object-contain" />
+          <span className="font-display text-2xl font-extrabold tracking-tight">ExameQR</span>
         </div>
+        <div className="max-w-md">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight leading-tight">Controle de exames por parceria, do jeito certo.</h1>
+          <ul className="mt-8 space-y-4">
+            {DESTAQUES.map((d, i) => (
+              <li key={i} className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center flex-none"><span className="material-symbols-outlined">{d.icon}</span></span>
+                <span className="text-white/90 text-sm">{d.txt}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="text-white/60 text-xs">ExameQR · Campina Grande — PB</p>
+        <div className="absolute -right-16 -bottom-16 w-72 h-72 rounded-full bg-white/10" aria-hidden />
+      </aside>
 
-        <div className="bg-surface-container-lowest rounded-xl shadow-card p-8 border border-outline-variant/5">
-          <h2 className="text-xl font-semibold text-on-surface mb-1">Acesse sua conta</h2>
-          <p className="text-on-surface-variant text-sm mb-6">Entre com seu usuário ou e-mail.</p>
+      {/* Formulário (direita) */}
+      <main className="flex-1 flex items-center justify-center p-6 bg-surface">
+        <div className="w-full max-w-sm">
+          <div className="lg:hidden text-center mb-8">
+            <img src="/brotopay.png" alt="ExameQR" className="w-16 h-16 mx-auto mb-2 object-contain" />
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-primary">ExameQR</h1>
+          </div>
 
-          {!ready && (
-            <div className="mb-4 p-3 rounded-lg bg-yellow-50 text-yellow-800 text-sm">
-              Configuração do Supabase pendente (VITE_SUPABASE_URL / ANON_KEY).
-            </div>
-          )}
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">Acesse sua conta</h2>
+          <p className="text-on-surface-variant text-sm mt-1 mb-6">Entre com seu usuário ou e-mail.</p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label className="block text-xs font-bold tracking-widest text-on-surface-variant uppercase">Usuário ou e-mail</label>
-              <input
-                className="w-full px-4 py-3 bg-surface-bright border border-outline-variant rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary outline-none transition"
-                placeholder="nome.sobrenome"
-                value={login}
-                onChange={e => setLogin(e.target.value)}
-                autoFocus
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-xs font-bold tracking-widest text-on-surface-variant uppercase">Senha</label>
+          {!ready && <div className="mb-4 p-3 rounded-xl bg-yellow-50 text-yellow-800 text-sm">Configuração do Supabase pendente (VITE_SUPABASE_URL / ANON_KEY).</div>}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Field label="Usuário ou e-mail">
+              <Input placeholder="nome.sobrenome" value={login} onChange={e => setLogin(e.target.value)} autoFocus required />
+            </Field>
+            <Field label="Senha">
               <div className="relative">
-                <input
-                  className="w-full px-4 py-3 pr-10 bg-surface-bright border border-outline-variant rounded-lg text-on-surface text-sm focus:ring-2 focus:ring-primary outline-none transition"
-                  type={show ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
+                <Input type={show ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pr-10" required />
                 <button type="button" onClick={() => setShow(s => !s)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface-variant">
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{show ? 'visibility_off' : 'visibility'}</span>
                 </button>
               </div>
-            </div>
+            </Field>
 
-            {error && <div className="bg-error-container/40 border border-error/20 rounded-lg px-4 py-3 text-sm text-on-error-container">{error}</div>}
+            {error && <div className="bg-error-container/40 rounded-xl px-4 py-3 text-sm text-on-error-container">{error}</div>}
 
-            <button type="submit" disabled={loading || !ready} className="w-full bg-primary text-white font-bold py-3.5 rounded-lg hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-              {loading ? 'Entrando…' : 'Entrar'}
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-            </button>
+            <Button type="submit" loading={loading} disabled={!ready} iconRight="arrow_forward" className="w-full !py-3.5">Entrar</Button>
           </form>
         </div>
       </main>

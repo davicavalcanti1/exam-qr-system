@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { Button, Field, Input, Loading } from '../../components/ui'
 import OwnerArea from './areas/OwnerArea'
 import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
@@ -15,10 +16,6 @@ import DesenvolvedorArea from './areas/DesenvolvedorArea'
 import ContratosArea from './areas/ContratosArea'
 import ContratoArea from './areas/ContratoArea'
 import AuditoriaArea from './areas/AuditoriaArea'
-
-function Spinner() {
-  return <div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
-}
 
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
@@ -36,130 +33,139 @@ function TrocarSenha({ onDone }) {
   }
   return (
     <div className="min-h-screen soft-bg-gradient flex items-center justify-center p-4">
-      <form onSubmit={submit} className="bg-surface-container-lowest rounded-xl shadow-card p-8 w-full max-w-sm space-y-4">
+      <form onSubmit={submit} className="bg-surface-container-lowest rounded-2xl shadow-card p-8 w-full max-w-sm space-y-5">
         <div className="text-center">
-          <img src="/brotopay.png" alt="ExameQR" className="w-16 h-16 mx-auto mb-2 object-contain" />
-          <h2 className="text-lg font-bold">Defina sua nova senha</h2>
-          <p className="text-sm text-on-surface-variant">Primeiro acesso — troque a senha padrão.</p>
+          <img src="/brotopay.png" alt="ExameQR" className="w-14 h-14 mx-auto mb-2 object-contain" />
+          <h2 className="font-display text-xl font-extrabold tracking-tight">Defina sua nova senha</h2>
+          <p className="text-sm text-on-surface-variant mt-1">Primeiro acesso — troque a senha padrão.</p>
         </div>
-        <input type="password" placeholder="Nova senha" value={p1} onChange={e => setP1(e.target.value)} className="w-full px-4 py-3 bg-surface-container rounded-lg outline-none focus:ring-2 focus:ring-primary text-sm" required />
-        <input type="password" placeholder="Confirmar nova senha" value={p2} onChange={e => setP2(e.target.value)} className="w-full px-4 py-3 bg-surface-container rounded-lg outline-none focus:ring-2 focus:ring-primary text-sm" required />
+        <Field label="Nova senha"><Input type="password" value={p1} onChange={e => setP1(e.target.value)} required /></Field>
+        <Field label="Confirmar nova senha"><Input type="password" value={p2} onChange={e => setP2(e.target.value)} required /></Field>
         {msg && <p className="text-sm text-error">{msg}</p>}
-        <button disabled={loading} className="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-primary-container transition disabled:opacity-50">{loading ? 'Salvando…' : 'Salvar e continuar'}</button>
+        <Button type="submit" loading={loading} className="w-full">Salvar e continuar</Button>
       </form>
     </div>
   )
 }
 
-const TITULOS = {
-  owner: 'Empresas & administradores',
-  empresa_admin: 'Parceiros & coordenadores',
-  parceiro_coordenador: 'Funcionários',
-  parceiro_funcionario: 'Pacientes',
+// Navegação por papel: cada item {k, label, icon}. Ordem = ordem na sidebar.
+const NAV = {
+  owner: [{ k: 'empresas', label: 'Empresas', icon: 'business' }],
+  empresa_admin: [
+    { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
+    { k: 'parceiros', label: 'Parceiros', icon: 'handshake' },
+    { k: 'agendamentos', label: 'Agendamentos', icon: 'event' },
+    { k: 'agenda', label: 'Agenda', icon: 'calendar_month' },
+    { k: 'catalogo', label: 'Exames & preços', icon: 'medical_services' },
+    { k: 'cobrancas', label: 'Cobranças', icon: 'receipt_long' },
+    { k: 'contratos', label: 'Contratos', icon: 'description' },
+    { k: 'auditoria', label: 'Auditoria', icon: 'history' },
+    { k: 'dev', label: 'Desenvolvedor', icon: 'terminal' },
+  ],
+  parceiro_coordenador: [
+    { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
+    { k: 'pacientes', label: 'Pacientes', icon: 'groups' },
+    { k: 'agenda', label: 'Agenda', icon: 'calendar_month' },
+    { k: 'autorizacoes', label: 'Autorizações', icon: 'fact_check' },
+    { k: 'cobrancas', label: 'Cobranças', icon: 'receipt_long' },
+    { k: 'contrato', label: 'Contrato', icon: 'description' },
+    { k: 'equipe', label: 'Funcionários', icon: 'badge' },
+  ],
+  parceiro_funcionario: [{ k: 'pacientes', label: 'Pacientes', icon: 'groups' }],
 }
 
-const COORD_TABS = [
-  { k: 'visao', label: 'Visão geral' },
-  { k: 'pacientes', label: 'Pacientes' },
-  { k: 'agenda', label: 'Agenda' },
-  { k: 'autorizacoes', label: 'Autorizações' },
-  { k: 'cobrancas', label: 'Cobranças' },
-  { k: 'contrato', label: 'Contrato' },
-  { k: 'equipe', label: 'Funcionários' },
-]
-const EMP_TABS = [
-  { k: 'visao', label: 'Visão geral' },
-  { k: 'parceiros', label: 'Parceiros' },
-  { k: 'agendamentos', label: 'Agendamentos' },
-  { k: 'agenda', label: 'Agenda' },
-  { k: 'catalogo', label: 'Exames & preços' },
-  { k: 'cobrancas', label: 'Cobranças' },
-  { k: 'contratos', label: 'Contratos' },
-  { k: 'auditoria', label: 'Auditoria' },
-  { k: 'dev', label: 'Desenvolvedor' },
-]
+const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Empresa', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário' }
 
-function TabBar({ tabs, sec, onPick }) {
-  return (
-    <div className="flex gap-1 mb-6 bg-surface-container rounded-xl p-1 w-fit">
-      {tabs.map(t => (
-        <button key={t.k} onClick={() => onPick(t.k)}
-          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${sec === t.k ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
-          {t.label}
-        </button>
-      ))}
-    </div>
-  )
+function renderArea(role, k) {
+  const map = {
+    empresas: <OwnerArea />,
+    visao: <VisaoGeralArea />,
+    parceiros: <EmpresaArea />,
+    agendamentos: <PacientesArea escolherParceiro />,
+    agenda: <AgendaArea />,
+    catalogo: <CatalogoArea />,
+    contratos: <ContratosArea />,
+    auditoria: <AuditoriaArea />,
+    dev: <DesenvolvedorArea />,
+    pacientes: <PacientesArea />,
+    autorizacoes: <AutorizacoesArea />,
+    contrato: <ContratoArea />,
+    equipe: <ParceiroArea />,
+    cobrancas: role === 'empresa_admin' ? <CobrancasArea /> : <CobrancasArea somenteLeitura />,
+  }
+  return map[k] || null
 }
 
 export default function Painel() {
   const { ready, loading, session, profile, role, signOut, reloadProfile } = useAuth()
-  const [secao, setSecao] = useState('pacientes')
+  const [secao, setSecao] = useState(null)
+  const [menuAberto, setMenuAberto] = useState(false)
 
   if (!ready) return <div className="p-10 text-center text-on-surface-variant">Supabase não configurado.</div>
-  if (loading) return <Spinner />
+  if (loading) return <div className="min-h-screen bg-surface"><Loading /></div>
   if (!session) return <Navigate to="/entrar" replace />
   if (profile?.must_change_password) return <TrocarSenha onDone={reloadProfile} />
 
-  const roleLabel = { owner: 'Dono', empresa_admin: 'Empresa', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário' }[role] || role
+  const nav = NAV[role] || []
+  const sec = nav.some(n => n.k === secao) ? secao : nav[0]?.k
+  const atual = nav.find(n => n.k === sec)
+  const inicial = (profile?.nome || profile?.email || '?').charAt(0).toUpperCase()
+
+  const irPara = (k) => { setSecao(k); setMenuAberto(false) }
 
   return (
-    <div className="min-h-screen bg-surface">
-      <header className="flex justify-between items-center px-8 py-4 bg-white border-b border-outline-variant/10 sticky top-0 z-40">
-        <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-surface flex">
+      {/* overlay mobile */}
+      {menuAberto && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setMenuAberto(false)} />}
+
+      {/* Sidebar */}
+      <aside className={`fixed z-40 inset-y-0 left-0 w-64 bg-surface-container-lowest border-r border-outline-variant/15 flex flex-col transition-transform lg:translate-x-0 ${menuAberto ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="px-5 py-5 flex items-center gap-2 border-b border-outline-variant/10">
           <img src="/brotopay.png" alt="ExameQR" className="w-9 h-9 object-contain" />
-          <span className="font-display text-2xl font-extrabold tracking-tight text-primary">ExameQR</span>
-          <span className="ml-2 text-[10px] font-bold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded-full">{roleLabel}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-on-surface-variant">{profile?.nome || profile?.email}</span>
-          <button onClick={signOut} className="p-2 text-on-surface-variant hover:text-error rounded-full" title="Sair"><span className="material-symbols-outlined">logout</span></button>
-        </div>
-      </header>
-
-      <main className="p-8 max-w-5xl mx-auto">
-        {role === 'parceiro_coordenador' && (() => {
-          const sec = COORD_TABS.some(t => t.k === secao) ? secao : 'visao'
-          return (
-            <>
-              <TabBar tabs={COORD_TABS} sec={sec} onPick={setSecao} />
-              {sec === 'visao' && <VisaoGeralArea />}
-              {sec === 'pacientes' && <PacientesArea />}
-              {sec === 'agenda' && <AgendaArea />}
-              {sec === 'autorizacoes' && <AutorizacoesArea />}
-              {sec === 'cobrancas' && <CobrancasArea somenteLeitura />}
-              {sec === 'contrato' && <ContratoArea />}
-              {sec === 'equipe' && <ParceiroArea />}
-            </>
-          )
-        })()}
-
-        {role === 'empresa_admin' && (() => {
-          const sec = EMP_TABS.some(t => t.k === secao) ? secao : 'visao'
-          return (
-            <>
-              <TabBar tabs={EMP_TABS} sec={sec} onPick={setSecao} />
-              {sec === 'visao' && <VisaoGeralArea />}
-              {sec === 'parceiros' && <EmpresaArea />}
-              {sec === 'agendamentos' && <PacientesArea escolherParceiro />}
-              {sec === 'agenda' && <AgendaArea />}
-              {sec === 'catalogo' && <CatalogoArea />}
-              {sec === 'cobrancas' && <CobrancasArea />}
-              {sec === 'contratos' && <ContratosArea />}
-              {sec === 'auditoria' && <AuditoriaArea />}
-              {sec === 'dev' && <DesenvolvedorArea />}
-            </>
-          )
-        })()}
-
-        {role === 'owner' && (<><h1 className="text-2xl font-bold tracking-tight mb-6">Empresas & administradores</h1><OwnerArea /></>)}
-        {role === 'parceiro_funcionario' && (<><h1 className="text-2xl font-bold tracking-tight mb-6">Pacientes</h1><PacientesArea /></>)}
-        {!role && (
-          <div className="bg-surface-container-lowest p-8 rounded-xl shadow-card text-center text-on-surface-variant">
-            Seu perfil ainda não tem um papel definido. Fale com o administrador.
+          <div className="leading-none">
+            <div className="font-display text-xl font-extrabold tracking-tight text-primary">ExameQR</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mt-0.5">{ROLE_LABEL[role] || role}</div>
           </div>
-        )}
-      </main>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          {nav.map(n => {
+            const on = n.k === sec
+            return (
+              <button key={n.k} onClick={() => irPara(n.k)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition ${on ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-black/[.03] hover:text-on-surface'}`}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: on ? "'FILL' 1" : "'FILL' 0" }}>{n.icon}</span>
+                {n.label}
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="p-3 border-t border-outline-variant/10 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{inicial}</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold truncate">{profile?.nome || profile?.email}</p>
+            <button onClick={signOut} className="text-[11px] font-bold text-on-surface-variant hover:text-error flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>logout</span>Sair</button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Conteúdo */}
+      <div className="flex-1 lg:ml-64 min-w-0 flex flex-col">
+        <header className="sticky top-0 z-20 bg-surface/80 backdrop-blur border-b border-outline-variant/10 px-5 lg:px-8 h-16 flex items-center gap-3">
+          <button onClick={() => setMenuAberto(true)} className="lg:hidden p-2 -ml-2 text-on-surface-variant"><span className="material-symbols-outlined">menu</span></button>
+          <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>{atual?.icon || 'dashboard'}</span>
+          <h1 className="font-display text-lg font-extrabold tracking-tight">{atual?.label || 'Painel'}</h1>
+        </header>
+
+        <main className="flex-1 p-5 lg:p-8">
+          <div className="max-w-6xl mx-auto">
+            {nav.length === 0
+              ? <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-card text-center text-on-surface-variant">Seu perfil ainda não tem um papel definido. Fale com o administrador.</div>
+              : renderArea(role, sec)}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
