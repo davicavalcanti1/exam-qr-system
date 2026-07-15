@@ -171,10 +171,13 @@ router.get('/horarios-catalogo', async (req, res) => {
       ...(parc.netris_id_unidade ? { idUnidade: parc.netris_id_unidade } : {}),
     }
     const r = await client.horariosAgrupados(params)
-    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou os horários', upstream: r.body })
+    if (!r.ok) {
+      const hint = `NetRis recusou os horários (HTTP ${r.status}). Provável causa: o procedimento ${proc.netris_procedimento_id} não pertence ao plano-convênio ${parc.netris_id_plano_convenio}/${parc.netris_id_convenio} do parceiro, ou não tem agenda online. Verifique o mapeamento.`
+      return res.status(r.status >= 500 ? 502 : r.status).json({ error: hint, upstream: String(r.body).slice(0, 300) })
+    }
     res.json({ slots: normalizeHorarios(JSON.parse(r.body || '[]')) })
   } catch (err) {
-    res.status(502).json({ error: 'Erro ao consultar horários', detail: err.message })
+    res.status(502).json({ error: 'Erro ao consultar horários: ' + err.message })
   }
 })
 
