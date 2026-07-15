@@ -17,21 +17,34 @@ export default function NetrisMapeamento() {
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState('')
   const [salvo, setSalvo] = useState({}) // id -> 'ok'|'erro'|'salvando'
+  const [planoRef, setPlanoRef] = useState(null) // plano usado pra listar procedimentos
+  const [carregandoProcs, setCarregandoProcs] = useState(false)
+
+  // carrega SÓ os procedimentos do plano escolhido (garante que o exame mapeado
+  // pertence ao plano do parceiro -> sem mismatch/500 na hora de agendar)
+  async function carregarProcs(idPlano) {
+    if (!idPlano) { setProcs([]); return }
+    setCarregandoProcs(true)
+    try {
+      const r = await adminApi.netrisProcedimentos(1, idPlano)
+      setProcs(r.procedimentos || [])
+    } catch (e) { setErro(e.message) } finally { setCarregandoProcs(false) }
+  }
 
   useEffect(() => {
     (async () => {
       try {
-        const [pl, pr, parc, cat] = await Promise.all([
+        const [pl, parc, cat] = await Promise.all([
           carregarTudo((p) => adminApi.netrisPlanos(p), 'planos'),
-          carregarTudo((p) => adminApi.netrisProcedimentos(p), 'procedimentos'),
           supabase.from('parceiros').select('id, nome, netris_id_plano_convenio, netris_id_convenio').order('nome'),
           supabase.from('procedimentos').select('id, nome, netris_procedimento_id').order('nome'),
         ])
-        // dedup procedimentos por id
-        const seen = new Set(); const prU = []
-        for (const x of pr) { if (x.idProcedimento && !seen.has(x.idProcedimento)) { seen.add(x.idProcedimento); prU.push(x) } }
-        setPlanos(pl); setProcs(prU)
+        setPlanos(pl)
         setParceiros(parc.data || []); setCatalogo(cat.data || [])
+        // plano de referência: o do primeiro parceiro mapeado, senão o primeiro da lista
+        const ref = (parc.data || []).find(p => p.netris_id_plano_convenio)?.netris_id_plano_convenio || pl[0]?.idPlanoConvenio || null
+        setPlanoRef(ref)
+        await carregarProcs(ref)
       } catch (e) { setErro(e.message) } finally { setLoading(false) }
     })()
   }, [])
@@ -110,7 +123,16 @@ export default function NetrisMapeamento() {
 
       <section className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
         <h3 className="text-lg font-semibold mb-1">Exames → procedimento NetRis</h3>
-        <p className="text-sm text-on-surface-variant mb-4">Vincule cada item do catálogo ao procedimento do NetRis ({procs.length} procedimentos). Ex.: “Mamografia” → 1397 MAMOGRAFIA MARCADA ONLINE.</p>
+        <p className="text-sm text-on-surface-variant mb-3">Vincule cada exame do catálogo a um procedimento do plano abaixo. Só aparecem procedimentos <b>desse plano</b> — isso garante que o agendamento vai funcionar (evita o erro de mismatch).</p>
+        <div className="flex items-center gap-2 mb-4">
+          <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant flex-none">Procedimentos do plano</label>
+          <select className="flex-1 px-3 py-2 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary"
+            value={planoRef || ''} onChange={e => { const v = Number(e.target.value); setPlanoRef(v); carregarProcs(v) }}>
+            {planos.map(p => <option key={p.idPlanoConvenio} value={p.idPlanoConvenio}>{p.idPlanoConvenio} — {p.nome}</option>)}
+          </select>
+          {carregandoProcs && <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-none" />}
+          <span className="text-[11px] text-on-surface-variant flex-none tabular-nums">{procs.length} procs</span>
+        </div>
 
         {/* criar exame já atribuindo o procedimento */}
         <div className="bg-surface rounded-lg p-3 mb-4 grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1.4fr_auto] gap-2 items-center">

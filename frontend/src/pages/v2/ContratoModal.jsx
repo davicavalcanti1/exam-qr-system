@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../auth/AuthContext'
+import { logAudit } from '../../lib/audit'
 
 const dataBR = (s) => s ? new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 
@@ -28,6 +29,7 @@ export default function ContratoModal({ contrato, podeAssinar = false, onClose, 
     }).eq('id', contrato.id)
     setSaving(false)
     if (error) { setErr(error.message); return }
+    logAudit({ empresaId: profile?.empresa_id, atorId: user?.id, atorNome: nome.trim(), acao: 'contrato.assinado', entidade: 'contrato', entidadeId: contrato.id, detalhe: { titulo: contrato.titulo } })
     onChange?.(); onClose()
   }
 

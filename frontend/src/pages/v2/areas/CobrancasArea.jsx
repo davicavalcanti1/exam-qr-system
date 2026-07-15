@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
+import { logAudit } from '../../../lib/audit'
 import ReciboModal from '../ReciboModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -14,7 +15,7 @@ const ST = {
 }
 
 export default function CobrancasArea({ somenteLeitura = false }) {
-  const { user, empresaId } = useAuth()
+  const { user, profile, empresaId } = useAuth()
   const [parceiros, setParceiros] = useState([])
   const [parceiroSel, setParceiroSel] = useState('')
   const [ini, setIni] = useState(primeiroDia())
@@ -70,12 +71,14 @@ export default function CobrancasArea({ somenteLeitura = false }) {
       const ids = preview.itens.map(i => i.id)
       const { error: eErr } = await supabase.from('exames').update({ cobranca_id: cob.id }).in('id', ids)
       if (eErr) throw eErr
+      logAudit({ empresaId, atorId: user?.id, atorNome: profile?.nome, acao: 'cobranca.fechada', entidade: 'cobranca', entidadeId: cob.id, detalhe: { total: preview.total, qtd: preview.itens.length, periodo: `${ini}..${fim}` } })
       setPreview(null); setParceiroSel(''); await load()
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
   }
 
   async function marcarPaga(id) {
     await supabase.from('cobrancas').update({ status: 'paga', paga_at: new Date().toISOString() }).eq('id', id)
+    logAudit({ empresaId, atorId: user?.id, atorNome: profile?.nome, acao: 'cobranca.paga', entidade: 'cobranca', entidadeId: id })
     await load()
   }
 

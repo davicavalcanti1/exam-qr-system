@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { supabaseAdmin, supabaseConfigured, getCaller } from '../lib/supabaseAdmin.js'
 import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
 import { SITUACAO } from '../lib/netris.js'
+import { logAudit } from '../lib/audit.js'
 
 const router = Router()
 
@@ -77,6 +78,8 @@ router.post('/validar', async (req, res) => {
       }
     } catch { netris = 'falhou' }
   }
+
+  logAudit({ empresaId: exame.empresa_id, atorNome: 'Leitor (scan público)', acao: 'qr.validado', entidade: 'exame', entidadeId: exame.id, detalhe: { paciente: exame?.pacientes?.nome, exame: exame?.nome, netris } })
 
   res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', valor: exame?.valor ?? null, netris })
 })

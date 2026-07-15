@@ -3,6 +3,7 @@ import { getCaller, supabaseAdmin } from '../lib/supabaseAdmin.js'
 import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
 import { resolverContextoExame } from '../lib/netrisAgendamento.js'
 import { SITUACAO, normalizePaciente, normalizeHorarios } from '../lib/netris.js'
+import { logAudit } from '../lib/audit.js'
 
 const router = Router()
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -205,6 +206,7 @@ router.post('/agendar-exame', async (req, res) => {
       netris_atendimento_id: agId, netris_agendamento_id: agId,
       scheduled_at: `${slot.dataString}T${slot.horarioString}:00`,
     }).eq('id', exameId)
+    logAudit({ empresaId: ctx.exame.empresa_id, atorId: c.profile.id, atorNome: c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: agId, slot } })
     res.json({ ok: true, agendamentoId: agId, upstream: parsed })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao agendar no NetRis', detail: err.message })
@@ -226,6 +228,7 @@ router.post('/cancelar-exame', async (req, res) => {
     const r = await client.alterarSituacao(ex.netris_atendimento_id, SITUACAO.CANCELADO)
     if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o cancelamento', upstream: r.body })
     await supabaseAdmin.from('exames').update({ netris_atendimento_id: null, netris_agendamento_id: null, scheduled_at: null }).eq('id', exameId)
+    logAudit({ empresaId: ex.empresa_id, atorId: c.profile.id, atorNome: c.profile.role, acao: 'netris.cancelado', entidade: 'exame', entidadeId: exameId })
     res.json({ ok: true })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao cancelar no NetRis', detail: err.message })

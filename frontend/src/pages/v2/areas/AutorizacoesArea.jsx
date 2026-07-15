@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
+import { logAudit } from '../../../lib/audit'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function AutorizacoesArea() {
-  const { user, parceiroId } = useAuth()
+  const { user, profile, parceiroId } = useAuth()
   const [itens, setItens] = useState([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(null)
@@ -42,6 +43,7 @@ export default function AutorizacoesArea() {
       ? { status: 'autorizado', autorizado_por: user?.id }
       : { status: 'cancelado' }
     await supabase.from('exames').update(patch).eq('id', ex.id)
+    logAudit({ empresaId: profile?.empresa_id, atorId: user?.id, atorNome: profile?.nome, acao: aprovar ? 'exame.autorizado' : 'exame.recusado', entidade: 'exame', entidadeId: ex.id, detalhe: { paciente: ex.pacientes?.nome, exame: ex.nome, valor: ex.valor } })
     // ao autorizar, se houver horário pendente, envia o agendamento ao NetRis
     if (aprovar && ex.netris_slot) {
       try {

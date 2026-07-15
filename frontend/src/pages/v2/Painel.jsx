@@ -14,6 +14,7 @@ import AgendaArea from './areas/AgendaArea'
 import DesenvolvedorArea from './areas/DesenvolvedorArea'
 import ContratosArea from './areas/ContratosArea'
 import ContratoArea from './areas/ContratoArea'
+import AuditoriaArea from './areas/AuditoriaArea'
 
 function Spinner() {
   return <div className="flex items-center justify-center py-32"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
@@ -74,6 +75,7 @@ const EMP_TABS = [
   { k: 'catalogo', label: 'Exames & preços' },
   { k: 'cobrancas', label: 'Cobranças' },
   { k: 'contratos', label: 'Contratos' },
+  { k: 'auditoria', label: 'Auditoria' },
   { k: 'dev', label: 'Desenvolvedor' },
 ]
 
@@ -144,6 +146,7 @@ export default function Painel() {
               {sec === 'catalogo' && <CatalogoArea />}
               {sec === 'cobrancas' && <CobrancasArea />}
               {sec === 'contratos' && <ContratosArea />}
+              {sec === 'auditoria' && <AuditoriaArea />}
               {sec === 'dev' && <DesenvolvedorArea />}
             </>
           )

@@ -44,6 +44,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [qrExame, setQrExame] = useState(null)
   const [agExame, setAgExame] = useState(null)
   const [cancelandoId, setCancelandoId] = useState(null)
+  const [consentimento, setConsentimento] = useState(false)
 
   useEffect(() => {
     adminApi.netrisStatus().then(s => setNetrisAtivo(!!s.ativo)).catch(() => setNetrisAtivo(false))
@@ -151,6 +152,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
     e.preventDefault(); setErr('')
     if (escolherParceiro && !pid) { setErr('Selecione o parceiro.'); return }
     if (exames.some(x => !x.procId)) { setErr('Selecione o exame em cada item.'); return }
+    if (!consentimento) { setErr('É necessário o consentimento do paciente (LGPD) para prosseguir.'); return }
     const cpfLimpo = cpf.replace(/\D/g, '')
     setSaving(true)
     try {
@@ -164,6 +166,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
           empresa_id: empresaId, parceiro_id: pid, nome: nome.trim(), cpf: cpfLimpo,
           netris_id_paciente: idNetris || null, sexo: sexo || null,
           data_nascimento: nascimento || null, telefone: telefone || null,
+          consentimento_lgpd: true, consentimento_at: new Date().toISOString(),
         })
         .select('id').single()
       if (pErr) throw pErr
@@ -181,7 +184,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
       })
       const { error: eErr } = await supabase.from('exames').insert(rows)
       if (eErr) throw eErr
-      setNome(''); setCpf(''); setSexo(''); setNascimento(''); setTelefone(''); setNetrisId(null); setNetrisMsg('')
+      setNome(''); setCpf(''); setSexo(''); setNascimento(''); setTelefone(''); setNetrisId(null); setNetrisMsg(''); setConsentimento(false)
       setExames([{ procId: '', indicacao: '', data: '', hora: '' }]); setParceiroSel(''); setSlotsPorItem({}); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
@@ -301,6 +304,10 @@ export default function PacientesArea({ escolherParceiro = false }) {
                 </p>
               )}
             </div>
+            <label className="flex items-start gap-2 text-sm cursor-pointer bg-surface rounded-lg p-3">
+              <input type="checkbox" checked={consentimento} onChange={e => setConsentimento(e.target.checked)} className="w-4 h-4 accent-primary mt-0.5" />
+              <span className="text-on-surface-variant">O paciente <b className="text-on-surface">autoriza</b> o uso dos seus dados pessoais e de saúde para o agendamento e a realização do exame, conforme a LGPD.</span>
+            </label>
             {err && <div className="text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
             <div className="flex items-center justify-between">
               <span className="text-sm text-on-surface-variant">Total: <b className="text-on-surface tabular-nums">{fmt(total)}</b></span>
