@@ -1,15 +1,30 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
+import { Card, Loading } from '../../../components/ui'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-function Card({ label, valor, cor = 'text-on-surface' }) {
+const TONES = {
+  primary: 'bg-primary/10 text-primary',
+  gold: 'bg-secondary-container text-on-secondary-container',
+  warn: 'bg-yellow-50 text-yellow-700',
+  green: 'bg-tertiary-fixed-dim/25 text-on-tertiary-fixed-variant',
+}
+
+function Stat({ icon, label, valor, tone = 'primary' }) {
   return (
-    <div className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
-      <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">{label}</span>
-      <div className={`text-3xl font-extrabold tracking-tight tabular-nums mt-2 ${cor}`}>{valor}</div>
-    </div>
+    <Card className="p-5">
+      <div className="flex items-center gap-3">
+        <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-none ${TONES[tone]}`}>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
+        </span>
+        <div className="min-w-0">
+          <div className="text-2xl font-extrabold tracking-tight tabular-nums leading-none">{valor}</div>
+          <div className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mt-1">{label}</div>
+        </div>
+      </div>
+    </Card>
   )
 }
 
@@ -44,39 +59,41 @@ export default function VisaoGeralArea() {
     })()
   }, [role, parceiroId])
 
-  if (!d) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+  if (!d) return <Loading />
 
   const pct = d.teto ? Math.min(Math.round((d.realizado / d.teto) * 100), 999) : null
+  const barra = pct == null ? 0 : Math.min(pct, 100)
+  const barCor = pct >= 100 ? 'bg-error' : pct >= 70 ? 'bg-yellow-400' : 'bg-primary'
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {d.parceiros != null && <Card label="Parceiros" valor={d.parceiros} />}
-        <Card label="Pacientes" valor={d.pacientes} />
-        <Card label="Aguardando" valor={d.by.aguardando_autorizacao} cor="text-yellow-600" />
-        <Card label="Autorizados" valor={d.by.autorizado} cor="text-primary" />
-        <Card label="Realizados" valor={d.by.realizado} cor="text-on-tertiary-fixed-variant" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {d.parceiros != null && <Stat icon="handshake" label="Parceiros" valor={d.parceiros} tone="primary" />}
+        <Stat icon="groups" label="Pacientes" valor={d.pacientes} tone="primary" />
+        <Stat icon="hourglass_top" label="Aguardando" valor={d.by.aguardando_autorizacao} tone="warn" />
+        <Stat icon="fact_check" label="Autorizados" valor={d.by.autorizado} tone="gold" />
+        <Stat icon="task_alt" label="Realizados" valor={d.by.realizado} tone="green" />
       </div>
 
-      <div className="bg-surface-container-lowest p-6 rounded-xl shadow-card">
-        <div className="flex items-end justify-between">
+      <Card className="p-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Valor realizado (dívida)</span>
-            <div className="text-3xl font-extrabold tracking-tight tabular-nums mt-1 text-yellow-600">{fmt(d.realizado)}</div>
+            <div className="text-4xl font-extrabold tracking-tight tabular-nums mt-1 text-on-surface">{fmt(d.realizado)}</div>
           </div>
           {d.teto != null
-            ? <div className="text-right text-sm text-on-surface-variant">Teto do parceiro<br /><b className="text-on-surface tabular-nums">{fmt(d.teto)}</b></div>
-            : <div className="text-right text-sm text-on-surface-variant">A receber (lotes abertos)<br /><b className="text-on-surface tabular-nums">{fmt(d.aReceber)}</b></div>}
+            ? <div className="text-right"><span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Teto do parceiro</span><div className="text-xl font-bold tabular-nums text-on-surface-variant">{fmt(d.teto)}</div></div>
+            : <div className="text-right"><span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">A receber (lotes abertos)</span><div className="text-xl font-bold tabular-nums text-primary">{fmt(d.aReceber)}</div></div>}
         </div>
         {pct != null && (
-          <div className="mt-4">
-            <div className="h-2 bg-surface-container rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${pct >= 100 ? 'bg-error' : pct >= 70 ? 'bg-yellow-400' : 'bg-primary'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+          <div className="mt-5">
+            <div className="h-2.5 bg-surface-container rounded-full overflow-hidden">
+              <div className={`h-full rounded-full transition-all ${barCor}`} style={{ width: `${barra}%` }} />
             </div>
-            <p className="text-xs text-on-surface-variant mt-1 tabular-nums">{pct}% do teto usado</p>
+            <p className="text-xs text-on-surface-variant mt-1.5 tabular-nums">{pct}% do teto usado</p>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }
