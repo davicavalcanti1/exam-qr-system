@@ -21,6 +21,8 @@ const post = (path, body) => req('POST', path, body)
 export const adminApi = {
   createUser: (payload) => post('/api/admin/users', payload),
   createParceiro: (payload) => post('/api/admin/parceiros', payload),
+  updateParceiro: (id, payload) => req('PUT', `/api/admin/parceiros/${id}`, payload),
+  updateUser: (id, payload) => req('PATCH', `/api/admin/users/${id}`, payload),
   gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
   // integrações de agendamento
   listarProviders: () => req('GET', '/api/integracao/providers'),

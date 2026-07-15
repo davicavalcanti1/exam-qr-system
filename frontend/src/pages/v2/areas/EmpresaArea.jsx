@@ -16,6 +16,8 @@ export default function EmpresaArea() {
   const [expanded, setExpanded] = useState(null)
   const [users, setUsers] = useState({})   // parceiroId -> [profiles]
   const [modal, setModal] = useState(null)  // parceiroId p/ criar coordenador
+  const [edit, setEdit] = useState({})      // parceiroId -> {teto, status}
+  const [savingP, setSavingP] = useState(null)
 
   async function load() {
     const { data } = await supabase.from('parceiros').select('id, nome, cnpj, teto, status, contrato_status').order('created_at', { ascending: false })
@@ -29,7 +31,22 @@ export default function EmpresaArea() {
   }
   function toggle(pid) {
     const next = expanded === pid ? null : pid
-    setExpanded(next); if (next && !users[next]) loadUsers(next)
+    setExpanded(next)
+    if (next) {
+      if (!users[next]) loadUsers(next)
+      const p = parceiros.find(x => x.id === next)
+      setEdit(e => ({ ...e, [next]: { teto: p?.teto ?? 0, status: p?.status || 'ativo' } }))
+    }
+  }
+
+  async function salvarParceiro(p) {
+    setSavingP(p.id)
+    try { await adminApi.updateParceiro(p.id, edit[p.id]); await load() }
+    catch (e) { setErr(e.message) } finally { setSavingP(null) }
+  }
+  async function toggleUser(pid, u) {
+    await adminApi.updateUser(u.id, { ativo: !u.ativo }).catch(() => {})
+    await loadUsers(pid)
   }
 
   async function createParceiro(e) {
@@ -70,6 +87,15 @@ export default function EmpresaArea() {
                   </button>
                   {expanded === p.id && (
                     <div className="px-6 pb-5 bg-slate-50/40">
+                      <div className="flex flex-wrap items-end gap-3 py-3 border-b border-outline-variant/10">
+                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Teto (R$)</label><input type="number" min="0" step="100" className="w-32 px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.teto ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], teto: e.target.value } }))} /></div>
+                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</label>
+                          <select className="px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.status || 'ativo'} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], status: e.target.value } }))}>
+                            <option value="ativo">Ativo</option><option value="bloqueado">Bloqueado</option><option value="suspenso">Suspenso</option>
+                          </select>
+                        </div>
+                        <button onClick={() => salvarParceiro(p)} disabled={savingP === p.id} className="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingP === p.id ? 'Salvando…' : 'Salvar'}</button>
+                      </div>
                       <div className="flex items-center justify-between py-3">
                         <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Usuários do parceiro</span>
                         <button onClick={() => setModal(p.id)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span>Criar coordenador</button>
@@ -79,8 +105,11 @@ export default function EmpresaArea() {
                         : <div className="space-y-1">
                             {users[p.id].map(u => (
                               <div key={u.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 text-sm">
-                                <span>{u.nome} <span className="text-on-surface-variant">· {u.username}</span></span>
-                                <span className="text-[10px] font-bold uppercase text-on-surface-variant">{roleLabel(u.role)}</span>
+                                <span className={u.ativo ? '' : 'opacity-50 line-through'}>{u.nome} <span className="text-on-surface-variant">· {u.username}</span></span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold uppercase text-on-surface-variant">{roleLabel(u.role)}</span>
+                                  <button onClick={() => toggleUser(p.id, u)} title={u.ativo ? 'Desativar' : 'Ativar'} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
+                                </div>
                               </div>
                             ))}
                           </div>}

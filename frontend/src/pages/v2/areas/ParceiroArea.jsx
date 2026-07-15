@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
+import { adminApi } from '../../../lib/adminApi'
 import CreateUserModal from '../CreateUserModal'
 
 export default function ParceiroArea() {
@@ -19,6 +20,11 @@ export default function ParceiroArea() {
   }
   useEffect(() => { if (parceiroId) load() }, [parceiroId])
 
+  async function toggleAtivo(u) {
+    await adminApi.updateUser(u.id, { ativo: !u.ativo }).catch(() => {})
+    await load()
+  }
+
   return (
     <div className="space-y-6">
       <section className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
@@ -34,10 +40,10 @@ export default function ParceiroArea() {
               {funcs.map(u => (
                 <div key={u.id} className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-sm">{u.nome?.charAt(0)?.toUpperCase() || 'F'}</div>
-                    <div><p className="font-semibold text-sm">{u.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{u.username}</p></div>
+                    <div className={`w-9 h-9 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-sm ${u.ativo ? '' : 'opacity-40'}`}>{u.nome?.charAt(0)?.toUpperCase() || 'F'}</div>
+                    <div><p className={`font-semibold text-sm ${u.ativo ? '' : 'opacity-50 line-through'}`}>{u.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{u.username}</p></div>
                   </div>
-                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant' : 'bg-surface-container text-on-surface-variant'}`}>{u.ativo ? 'ativo' : 'inativo'}</span>
+                  <button onClick={() => toggleAtivo(u)} title={u.ativo ? 'Desativar acesso' : 'Ativar acesso'} className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full transition ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
                 </div>
               ))}
             </div>}
