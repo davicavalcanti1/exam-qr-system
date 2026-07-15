@@ -11,9 +11,14 @@ router.get('/:cnpj', async (req, res) => {
   const cnpj = String(req.params.cnpj).replace(/\D/g, '')
   if (cnpj.length !== 14) return res.status(400).json({ error: 'CNPJ deve ter 14 dígitos' })
   try {
-    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, { headers: { Accept: 'application/json' } })
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), 12000)
+    let r
+    try {
+      r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, { headers: { Accept: 'application/json' }, signal: ctrl.signal })
+    } finally { clearTimeout(t) }
     if (r.status === 404) return res.status(404).json({ error: 'CNPJ não encontrado' })
-    if (!r.ok) return res.status(502).json({ error: `Falha na consulta (HTTP ${r.status})` })
+    if (!r.ok) return res.status(502).json({ error: `BrasilAPI respondeu HTTP ${r.status}` })
     const d = await r.json()
     const logr = [d.descricao_tipo_de_logradouro, d.logradouro].filter(Boolean).join(' ')
     const linha = [logr, d.numero, d.complemento].filter(Boolean).join(', ')
@@ -28,7 +33,8 @@ router.get('/:cnpj', async (req, res) => {
       situacao: d.descricao_situacao_cadastral || '',
     })
   } catch (err) {
-    res.status(502).json({ error: 'Falha ao consultar BrasilAPI', detail: err.message })
+    const causa = err.name === 'AbortError' ? 'tempo esgotado (a BrasilAPI demorou)' : (err.cause?.code || err.message)
+    res.status(502).json({ error: `Não foi possível consultar a BrasilAPI: ${causa}` })
   }
 })
 
