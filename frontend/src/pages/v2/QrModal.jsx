@@ -22,8 +22,8 @@ export default function QrModal({ exame, onClose }) {
   if (!exame) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadein" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-popin" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10">
           <div>
             <h3 className="text-lg font-bold">QR do exame</h3>

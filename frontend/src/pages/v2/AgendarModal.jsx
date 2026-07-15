@@ -52,8 +52,8 @@ export default function AgendarModal({ exame, onClose, onDone }) {
   const input = 'px-3 py-2 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-surface-container-lowest rounded-2xl shadow-card w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadein" onClick={onClose}>
+      <div className="bg-surface-container-lowest rounded-2xl shadow-card w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-popin" onClick={e => e.stopPropagation()}>
         <div className="p-5 border-b border-outline-variant/10 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold">Agendar no NetRis</h3>
