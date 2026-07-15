@@ -24,6 +24,11 @@ export default function ParceiroArea() {
     await adminApi.updateUser(u.id, { ativo: !u.ativo }).catch(() => {})
     await load()
   }
+  async function resetarSenha(u) {
+    if (!window.confirm(`Redefinir a senha de ${u.nome}?`)) return
+    try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse ao funcionário — ele troca no próximo acesso.`) }
+    catch (e) { window.alert('Falha: ' + e.message) }
+  }
 
   return (
     <div className="space-y-6">
@@ -43,7 +48,10 @@ export default function ParceiroArea() {
                     <div className={`w-9 h-9 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-sm ${u.ativo ? '' : 'opacity-40'}`}>{u.nome?.charAt(0)?.toUpperCase() || 'F'}</div>
                     <div><p className={`font-semibold text-sm ${u.ativo ? '' : 'opacity-50 line-through'}`}>{u.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{u.username}</p></div>
                   </div>
-                  <button onClick={() => toggleAtivo(u)} title={u.ativo ? 'Desativar acesso' : 'Ativar acesso'} className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full transition ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => resetarSenha(u)} title="Redefinir senha" className="p-1 text-on-surface-variant hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>key</span></button>
+                    <button onClick={() => toggleAtivo(u)} title={u.ativo ? 'Desativar acesso' : 'Ativar acesso'} className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full transition ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
+                  </div>
                 </div>
               ))}
             </div>}

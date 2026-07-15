@@ -127,8 +127,14 @@ export default function PacientesArea({ escolherParceiro = false }) {
       const hoje = new Date().toISOString().slice(0, 10)
       const fim = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10)
       const r = await adminApi.netrisHorariosCatalogo({ procedimentoId: ex.procId, parceiroId: pid, idPaciente: idPac, dataInicial: hoje, dataFinal: fim })
+      // vagas já ocupadas pelo ExameQR (pendentes/agendadas) — não oferecer de novo
+      const { data: ocupados } = await supabase.from('exames').select('netris_slot').not('netris_slot', 'is', null).neq('status', 'cancelado')
+      const taken = new Set()
+      for (const o of ocupados || []) { const s = o.netris_slot; if (s) taken.add(`${s.dataString}|${s.horarioString}|${s.idMedico}|${s.idSala}`) }
+      exames.forEach((e, idx) => { if (idx !== i && e.slot) { const s = e.slot; taken.add(`${s.dataString}|${s.horarioString}|${s.idMedico}|${s.idSala}`) } })
+      const livres = (r.slots || []).filter(s => !taken.has(`${s.dataString}|${s.horaInicial}|${s.idMedico}|${s.idSala}`))
       const map = {}
-      for (const s of r.slots || []) (map[s.data] ||= []).push(s)
+      for (const s of livres) (map[s.data] ||= []).push(s)
       const grupos = Object.entries(map).map(([data, slots]) => ({ data, slots }))
       setSlotsPorItem(s => ({ ...s, [i]: { grupos } }))
     } catch (e) { setSlotsPorItem(s => ({ ...s, [i]: { erro: e.message } })) }

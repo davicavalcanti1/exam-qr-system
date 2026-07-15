@@ -7,7 +7,7 @@ import { netrisParaEmpresa } from './netrisEmpresa.js'
 export async function resolverContextoExame(exameId) {
   const { data: ex } = await supabaseAdmin
     .from('exames')
-    .select(`id, empresa_id, parceiro_id, nome, scheduled_at,
+    .select(`id, empresa_id, parceiro_id, nome, scheduled_at, netris_atendimento_id,
              pacientes(nome, cpf),
              procedimentos(netris_procedimento_id),
              parceiros(nome, netris_id_plano_convenio, netris_id_convenio, netris_id_unidade)`)

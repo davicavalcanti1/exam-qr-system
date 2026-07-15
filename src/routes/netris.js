@@ -192,6 +192,10 @@ router.post('/agendar-exame', async (req, res) => {
   const ctx = await resolverContextoExame(exameId)
   if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
   try {
+    // reagendamento: cancela o encaixe anterior antes de criar o novo (evita duplicar)
+    if (ctx.exame.netris_atendimento_id) {
+      try { await ctx.client.alterarSituacao(ctx.exame.netris_atendimento_id, SITUACAO.CANCELADO) } catch { /* best-effort */ }
+    }
     const r = await ctx.client.criarEncaixe({
       dataString: slot.dataString, horarioString: slot.horarioString,
       idConvenio: ctx.idConvenio, idPlanoConvenio: ctx.idPlanoConvenio,
@@ -201,10 +205,11 @@ router.post('/agendar-exame', async (req, res) => {
     if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o agendamento', upstream: r.body })
     let parsed = null; try { parsed = JSON.parse(r.body) } catch { parsed = r.body }
     const agId = parsed?.message?.match?.(/ID:\s*(\d+)/)?.[1] || parsed?.id || null
-    // fecha o ciclo: grava no exame o vínculo e o horário
+    // fecha o ciclo: grava no exame o vínculo e o horário (netris_slot = vaga ocupada)
     await supabaseAdmin.from('exames').update({
       netris_atendimento_id: agId, netris_agendamento_id: agId,
       scheduled_at: `${slot.dataString}T${slot.horarioString}:00`,
+      netris_slot: { dataString: slot.dataString, horarioString: slot.horarioString, idMedico: Number(slot.idMedico), idSala: Number(slot.idSala) },
     }).eq('id', exameId)
     logAudit({ empresaId: ctx.exame.empresa_id, atorId: c.profile.id, atorNome: c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: agId, slot } })
     res.json({ ok: true, agendamentoId: agId, upstream: parsed })
@@ -227,7 +232,7 @@ router.post('/cancelar-exame', async (req, res) => {
   try {
     const r = await client.alterarSituacao(ex.netris_atendimento_id, SITUACAO.CANCELADO)
     if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o cancelamento', upstream: r.body })
-    await supabaseAdmin.from('exames').update({ netris_atendimento_id: null, netris_agendamento_id: null, scheduled_at: null }).eq('id', exameId)
+    await supabaseAdmin.from('exames').update({ netris_atendimento_id: null, netris_agendamento_id: null, scheduled_at: null, netris_slot: null }).eq('id', exameId)
     logAudit({ empresaId: ex.empresa_id, atorId: c.profile.id, atorNome: c.profile.role, acao: 'netris.cancelado', entidade: 'exame', entidadeId: exameId })
     res.json({ ok: true })
   } catch (err) {

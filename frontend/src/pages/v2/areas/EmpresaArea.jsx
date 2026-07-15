@@ -48,6 +48,11 @@ export default function EmpresaArea() {
     await adminApi.updateUser(u.id, { ativo: !u.ativo }).catch(() => {})
     await loadUsers(pid)
   }
+  async function resetarSenha(u) {
+    if (!window.confirm(`Redefinir a senha de ${u.nome}? Será gerada uma senha temporária.`)) return
+    try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse ao usuário — ele troca no próximo acesso.`) }
+    catch (e) { window.alert('Falha: ' + e.message) }
+  }
 
   async function createParceiro(e) {
     e.preventDefault(); setErr(''); setSaving(true)
@@ -108,6 +113,7 @@ export default function EmpresaArea() {
                                 <span className={u.ativo ? '' : 'opacity-50 line-through'}>{u.nome} <span className="text-on-surface-variant">· {u.username}</span></span>
                                 <div className="flex items-center gap-2">
                                   <span className="text-[10px] font-bold uppercase text-on-surface-variant">{roleLabel(u.role)}</span>
+                                  <button onClick={() => resetarSenha(u)} title="Redefinir senha" className="p-1 text-on-surface-variant hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>key</span></button>
                                   <button onClick={() => toggleUser(p.id, u)} title={u.ativo ? 'Desativar' : 'Ativar'} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
                                 </div>
                               </div>

@@ -134,6 +134,27 @@ router.patch('/users/:id', async (req, res) => {
   res.json({ ok: true })
 })
 
+// Redefine a senha de um usuário (recuperação). Regras de quem-pode + força troca
+// no próximo acesso. Devolve a senha temporária para o admin repassar.
+router.post('/users/:id/reset-senha', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  const me = c.profile
+  const { data: alvo } = await supabaseAdmin.from('profiles').select('id, role, empresa_id, parceiro_id').eq('id', req.params.id).maybeSingle()
+  if (!alvo) return res.status(404).json({ error: 'Usuário não encontrado' })
+
+  const pode = me.role === 'owner'
+    || (me.role === 'empresa_admin' && alvo.empresa_id === me.empresa_id && !['owner', 'empresa_admin'].includes(alvo.role))
+    || (me.role === 'parceiro_coordenador' && alvo.parceiro_id === me.parceiro_id && alvo.role === 'parceiro_funcionario')
+  if (!pode) return res.status(403).json({ error: 'Sem permissão para redefinir a senha deste usuário' })
+
+  const novaSenha = req.body?.senha || DEFAULT_PASSWORD
+  const { error: aErr } = await supabaseAdmin.auth.admin.updateUserById(alvo.id, { password: novaSenha })
+  if (aErr) return res.status(400).json({ error: aErr.message })
+  await supabaseAdmin.from('profiles').update({ must_change_password: true }).eq('id', alvo.id)
+  res.json({ ok: true, senha: novaSenha })
+})
+
 // Atualiza o mapeamento NetRis de um parceiro (plano-convênio/convênio/unidade).
 router.put('/parceiros/:id/netris', async (req, res) => {
   const c = await getCaller(req)
