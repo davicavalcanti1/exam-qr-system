@@ -1,5 +1,5 @@
-import { supabaseAdmin } from './supabaseAdmin.js'
-import { createNetrisClient } from './netris.js'
+import { supabaseAdmin } from '../../lib/supabaseAdmin.js'
+import { createNetrisClient } from './client.js'
 
 // Carrega a config de integração de uma empresa e devolve um cliente NetRis
 // pronto — ou null se a empresa não usa NetRis / não está ativa / mal configurada.

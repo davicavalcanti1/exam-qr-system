@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { getCaller, supabaseAdmin } from '../lib/supabaseAdmin.js'
-import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
-import { resolverContextoExame } from '../lib/netrisAgendamento.js'
-import { SITUACAO, normalizePaciente, normalizeHorarios } from '../lib/netris.js'
-import { logAudit } from '../lib/audit.js'
+import { getCaller, supabaseAdmin } from '../../lib/supabaseAdmin.js'
+import { netrisParaEmpresa } from './empresa.js'
+import { resolverContextoExame } from './agendamento.js'
+import { SITUACAO, normalizePaciente, normalizeHorarios } from './client.js'
+import { logAudit } from '../../lib/audit.js'
 
 const router = Router()
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/

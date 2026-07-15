@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { adminApi } from '../../../lib/adminApi'
+import { useToast } from '../../../components/ui'
 import CreateUserModal from '../CreateUserModal'
 
 export default function OwnerArea() {
+  const toast = useToast()
   const [empresas, setEmpresas] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ nome: '', cnpj: '', slug: '' })
+  const [form, setForm] = useState({ nome: '', cnpj: '', slug: '', nomeFantasia: '', endereco: '', telefone: '', email: '' })
+  const [buscando, setBuscando] = useState(false)
   const [msg, setMsg] = useState(null)
   const [saving, setSaving] = useState(false)
   const [expanded, setExpanded] = useState(null)
@@ -28,12 +32,26 @@ export default function OwnerArea() {
     if (next && !admins[next]) loadAdmins(next)
   }
 
+  async function buscarCnpj() {
+    const c = form.cnpj.replace(/\D/g, '')
+    if (c.length !== 14) return toast.error('Informe um CNPJ com 14 dígitos.')
+    setBuscando(true)
+    try {
+      const d = await adminApi.buscarCnpj(c)
+      setForm(f => ({ ...f, nome: d.razaoSocial || f.nome, nomeFantasia: d.nomeFantasia, endereco: d.endereco, telefone: d.telefone, email: d.email }))
+      toast.success(`${d.razaoSocial}${d.situacao ? ' · ' + d.situacao : ''}`)
+    } catch (e) { toast.error(e.message) } finally { setBuscando(false) }
+  }
+
   async function createEmpresa(e) {
     e.preventDefault(); setMsg(null); setSaving(true)
     const slug = (form.slug || form.nome).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    const { error } = await supabase.from('empresas').insert({ nome: form.nome.trim(), cnpj: form.cnpj.trim() || null, slug })
+    const { error } = await supabase.from('empresas').insert({
+      nome: form.nome.trim(), cnpj: form.cnpj.trim() || null, slug,
+      nome_fantasia: form.nomeFantasia || null, endereco: form.endereco || null, telefone: form.telefone || null, email: form.email || null,
+    })
     if (error) setMsg({ t: 'err', m: error.message })
-    else { setForm({ nome: '', cnpj: '', slug: '' }); await load() }
+    else { setForm({ nome: '', cnpj: '', slug: '', nomeFantasia: '', endereco: '', telefone: '', email: '' }); await load() }
     setSaving(false)
   }
 
@@ -45,9 +63,16 @@ export default function OwnerArea() {
       <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-4">Nova empresa principal</h3>
         <form onSubmit={createEmpresa} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div><label className={label}>Nome</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required /></div>
-          <div><label className={label}>CNPJ</label><input className={input} value={form.cnpj} onChange={e => setForm({ ...form, cnpj: e.target.value })} /></div>
+          <div className="md:col-span-1">
+            <label className={label}>CNPJ</label>
+            <div className="flex gap-2">
+              <input className={input} value={form.cnpj} onChange={e => setForm({ ...form, cnpj: e.target.value })} placeholder="só números" />
+              <button type="button" onClick={buscarCnpj} disabled={buscando} className="px-3 py-2.5 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition disabled:opacity-50 flex-none whitespace-nowrap">{buscando ? '…' : 'Buscar'}</button>
+            </div>
+          </div>
+          <div><label className={label}>Nome / Razão social</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required /></div>
           <div><label className={label}>Slug</label><input className={input} value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="auto" /></div>
+          {(form.nomeFantasia || form.endereco) && <div className="md:col-span-3 text-[11px] text-on-surface-variant bg-surface rounded-lg px-3 py-2">{form.nomeFantasia && <b>{form.nomeFantasia}</b>}{form.endereco ? ` · ${form.endereco}` : ''}{form.telefone ? ` · ${form.telefone}` : ''}</div>}
           {msg && <div className="md:col-span-3 text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{msg.m}</div>}
           <div className="md:col-span-3 flex justify-end"><button disabled={saving} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Criando…' : 'Criar empresa'}</button></div>
         </form>

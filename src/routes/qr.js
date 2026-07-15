@@ -2,8 +2,8 @@ import { Router } from 'express'
 import QRCode from 'qrcode'
 import crypto from 'crypto'
 import { supabaseAdmin, supabaseConfigured, getCaller } from '../lib/supabaseAdmin.js'
-import { netrisParaEmpresa } from '../lib/netrisEmpresa.js'
-import { SITUACAO } from '../lib/netris.js'
+import { netrisParaEmpresa } from '../integrations/netris/empresa.js'
+import { SITUACAO } from '../integrations/netris/client.js'
 import { logAudit } from '../lib/audit.js'
 
 const router = Router()

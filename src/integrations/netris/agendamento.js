@@ -1,5 +1,5 @@
-import { supabaseAdmin } from './supabaseAdmin.js'
-import { netrisParaEmpresa } from './netrisEmpresa.js'
+import { supabaseAdmin } from '../../lib/supabaseAdmin.js'
+import { netrisParaEmpresa } from './empresa.js'
 
 // Resolve tudo que o NetRis precisa para agendar um exame do ExameQR:
 // cliente da empresa, mapeamento do parceiro (plano/convênio), procedimento e

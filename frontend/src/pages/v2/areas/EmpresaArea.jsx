@@ -2,15 +2,18 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { adminApi } from '../../../lib/adminApi'
 import { useAuth } from '../../../auth/AuthContext'
+import { useToast } from '../../../components/ui'
 import CreateUserModal from '../CreateUserModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function EmpresaArea() {
   const { empresaId } = useAuth()
+  const toast = useToast()
   const [parceiros, setParceiros] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ nome: '', cnpj: '', teto: 2000 })
+  const [form, setForm] = useState({ nome: '', cnpj: '', teto: 2000, nomeFantasia: '', endereco: '', telefone: '', email: '' })
+  const [buscando, setBuscando] = useState(false)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [expanded, setExpanded] = useState(null)
@@ -54,11 +57,25 @@ export default function EmpresaArea() {
     catch (e) { window.alert('Falha: ' + e.message) }
   }
 
+  async function buscarCnpj() {
+    const c = form.cnpj.replace(/\D/g, '')
+    if (c.length !== 14) return toast.error('Informe um CNPJ com 14 dígitos.')
+    setBuscando(true)
+    try {
+      const d = await adminApi.buscarCnpj(c)
+      setForm(f => ({ ...f, nome: d.razaoSocial || f.nome, nomeFantasia: d.nomeFantasia, endereco: d.endereco, telefone: d.telefone, email: d.email }))
+      toast.success(`${d.razaoSocial}${d.situacao ? ' · ' + d.situacao : ''}`)
+    } catch (e) { toast.error(e.message) } finally { setBuscando(false) }
+  }
+
   async function createParceiro(e) {
     e.preventDefault(); setErr(''); setSaving(true)
     try {
-      await adminApi.createParceiro({ nome: form.nome, cnpj: form.cnpj || undefined, teto: Number(form.teto) || 2000 })
-      setForm({ nome: '', cnpj: '', teto: 2000 }); await load()
+      await adminApi.createParceiro({
+        nome: form.nome, cnpj: form.cnpj || undefined, teto: Number(form.teto) || 2000,
+        nomeFantasia: form.nomeFantasia || undefined, endereco: form.endereco || undefined, telefone: form.telefone || undefined, email: form.email || undefined,
+      })
+      setForm({ nome: '', cnpj: '', teto: 2000, nomeFantasia: '', endereco: '', telefone: '', email: '' }); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
 
@@ -71,9 +88,16 @@ export default function EmpresaArea() {
       <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-4">Novo parceiro</h3>
         <form onSubmit={createParceiro} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div><label className={label}>Nome</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required /></div>
-          <div><label className={label}>CNPJ</label><input className={input} value={form.cnpj} onChange={e => setForm({ ...form, cnpj: e.target.value })} /></div>
+          <div>
+            <label className={label}>CNPJ</label>
+            <div className="flex gap-2">
+              <input className={input} value={form.cnpj} onChange={e => setForm({ ...form, cnpj: e.target.value })} placeholder="só números" />
+              <button type="button" onClick={buscarCnpj} disabled={buscando} className="px-3 py-2.5 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition disabled:opacity-50 flex-none whitespace-nowrap">{buscando ? '…' : 'Buscar'}</button>
+            </div>
+          </div>
+          <div><label className={label}>Nome / Razão social</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required /></div>
           <div><label className={label}>Teto (R$)</label><input className={input} type="number" min="0" step="100" value={form.teto} onChange={e => setForm({ ...form, teto: e.target.value })} /></div>
+          {(form.nomeFantasia || form.endereco) && <div className="md:col-span-3 text-[11px] text-on-surface-variant bg-surface rounded-lg px-3 py-2">{form.nomeFantasia && <b>{form.nomeFantasia}</b>}{form.endereco ? ` · ${form.endereco}` : ''}{form.telefone ? ` · ${form.telefone}` : ''}</div>}
           {err && <div className="md:col-span-3 text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
           <div className="md:col-span-3 flex justify-end"><button disabled={saving} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Criando…' : 'Criar parceiro'}</button></div>
         </form>

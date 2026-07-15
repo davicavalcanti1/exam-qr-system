@@ -3,10 +3,11 @@ import express from 'express'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import netrisRouter from './routes/netris.js'
+import netrisRouter from './integrations/netris/routes.js'
 import adminRouter from './routes/admin.js'
 import qrRouter from './routes/qr.js'
 import integracaoRouter from './routes/integracao.js'
+import cnpjRouter from './integrations/brasilapi/cnpj/routes.js'
 
 // ── Rotas legadas do MVP (SQLite) desativadas ────────────────────────────────
 // O sistema v2 usa Supabase Auth + RLS direto no frontend e apenas os endpoints
@@ -31,6 +32,7 @@ app.use((req, res, next) => {
 app.use('/api/admin', adminRouter)   // criação da hierarquia (service role)
 app.use('/api/qr', qrRouter)         // gerar/validar QR do exame
 app.use('/api/integracao', integracaoRouter) // método de agendamento por empresa
+app.use('/api/cnpj', cnpjRouter)             // consulta de empresa por CNPJ (BrasilAPI)
 app.use('/api/netris', netrisRouter) // integração NetRis (agendamento futuro)
 
 const frontendDist = path.join(__dirname, '../frontend/dist')

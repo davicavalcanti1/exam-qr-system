@@ -21,6 +21,7 @@ const post = (path, body) => req('POST', path, body)
 export const adminApi = {
   createUser: (payload) => post('/api/admin/users', payload),
   createParceiro: (payload) => post('/api/admin/parceiros', payload),
+  buscarCnpj: (cnpj) => req('GET', `/api/cnpj/${String(cnpj).replace(/\D/g, '')}`),
   updateParceiro: (id, payload) => req('PUT', `/api/admin/parceiros/${id}`, payload),
   updateUser: (id, payload) => req('PATCH', `/api/admin/users/${id}`, payload),
   resetarSenha: (id) => post(`/api/admin/users/${id}/reset-senha`, {}),
