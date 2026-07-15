@@ -63,9 +63,16 @@ function pick(obj, keys) {
   return null
 }
 
-// Data BR (dd/mm/aaaa) ou ISO → ISO (yyyy-mm-dd). Retorna null se não parsear.
+// Data em epoch-ms (o NetRis manda assim), BR (dd/mm/aaaa) ou ISO → ISO (yyyy-mm-dd).
 function normalizarData(v) {
-  if (!v) return null
+  if (v === null || v === undefined || v === '') return null
+  // epoch em ms/segundos (número ou string só de dígitos)
+  if (typeof v === 'number' || /^\d{10,13}$/.test(String(v).trim())) {
+    let n = Number(v)
+    if (String(Math.trunc(n)).length <= 10) n *= 1000 // segundos → ms
+    const d = new Date(n)
+    return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
+  }
   const s = String(v).trim()
   let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/)      // 31/12/2026
   if (m) return `${m[3]}-${m[2]}-${m[1]}`
