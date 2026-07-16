@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { adminApi, carregarTudo } from '../../../lib/adminApi'
+import { Card, Button, Loading } from '../../../components/ui'
 
 const parseId = (v) => { const m = String(v || '').match(/^\s*(\d+)/); return m ? Number(m[1]) : null }
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -88,14 +89,14 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
     marca(cat.id, 'ok')
   }
 
-  if (loading) return <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card"><div className="flex items-center gap-2 text-sm text-on-surface-variant"><div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />Carregando listas do NetRis…</div></section>
-  if (erro) return <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card"><p className="text-sm text-on-error-container">Não foi possível carregar do NetRis: {erro}</p></section>
+  if (loading) return <Card className="p-6"><Loading label="Carregando listas do NetRis…" /></Card>
+  if (erro) return <Card className="p-6"><p className="text-sm text-on-error-container">Não foi possível carregar do NetRis: {erro}</p></Card>
 
   const Selo = ({ id }) => salvo[id] === 'salvando' ? <span className="text-[11px] text-on-surface-variant">salvando…</span>
     : salvo[id] === 'ok' ? <span className="text-[11px] text-primary font-bold">✓ salvo</span>
     : salvo[id] === 'erro' ? <span className="text-[11px] text-error font-bold">erro</span> : null
 
-  const input = 'flex-1 px-3 py-2 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
+  const input = 'flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
   const planoLabel = (p) => `${p.netris_id_plano_convenio} — ${planos.find(x => x.idPlanoConvenio === p.netris_id_plano_convenio)?.nome || '?'}`
   const procLabel = (c) => `${c.netris_procedimento_id} — ${procs.find(x => x.idProcedimento === Number(c.netris_procedimento_id))?.nome || '?'}`
 
@@ -104,14 +105,14 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
       <datalist id="dl-planos">{planos.map(p => <option key={p.idPlanoConvenio} value={`${p.idPlanoConvenio} — ${p.nome}`} />)}</datalist>
       <datalist id="dl-procs">{procs.map(p => <option key={p.idProcedimento} value={`${p.idProcedimento} — ${p.nome}`} />)}</datalist>
 
-      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
+      <Card className="p-6">
         <h3 className="text-lg font-semibold mb-1">Parceiros → plano-convênio NetRis</h3>
         <p className="text-sm text-on-surface-variant mb-4">Vincule cada parceiro ao plano-convênio dele no NetRis ({planos.length} planos). O convênio é preenchido junto.</p>
         {parceiros.length === 0 ? <p className="text-sm text-on-surface-variant">Nenhum parceiro cadastrado.</p> : (
           <div className="space-y-3">
             {parceiros.map(p => (
-              <div key={p.id} className="flex items-center gap-3">
-                <span className="w-40 flex-none text-sm font-semibold truncate">{p.nome}</span>
+              <div key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <span className="w-full sm:w-44 flex-none text-sm font-semibold truncate">{p.nome}</span>
                 <input className={input} list="dl-planos" placeholder="Buscar plano-convênio…"
                   defaultValue={p.netris_id_plano_convenio ? planoLabel(p) : ''}
                   onChange={e => { if (planos.some(x => `${x.idPlanoConvenio} — ${x.nome}` === e.target.value)) salvarParceiro(p, e.target.value) }} />
@@ -120,9 +121,9 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
             ))}
           </div>
         )}
-      </section>
+      </Card>
 
-      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
+      <Card className="p-6">
         <h3 className="text-lg font-semibold mb-1">Exames → procedimento NetRis</h3>
         <p className="text-sm text-on-surface-variant mb-3">Vincule cada exame do catálogo a um procedimento do plano abaixo. Só aparecem procedimentos <b>desse plano</b> — isso garante que o agendamento vai funcionar (evita o erro de mismatch).</p>
         <div className="flex items-center gap-2 mb-4">
@@ -140,13 +141,13 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
           <input className="px-3 py-2 text-sm rounded-lg bg-surface-container-lowest ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" placeholder="Novo exame (nome)" value={novo.nome} onChange={e => setNovo(n => ({ ...n, nome: e.target.value }))} />
           <input className="px-3 py-2 text-sm rounded-lg bg-surface-container-lowest ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" placeholder="Valor" inputMode="decimal" value={novo.valor} onChange={e => setNovo(n => ({ ...n, valor: e.target.value }))} />
           <input className="px-3 py-2 text-sm rounded-lg bg-surface-container-lowest ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" list="dl-procs" placeholder="Procedimento NetRis (opcional)" value={novo.proc} onChange={e => setNovo(n => ({ ...n, proc: e.target.value }))} />
-          <button type="button" onClick={criarExame} disabled={criando || !novo.nome.trim()} className="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50 flex-none">{criando ? '…' : 'Criar'}</button>
+          <Button type="button" onClick={criarExame} loading={criando} disabled={!novo.nome.trim()} className="flex-none">Criar</Button>
         </div>
         {catalogo.length === 0 ? <p className="text-sm text-on-surface-variant">Nenhum exame no catálogo.</p> : (
           <div className="space-y-3">
             {catalogo.map(c => (
-              <div key={c.id} className="flex items-center gap-3">
-                <span className="w-40 flex-none text-sm font-semibold truncate">{c.nome}</span>
+              <div key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <span className="w-full sm:w-44 flex-none text-sm font-semibold truncate">{c.nome}</span>
                 <input className={input} list="dl-procs" placeholder="Buscar procedimento…"
                   defaultValue={c.netris_procedimento_id ? procLabel(c) : ''}
                   onChange={e => { if (procs.some(x => `${x.idProcedimento} — ${x.nome}` === e.target.value)) salvarProc(c, e.target.value) }} />
@@ -155,7 +156,7 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
             ))}
           </div>
         )}
-      </section>
+      </Card>
     </div>
   )
 }

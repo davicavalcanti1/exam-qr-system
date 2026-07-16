@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../../lib/adminApi'
+import { Card, Button, Badge } from '../../../components/ui'
 
 const soDigitos = (s) => String(s || '').replace(/\D/g, '')
 const mascaraCpf = (s) => {
@@ -10,9 +11,9 @@ const dataBR = (iso) => iso ? iso.split('-').reverse().join('/') : '—'
 
 function Campo({ label, valor }) {
   return (
-    <div className="flex justify-between px-4 py-2.5 text-sm">
-      <span className="text-on-surface-variant">{label}</span>
-      <span className="font-semibold text-right">{valor ?? '—'}</span>
+    <div className="flex justify-between gap-3 px-4 py-2.5 text-sm">
+      <span className="text-on-surface-variant flex-none">{label}</span>
+      <span className="font-semibold text-right truncate">{valor ?? '—'}</span>
     </div>
   )
 }
@@ -45,16 +46,13 @@ export default function NetrisConsole({ empresaId }) {
   }
 
   if (ativo === null) return null
-  const input = 'w-full px-3 py-2.5 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
 
   return (
-    <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card space-y-4">
+    <Card className="p-6 space-y-4">
       <div className="flex items-center gap-2">
         <span className="material-symbols-outlined text-primary">terminal</span>
         <h3 className="text-lg font-semibold">Console NetRis</h3>
-        <span className={`ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${ativo ? 'bg-primary/10 text-primary' : 'bg-surface-container text-on-surface-variant'}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${ativo ? 'bg-primary' : 'bg-on-surface-variant/40'}`} />{ativo ? 'Conectado' : 'Inativo'}
-        </span>
+        <Badge tone={ativo ? 'success' : 'neutral'} className="ml-auto" icon={ativo ? 'wifi' : 'wifi_off'}>{ativo ? 'Conectado' : 'Inativo'}</Badge>
       </div>
 
       {!ativo ? (
@@ -64,34 +62,33 @@ export default function NetrisConsole({ empresaId }) {
           <div>
             <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Buscar paciente por CPF</label>
             <form onSubmit={buscar} className="flex gap-2 mt-1">
-              <input className={input} inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={e => setCpf(mascaraCpf(e.target.value))} />
-              <button disabled={loading} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50 flex-none">{loading ? 'Buscando…' : 'Buscar'}</button>
+              <input className="flex-1 px-3.5 py-2.5 text-sm rounded-xl bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={e => setCpf(mascaraCpf(e.target.value))} />
+              <Button type="submit" loading={loading} className="flex-none">Buscar</Button>
             </form>
           </div>
 
-          {err && <div className="text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
+          {err && <div className="text-sm px-3 py-2 rounded-xl bg-error-container/50 text-on-error-container">{err}</div>}
 
           {res && (res.encontrado ? (
             <div className="space-y-3">
-              <div className="rounded-lg ring-1 ring-outline-variant/20 divide-y divide-outline-variant/10">
+              <div className="rounded-xl ring-1 ring-outline-variant/20 divide-y divide-outline-variant/10 overflow-hidden">
                 <Campo label="Nome" valor={res.paciente?.nome} />
                 <Campo label="CPF" valor={res.paciente?.cpf ? mascaraCpf(res.paciente.cpf) : '—'} />
                 <Campo label="Nascimento" valor={dataBR(res.paciente?.nascimento)} />
                 <Campo label="Sexo" valor={res.paciente?.sexo === 'M' ? 'Masculino' : res.paciente?.sexo === 'F' ? 'Feminino' : '—'} />
                 <Campo label="Telefone" valor={res.paciente?.telefone} />
-                <Campo label="E-mail" valor={res.paciente?.email} />
                 <Campo label="ID no NetRis" valor={res.paciente?.netrisId} />
               </div>
               <button onClick={() => setVerRaw(v => !v)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">{verRaw ? 'expand_less' : 'expand_more'}</span>{verRaw ? 'Ocultar' : 'Ver'} resposta crua (NetRis)
               </button>
-              {verRaw && <pre className="text-[11px] bg-surface rounded-lg p-3 overflow-x-auto max-h-72 overflow-y-auto">{JSON.stringify(raw, null, 2)}</pre>}
+              {verRaw && <pre className="text-[11px] bg-surface rounded-xl p-3 overflow-x-auto max-h-72 overflow-y-auto">{JSON.stringify(raw, null, 2)}</pre>}
             </div>
           ) : (
             <p className="text-sm text-on-surface-variant">Nenhum paciente encontrado para esse CPF no NetRis.</p>
           ))}
         </>
       )}
-    </section>
+    </Card>
   )
 }
