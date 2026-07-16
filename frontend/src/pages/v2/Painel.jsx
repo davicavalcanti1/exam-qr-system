@@ -130,7 +130,8 @@ export default function Painel() {
             const on = n.k === sec
             return (
               <button key={n.k} onClick={() => irPara(n.k)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition ${on ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-black/[.03] hover:text-on-surface'}`}>
+                className={`group relative w-full flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-xl text-sm font-bold transition ${on ? 'bg-primary/10 text-primary' : 'text-on-surface-variant hover:bg-black/[.04] hover:text-on-surface'}`}>
+                <span className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-full bg-primary transition-all ${on ? 'h-5 opacity-100' : 'h-0 opacity-0'}`} />
                 <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: on ? "'FILL' 1" : "'FILL' 0" }}>{n.icon}</span>
                 {n.label}
               </button>
