@@ -228,6 +228,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
                 </select>
               </div>
             )}
+            <div className="flex items-center gap-2 text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person</span><span className="text-xs font-bold uppercase tracking-widest">Dados do paciente</span></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><label className={label}>Nome</label><input className={input} value={nome} onChange={e => setNome(e.target.value)} required /></div>
               <div>
@@ -259,9 +260,9 @@ export default function PacientesArea({ escolherParceiro = false }) {
                 <p className="text-[11px] text-on-surface-variant">Com o NetRis ativo, o paciente é vinculado (ou criado) lá automaticamente ao salvar. Use “Buscar NetRis” para puxar quem já existe.</p>
               </>
             )}
-            <div className="space-y-3">
+            <div className="space-y-3 pt-4 border-t border-outline-variant/10">
               <div className="flex items-center justify-between">
-                <span className={label}>Exames</span>
+                <span className="flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-widest"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>medical_services</span>Exames</span>
                 <button type="button" onClick={() => setExames(x => [...x, { procId: '', indicacao: '', data: '', hora: '' }])} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span>Adicionar exame</button>
               </div>
               {exames.map((ex, i) => (

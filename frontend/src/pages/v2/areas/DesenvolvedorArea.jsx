@@ -59,8 +59,10 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
   const input = 'w-full px-3 py-2.5 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
   const label = 'text-[11px] font-bold uppercase tracking-widest text-on-surface-variant'
 
+  const ICONE_PROVEDOR = { manual: 'edit_calendar', netris: 'sync_alt' }
+
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Desenvolvedor{empresaNome ? ` · ${empresaNome}` : ''}</h2>
@@ -78,11 +80,14 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
           {Object.entries(providers).map(([k, v]) => (
             <button key={k} onClick={() => trocarProvider(k)}
               className={`text-left p-4 rounded-xl ring-1 transition ${provider === k ? 'ring-2 ring-primary bg-primary/5' : 'ring-outline-variant/30 hover:ring-primary/40'}`}>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm">{v.label}</span>
+              <div className="flex items-center gap-2">
+                <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-none ${provider === k ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'}`}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{ICONE_PROVEDOR[k] || 'extension'}</span>
+                </span>
+                <span className="font-bold text-sm flex-1">{v.label}</span>
                 {provider === k && <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
               </div>
-              <p className="text-xs text-on-surface-variant mt-1">{v.descricao}</p>
+              <p className="text-xs text-on-surface-variant mt-2">{v.descricao}</p>
             </button>
           ))}
         </div>
