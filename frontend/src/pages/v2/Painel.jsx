@@ -74,10 +74,10 @@ const NAV = {
 
 const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Empresa', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário' }
 
-function renderArea(role, k) {
+function renderArea(role, k, irPara) {
   const map = {
     empresas: <OwnerArea />,
-    visao: <VisaoGeralArea />,
+    visao: <VisaoGeralArea irPara={irPara} />,
     parceiros: <EmpresaArea />,
     agendamentos: <PacientesArea escolherParceiro />,
     agenda: <AgendaArea />,
@@ -160,7 +160,7 @@ export default function Painel() {
           <div className="max-w-6xl mx-auto">
             {nav.length === 0
               ? <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-card text-center text-on-surface-variant">Seu perfil ainda não tem um papel definido. Fale com o administrador.</div>
-              : renderArea(role, sec)}
+              : renderArea(role, sec, irPara)}
           </div>
         </main>
       </div>
