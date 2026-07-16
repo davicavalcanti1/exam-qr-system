@@ -92,6 +92,13 @@ export default function Entrar() {
 
             <Button type="submit" loading={loading} disabled={!ready} iconRight="arrow_forward" className="w-full !py-3.5">Entrar</Button>
           </form>
+
+          <div className="mt-8 pt-4 border-t border-outline-variant/10 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-on-surface-variant">
+            <a href="/documentacao" className="hover:text-primary">Documentação</a>
+            <a href="/privacidade" className="hover:text-primary">Privacidade (LGPD)</a>
+            <a href="/seguranca" className="hover:text-primary">Segurança &amp; dados</a>
+            <a href="/termos" className="hover:text-primary">Termos</a>
+          </div>
         </div>
       </main>
     </div>

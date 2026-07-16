@@ -5,6 +5,10 @@ import Entrar from './pages/v2/Entrar'
 import Painel from './pages/v2/Painel'
 import ScanPage from './pages/v2/ScanPage'
 import IntegracaoNetris from './pages/v2/IntegracaoNetris'
+import Documentacao from './pages/public/Documentacao'
+import Privacidade from './pages/public/Privacidade'
+import Seguranca from './pages/public/Seguranca'
+import Termos from './pages/public/Termos'
 
 export default function App() {
   return (
@@ -14,6 +18,11 @@ export default function App() {
         <Route path="/painel" element={<Painel />} />
         <Route path="/scan" element={<ScanPage />} />
         <Route path="/integracao-netris" element={<IntegracaoNetris />} />
+        {/* documentação pública (sem login) */}
+        <Route path="/documentacao" element={<Documentacao />} />
+        <Route path="/privacidade" element={<Privacidade />} />
+        <Route path="/seguranca" element={<Seguranca />} />
+        <Route path="/termos" element={<Termos />} />
         {/* rotas legadas (Express/clinic/partner) desativadas — tudo cai no login v2 */}
         <Route path="/login" element={<Navigate to="/entrar" replace />} />
         <Route path="*" element={<Navigate to="/entrar" replace />} />
