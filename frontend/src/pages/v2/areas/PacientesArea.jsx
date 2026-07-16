@@ -55,6 +55,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   const [parceiroSel, setParceiroSel] = useState('')
   const [qrExame, setQrExame] = useState(null)
   const [agExame, setAgExame] = useState(null)
+  const [busca, setBusca] = useState('')
   const [cancelandoId, setCancelandoId] = useState(null)
   const [edExame, setEdExame] = useState(null)
   const [consentimento, setConsentimento] = useState(false)
@@ -367,11 +368,23 @@ export default function PacientesArea({ escolherParceiro = false }) {
       </section>
 
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
-        <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Pacientes ({lista.length})</h3></div>
+        <div className="p-6 border-b border-outline-variant/10 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold">Pacientes ({lista.length})</h3>
+          {lista.length > 0 && (
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant" style={{ fontSize: '18px' }}>search</span>
+              <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar por nome ou CPF…" className="w-64 max-w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+          )}
+        </div>
         {loading ? <Loading />
           : lista.length === 0 ? <EmptyState icon="groups" title="Nenhum paciente ainda" hint="Cadastre o primeiro paciente no formulário acima." />
-          : <div className="divide-y divide-outline-variant/10">
-              {lista.map(p => (
+          : (() => {
+              const q = busca.trim().toLowerCase(); const qd = busca.replace(/\D/g, '')
+              const filtrada = lista.filter(p => !q || (p.nome || '').toLowerCase().includes(q) || (qd && (p.cpf || '').includes(qd)))
+              if (filtrada.length === 0) return <EmptyState icon="search_off" title="Nada encontrado" hint="Nenhum paciente com esse nome ou CPF." />
+              return <div className="divide-y divide-outline-variant/10">
+              {filtrada.map(p => (
                 <div key={p.id} className="px-6 py-4 hover:bg-black/[.02] transition">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(p.nome || '?').charAt(0).toUpperCase()}</div>
@@ -418,7 +431,8 @@ export default function PacientesArea({ escolherParceiro = false }) {
                   </div>
                 </div>
               ))}
-            </div>}
+            </div>
+            })()}
       </section>
 
       <QrModal exame={qrExame} onClose={() => { setQrExame(null); load() }} />

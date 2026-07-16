@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { Button, Field, Input, Loading } from '../../components/ui'
+import BuscaGlobal from '../../components/BuscaGlobal'
 import OwnerArea from './areas/OwnerArea'
 import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
@@ -154,6 +155,11 @@ export default function Painel() {
           <button onClick={() => setMenuAberto(true)} className="lg:hidden p-2 -ml-2 text-on-surface-variant"><span className="material-symbols-outlined">menu</span></button>
           <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>{atual?.icon || 'dashboard'}</span>
           <h1 className="font-display text-lg font-extrabold tracking-tight">{atual?.label || 'Painel'}</h1>
+          {role !== 'owner' && nav.length > 0 && (
+            <div className="ml-auto">
+              <BuscaGlobal onSelect={() => irPara(role === 'empresa_admin' ? 'agendamentos' : 'pacientes')} />
+            </div>
+          )}
         </header>
 
         <main className="flex-1 p-5 lg:p-8">
