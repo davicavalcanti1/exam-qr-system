@@ -27,18 +27,25 @@ export default function AutorizacoesArea() {
     if (parceiroId) {
       const { data: p } = await supabase.from('parceiros').select('teto').eq('id', parceiroId).maybeSingle()
       setTeto(p?.teto ?? null)
-      // comprometido = exames realizados que ainda não estão num lote PAGO
-      const { data: real } = await supabase.from('exames').select('valor, cobranca_id').eq('status', 'realizado')
+      // comprometido = exames autorizados + realizados que ainda não foram pagos
+      // (é o que "ocupa" o teto; autorizado conta porque vira dívida ao ser realizado)
+      const { data: comp } = await supabase.from('exames').select('valor, cobranca_id').in('status', ['autorizado', 'realizado'])
       const { data: pagas } = await supabase.from('cobrancas').select('id').eq('status', 'paga')
       const pagasSet = new Set((pagas || []).map(c => c.id))
       let soma = 0
-      for (const e of real || []) if (!e.cobranca_id || !pagasSet.has(e.cobranca_id)) soma += Number(e.valor || 0)
+      for (const e of comp || []) if (!e.cobranca_id || !pagasSet.has(e.cobranca_id)) soma += Number(e.valor || 0)
       setComprometido(soma)
     }
   }
   useEffect(() => { load() }, [parceiroId])
 
   async function decidir(ex, aprovar) {
+    // trava do teto: só bloqueia quando JÁ atingiu/passou o teto (se está abaixo,
+    // deixa encaixar mais um, mesmo que ultrapasse). Recusar sempre é permitido.
+    if (aprovar && teto != null && comprometido >= teto) {
+      setAviso(`⛔ Teto do parceiro atingido (${fmt(comprometido)} de ${fmt(teto)}). Não é possível autorizar novos exames até quitar as cobranças em aberto.`)
+      return
+    }
     setBusy(ex.id); setAviso('')
     const patch = aprovar
       ? { status: 'autorizado', autorizado_por: user?.id }
@@ -61,6 +68,7 @@ export default function AutorizacoesArea() {
 
   const disponivel = teto != null ? teto - comprometido : null
   const pct = teto ? Math.min(Math.round((comprometido / teto) * 100), 100) : 0
+  const tetoAtingido = teto != null && comprometido >= teto
 
   return (
     <div className="space-y-6">
@@ -74,6 +82,7 @@ export default function AutorizacoesArea() {
           <div className={`h-full rounded-full ${pct >= 100 ? 'bg-error' : pct >= 70 ? 'bg-yellow-400' : 'bg-primary'}`} style={{ width: `${pct}%` }} />
         </div>
         <p className="text-xs text-on-surface-variant mt-1 tabular-nums">Comprometido {fmt(comprometido)} de {fmt(teto)} ({pct}%)</p>
+        {tetoAtingido && <p className="text-xs font-bold text-error mt-2 flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: '15px' }}>block</span>Teto atingido — autorizações bloqueadas até quitar as cobranças.</p>}
       </div>
     )}
     {aviso && <div className="text-sm px-4 py-3 rounded-xl bg-surface-container-lowest shadow-card">{aviso}</div>}
@@ -93,7 +102,7 @@ export default function AutorizacoesArea() {
                   {ex.netris_slot && <p className="text-[11px] text-primary font-bold flex items-center gap-1 mt-0.5"><span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>NetRis: {String(ex.netris_slot.data || '').slice(0, 5)} {ex.netris_slot.horarioString} (agenda ao autorizar)</p>}
                 </div>
                 <div className="flex gap-2 flex-none">
-                  <Button size="sm" loading={busy === ex.id} onClick={() => decidir(ex, true)} icon="check">Autorizar</Button>
+                  <Button size="sm" loading={busy === ex.id} disabled={tetoAtingido} onClick={() => decidir(ex, true)} icon="check" title={tetoAtingido ? 'Teto atingido' : ''}>Autorizar</Button>
                   <Button size="sm" variant="danger" disabled={busy === ex.id} onClick={() => decidir(ex, false)}>Recusar</Button>
                 </div>
               </div>
