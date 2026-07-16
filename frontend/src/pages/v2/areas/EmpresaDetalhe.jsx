@@ -28,6 +28,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const [carregando, setCarregando] = useState(true)
   const [admins, setAdmins] = useState(null)
   const [modal, setModal] = useState(false)
+  const [logoInput, setLogoInput] = useState('')
 
   async function loadEmpresa() {
     const { data } = await supabase.from('empresas').select('*').eq('id', empresa.id).maybeSingle()
@@ -39,8 +40,15 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
     setAdmins(data || [])
   }
   useEffect(() => { loadEmpresa() }, [empresa.id])
+  useEffect(() => { setLogoInput(emp.logo_url || '') }, [emp.logo_url])
   useEffect(() => { if (aba === 'usuarios' && admins === null) loadAdmins() }, [aba])
 
+  async function salvarLogo(url) {
+    const v = (url ?? '').trim() || null
+    const { error } = await supabase.from('empresas').update({ logo_url: v }).eq('id', emp.id)
+    if (error) return toast.error(error.message)
+    setEmp(e => ({ ...e, logo_url: v })); onChange?.(); toast.success('Logo atualizada.')
+  }
   async function toggleStatus() {
     const novo = emp.status === 'ativa' ? 'inativa' : 'ativa'
     const { error } = await supabase.from('empresas').update({ status: novo }).eq('id', emp.id)
@@ -62,7 +70,9 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" icon="arrow_back" onClick={onBack}>Empresas</Button>
         <div className="flex items-center gap-3 min-w-0">
-          <span className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-none"><span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>business</span></span>
+          {emp.logo_url
+            ? <span className="h-11 flex items-center flex-none"><img src={emp.logo_url} alt={emp.nome} className="h-9 max-w-[160px] object-contain" /></span>
+            : <span className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-none"><span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>business</span></span>}
           <div className="min-w-0">
             <h2 className="font-display text-xl font-extrabold tracking-tight truncate">{emp.nome}</h2>
             <p className="text-[11px] text-on-surface-variant">{emp.slug}</p>
@@ -95,6 +105,18 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
           <Linha label="Telefone" valor={emp.telefone} />
           <Linha label="E-mail" valor={emp.email} />
           <Linha label="Criada em" valor={dataBR(emp.created_at)} />
+
+          <div className="mt-5 pt-5 border-t border-outline-variant/10">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Logomarca</span>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="w-24 h-14 rounded-xl bg-surface ring-1 ring-outline-variant/20 flex items-center justify-center flex-none overflow-hidden">
+                {emp.logo_url ? <img src={emp.logo_url} alt="" className="max-h-10 max-w-[84px] object-contain" /> : <span className="material-symbols-outlined text-on-surface-variant/50">image</span>}
+              </span>
+              <input value={logoInput} onChange={e => setLogoInput(e.target.value)} placeholder="URL da logo (ex.: /imago-logo.png)" className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" />
+              <Button variant="secondary" onClick={() => salvarLogo(logoInput)} className="flex-none">Salvar</Button>
+            </div>
+            <button onClick={() => salvarLogo('/imago-logo.png')} className="text-xs font-bold text-primary hover:underline mt-2">Usar logo IMAGO</button>
+          </div>
         </Card>
       ))}
 

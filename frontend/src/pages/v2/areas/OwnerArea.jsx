@@ -16,7 +16,7 @@ export default function OwnerArea() {
   const [selected, setSelected] = useState(null)
 
   async function load() {
-    const { data } = await supabase.from('empresas').select('id, nome, cnpj, slug, status, created_at').order('created_at', { ascending: false })
+    const { data } = await supabase.from('empresas').select('id, nome, cnpj, slug, status, created_at, logo_url').order('created_at', { ascending: false })
     setEmpresas(data || []); setLoading(false)
   }
   useEffect(() => { load() }, [])
@@ -85,7 +85,9 @@ export default function OwnerArea() {
             {empresas.map(emp => (
               <Card as="button" key={emp.id} onClick={() => setSelected(emp)} className="p-5 text-left w-full hover:ring-2 hover:ring-primary/30 transition">
                 <div className="flex items-start justify-between gap-2">
-                  <span className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-none"><span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>business</span></span>
+                  {emp.logo_url
+                    ? <span className="h-11 flex items-center flex-none"><img src={emp.logo_url} alt="" className="max-h-9 max-w-[150px] object-contain" /></span>
+                    : <span className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-none"><span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>business</span></span>}
                   <Badge tone={emp.status === 'ativa' ? 'success' : 'neutral'}>{emp.status}</Badge>
                 </div>
                 <p className="font-bold mt-3 truncate">{emp.nome}</p>
