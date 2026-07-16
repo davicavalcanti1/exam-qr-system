@@ -78,28 +78,6 @@ export default function VisaoGeralArea() {
       </div>
 
       <Card className="p-6">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Exames por status</span>
-        <div className="mt-4 space-y-3">
-          {[
-            { label: 'Aguardando autorização', v: d.by.aguardando_autorizacao, cor: 'bg-yellow-400' },
-            { label: 'Autorizados', v: d.by.autorizado, cor: 'bg-primary' },
-            { label: 'Realizados', v: d.by.realizado, cor: 'bg-tertiary-fixed-dim' },
-          ].map((s) => {
-            const max = Math.max(1, d.by.aguardando_autorizacao, d.by.autorizado, d.by.realizado)
-            return (
-              <div key={s.label} className="flex items-center gap-3">
-                <span className="w-40 flex-none text-sm text-on-surface-variant truncate">{s.label}</span>
-                <div className="flex-1 h-3 bg-surface-container rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${s.cor}`} style={{ width: `${(s.v / max) * 100}%` }} />
-                </div>
-                <span className="w-8 flex-none text-right text-sm font-bold tabular-nums">{s.v}</span>
-              </div>
-            )
-          })}
-        </div>
-      </Card>
-
-      <Card className="p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Em aberto (dívida)</span>
