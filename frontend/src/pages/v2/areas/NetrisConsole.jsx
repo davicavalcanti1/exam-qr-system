@@ -17,7 +17,7 @@ function Campo({ label, valor }) {
   )
 }
 
-export default function NetrisConsole() {
+export default function NetrisConsole({ empresaId }) {
   const [ativo, setAtivo] = useState(null)
   const [cpf, setCpf] = useState('')
   const [loading, setLoading] = useState(false)
@@ -27,8 +27,8 @@ export default function NetrisConsole() {
   const [err, setErr] = useState('')
 
   useEffect(() => {
-    adminApi.netrisStatus().then(s => setAtivo(!!s.ativo)).catch(() => setAtivo(false))
-  }, [])
+    adminApi.netrisStatus(empresaId).then(s => setAtivo(!!s.ativo)).catch(() => setAtivo(false))
+  }, [empresaId])
 
   async function buscar(e) {
     e?.preventDefault()
@@ -37,8 +37,8 @@ export default function NetrisConsole() {
     setErr(''); setLoading(true); setRes(null); setRaw(null); setVerRaw(false)
     try {
       const [norm, cru] = await Promise.all([
-        adminApi.netrisPaciente(d, false),
-        adminApi.netrisPaciente(d, true),
+        adminApi.netrisPaciente(d, false, empresaId),
+        adminApi.netrisPaciente(d, true, empresaId),
       ])
       setRes(norm); setRaw(cru.raw ?? null)
     } catch (e) { setErr(e.message) } finally { setLoading(false) }

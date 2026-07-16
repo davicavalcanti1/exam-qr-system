@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { useToast } from '../../../components/ui'
 import { buscarCnpj as consultarCnpj } from '../../../integrations/brasilapi/cnpj'
 import CreateUserModal from '../CreateUserModal'
+import DesenvolvedorArea from './DesenvolvedorArea'
 
 export default function OwnerArea() {
   const toast = useToast()
@@ -15,6 +16,7 @@ export default function OwnerArea() {
   const [expanded, setExpanded] = useState(null)
   const [admins, setAdmins] = useState({})       // empresaId -> [profiles]
   const [modal, setModal] = useState(null)        // empresaId p/ criar admin
+  const [config, setConfig] = useState(null)      // {id, nome} empresa em configuração
 
   async function load() {
     const { data } = await supabase.from('empresas').select('id, nome, cnpj, slug, status, created_at').order('created_at', { ascending: false })
@@ -58,6 +60,18 @@ export default function OwnerArea() {
   const input = 'w-full px-3 py-2.5 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
   const label = 'text-[11px] font-bold uppercase tracking-widest text-on-surface-variant'
 
+  // modo configuração: mostra o Desenvolvedor da empresa selecionada
+  if (config) {
+    return (
+      <div className="space-y-4">
+        <button onClick={() => setConfig(null)} className="flex items-center gap-1 text-sm font-bold text-on-surface-variant hover:text-primary">
+          <span className="material-symbols-outlined text-base">arrow_back</span>Voltar às empresas
+        </button>
+        <DesenvolvedorArea empresaId={config.id} empresaNome={config.nome} />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
@@ -91,7 +105,13 @@ export default function OwnerArea() {
                   </button>
                   {expanded === emp.id && (
                     <div className="px-6 pb-5 bg-slate-50/40">
-                      <div className="flex items-center justify-between py-3">
+                      <div className="py-3">
+                        <button onClick={() => setConfig({ id: emp.id, nome: emp.nome })} className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-white ring-1 ring-outline-variant/20 hover:ring-primary/40 transition text-left">
+                          <span className="flex items-center gap-2 text-sm font-bold"><span className="material-symbols-outlined text-primary">terminal</span>Configurar integração (Desenvolvedor)</span>
+                          <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between py-3 border-t border-outline-variant/10">
                         <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Usuários da empresa</span>
                         <button onClick={() => setModal(emp.id)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span>Criar administrador</button>
                       </div>

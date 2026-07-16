@@ -6,8 +6,9 @@ import { adminApi, carregarTudo } from '../../../lib/adminApi'
 const parseId = (v) => { const m = String(v || '').match(/^\s*(\d+)/); return m ? Number(m[1]) : null }
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
-export default function NetrisMapeamento() {
-  const { empresaId } = useAuth()
+export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
+  const { empresaId: empresaIdAuth } = useAuth()
+  const empresaId = empresaIdProp || empresaIdAuth
   const [novo, setNovo] = useState({ nome: '', valor: '', proc: '' })
   const [criando, setCriando] = useState(false)
   const [planos, setPlanos] = useState([])
@@ -26,7 +27,7 @@ export default function NetrisMapeamento() {
     if (!idPlano) { setProcs([]); return }
     setCarregandoProcs(true)
     try {
-      const r = await adminApi.netrisProcedimentos(1, idPlano)
+      const r = await adminApi.netrisProcedimentos(1, idPlano, empresaId)
       setProcs(r.procedimentos || [])
     } catch (e) { setErro(e.message) } finally { setCarregandoProcs(false) }
   }
@@ -35,9 +36,9 @@ export default function NetrisMapeamento() {
     (async () => {
       try {
         const [pl, parc, cat] = await Promise.all([
-          carregarTudo((p) => adminApi.netrisPlanos(p), 'planos'),
-          supabase.from('parceiros').select('id, nome, netris_id_plano_convenio, netris_id_convenio').order('nome'),
-          supabase.from('procedimentos').select('id, nome, netris_procedimento_id').order('nome'),
+          carregarTudo((p) => adminApi.netrisPlanos(p, empresaId), 'planos'),
+          supabase.from('parceiros').select('id, nome, netris_id_plano_convenio, netris_id_convenio').eq('empresa_id', empresaId).order('nome'),
+          supabase.from('procedimentos').select('id, nome, netris_procedimento_id').eq('empresa_id', empresaId).order('nome'),
         ])
         setPlanos(pl)
         setParceiros(parc.data || []); setCatalogo(cat.data || [])
@@ -47,7 +48,7 @@ export default function NetrisMapeamento() {
         await carregarProcs(ref)
       } catch (e) { setErro(e.message) } finally { setLoading(false) }
     })()
-  }, [])
+  }, [empresaId])
 
   const marca = (id, estado) => setSalvo(s => ({ ...s, [id]: estado }))
 

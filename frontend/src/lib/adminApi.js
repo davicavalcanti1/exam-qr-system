@@ -25,19 +25,19 @@ export const adminApi = {
   updateUser: (id, payload) => req('PATCH', `/api/admin/users/${id}`, payload),
   resetarSenha: (id) => post(`/api/admin/users/${id}/reset-senha`, {}),
   gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
-  // integrações de agendamento
+  // integrações de agendamento (empresaId opcional: owner configura por empresa)
   listarProviders: () => req('GET', '/api/integracao/providers'),
-  getIntegracao: () => req('GET', '/api/integracao'),
+  getIntegracao: (empresaId) => req('GET', `/api/integracao${empresaId ? `?empresaId=${empresaId}` : ''}`),
   salvarIntegracao: (payload) => req('PUT', '/api/integracao', payload),
   testarIntegracao: (payload) => post('/api/integracao/testar', payload || {}),
   // console NetRis (dentro do sistema)
-  netrisStatus: () => req('GET', '/api/netris/status'),
-  netrisPaciente: (cpf, raw = false) => req('GET', `/api/netris/pacientes/cpf/${encodeURIComponent(cpf)}${raw ? '?raw=1' : ''}`),
+  netrisStatus: (empresaId) => req('GET', `/api/netris/status${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  netrisPaciente: (cpf, raw = false, empresaId) => req('GET', `/api/netris/pacientes/cpf/${encodeURIComponent(cpf)}?${raw ? 'raw=1&' : ''}${empresaId ? `empresaId=${empresaId}` : ''}`),
   netrisCriarPaciente: (dados) => post('/api/netris/pacientes', dados),
   // mapeamento (Fase 4)
   updateParceiroNetris: (id, payload) => req('PUT', `/api/admin/parceiros/${id}/netris`, payload),
-  netrisPlanos: (page = 1) => req('GET', `/api/netris/planos?page=${page}`),
-  netrisProcedimentos: (page = 1, idPlanoConvenio) => req('GET', `/api/netris/procedimentos?page=${page}${idPlanoConvenio ? `&idPlanoConvenio=${idPlanoConvenio}` : ''}`),
+  netrisPlanos: (page = 1, empresaId) => req('GET', `/api/netris/planos?page=${page}${empresaId ? `&empresaId=${empresaId}` : ''}`),
+  netrisProcedimentos: (page = 1, idPlanoConvenio, empresaId) => req('GET', `/api/netris/procedimentos?page=${page}${idPlanoConvenio ? `&idPlanoConvenio=${idPlanoConvenio}` : ''}${empresaId ? `&empresaId=${empresaId}` : ''}`),
   // agendamento no fluxo do exame
   netrisHorariosExame: (exameId, dataInicial, dataFinal) => req('GET', `/api/netris/horarios-exame?exameId=${exameId}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
   netrisHorariosCatalogo: ({ procedimentoId, parceiroId, idPaciente, pesoPaciente, dataInicial, dataFinal }) =>

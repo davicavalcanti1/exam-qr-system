@@ -4,7 +4,7 @@ import { adminApi } from '../../../lib/adminApi'
 import NetrisConsole from './NetrisConsole'
 import NetrisMapeamento from './NetrisMapeamento'
 
-export default function DesenvolvedorArea() {
+export default function DesenvolvedorArea({ empresaId, empresaNome }) {
   const [providers, setProviders] = useState({})
   const [provider, setProvider] = useState('manual')
   const [config, setConfig] = useState({})
@@ -18,14 +18,14 @@ export default function DesenvolvedorArea() {
   useEffect(() => {
     (async () => {
       try {
-        const [{ providers }, atual] = await Promise.all([adminApi.listarProviders(), adminApi.getIntegracao()])
+        const [{ providers }, atual] = await Promise.all([adminApi.listarProviders(), adminApi.getIntegracao(empresaId)])
         setProviders(providers || {})
         setProvider(atual.provider || 'manual')
         setConfig(atual.config || {})
         setAtivo(atual.ativo || false)
       } catch (e) { setMsg(e.message) } finally { setLoading(false) }
     })()
-  }, [])
+  }, [empresaId])
 
   function trocarProvider(p) {
     setProvider(p); setTeste(null); setMsg('')
@@ -40,7 +40,7 @@ export default function DesenvolvedorArea() {
   async function salvar() {
     setSaving(true); setMsg(''); setTeste(null)
     try {
-      const r = await adminApi.salvarIntegracao({ provider, config, ativo })
+      const r = await adminApi.salvarIntegracao({ provider, config, ativo, empresaId })
       setConfig(r.config || {}); setAtivo(r.ativo)
       setMsg('Salvo com sucesso.')
     } catch (e) { setMsg(e.message) } finally { setSaving(false) }
@@ -48,7 +48,7 @@ export default function DesenvolvedorArea() {
 
   async function testar() {
     setTestando(true); setTeste(null)
-    try { setTeste(await adminApi.testarIntegracao()) }
+    try { setTeste(await adminApi.testarIntegracao({ empresaId })) }
     catch (e) { setTeste({ ok: false, mensagem: e.message }) }
     finally { setTestando(false) }
   }
@@ -63,8 +63,8 @@ export default function DesenvolvedorArea() {
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Desenvolvedor</h2>
-          <p className="text-sm text-on-surface-variant mt-1">Escolha como esta empresa marca os exames. As credenciais ficam guardadas no servidor — nunca chegam ao navegador.</p>
+          <h2 className="text-2xl font-bold tracking-tight">Desenvolvedor{empresaNome ? ` · ${empresaNome}` : ''}</h2>
+          <p className="text-sm text-on-surface-variant mt-1">Escolha como {empresaNome ? 'esta empresa' : 'a empresa'} marca os exames. As credenciais ficam no servidor — nunca chegam ao navegador.</p>
         </div>
         <Link to="/integracao-netris" className="flex-none flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition whitespace-nowrap">
           <span className="material-symbols-outlined text-base">help</span>Como funciona
@@ -123,8 +123,8 @@ export default function DesenvolvedorArea() {
         {provider !== 'manual' && <button disabled={testando} onClick={testar} className="px-5 py-2.5 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition disabled:opacity-50">{testando ? 'Testando…' : 'Testar conexão'}</button>}
       </div>
 
-      {provider === 'netris' && <NetrisConsole key={ativo ? 'on' : 'off'} />}
-      {provider === 'netris' && ativo && <NetrisMapeamento key={ativo ? 'map-on' : 'map-off'} />}
+      {provider === 'netris' && <NetrisConsole key={`c-${empresaId || 'me'}-${ativo}`} empresaId={empresaId} />}
+      {provider === 'netris' && ativo && <NetrisMapeamento key={`m-${empresaId || 'me'}`} empresaId={empresaId} />}
     </div>
   )
 }

@@ -12,7 +12,6 @@ import CatalogoArea from './areas/CatalogoArea'
 import VisaoGeralArea from './areas/VisaoGeralArea'
 import CobrancasArea from './areas/CobrancasArea'
 import AgendaArea from './areas/AgendaArea'
-import DesenvolvedorArea from './areas/DesenvolvedorArea'
 import ContratosArea from './areas/ContratosArea'
 import ContratoArea from './areas/ContratoArea'
 import AuditoriaArea from './areas/AuditoriaArea'
@@ -60,7 +59,6 @@ const NAV = {
     { k: 'cobrancas', label: 'Cobranças', icon: 'receipt_long' },
     { k: 'contratos', label: 'Contratos', icon: 'description' },
     { k: 'auditoria', label: 'Auditoria', icon: 'history' },
-    { k: 'dev', label: 'Desenvolvedor', icon: 'terminal' },
   ],
   parceiro_coordenador: [
     { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
@@ -86,7 +84,6 @@ function renderArea(role, k) {
     catalogo: <CatalogoArea />,
     contratos: <ContratosArea />,
     auditoria: <AuditoriaArea />,
-    dev: <DesenvolvedorArea />,
     pacientes: <PacientesArea />,
     autorizacoes: <AutorizacoesArea />,
     contrato: <ContratoArea />,
