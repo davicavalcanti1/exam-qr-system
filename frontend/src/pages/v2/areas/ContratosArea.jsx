@@ -104,8 +104,11 @@ export default function ContratosArea() {
                 const c = contratoDoParceiro(p.id)
                 const st = c ? (ST[c.status] || ST.pendente) : null
                 return (
-                  <div key={p.id} className="flex items-center justify-between gap-4 px-6 py-4">
-                    <div className="min-w-0"><p className="font-semibold truncate">{p.nome}</p><p className="text-[11px] text-on-surface-variant">Teto {fmt(p.teto)}</p></div>
+                  <div key={p.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-black/[.02] transition">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(p.nome || '?').charAt(0).toUpperCase()}</span>
+                      <div className="min-w-0"><p className="font-semibold truncate">{p.nome}</p><p className="text-[11px] text-on-surface-variant">Teto {fmt(p.teto)}</p></div>
+                    </div>
                     <div className="flex items-center gap-2 flex-none">
                       {c
                         ? <>

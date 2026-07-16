@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
-import { useToast, EmptyState } from '../../../components/ui'
+import { useToast, EmptyState, Loading } from '../../../components/ui'
 import QrModal from '../QrModal'
 import AgendarModal from '../AgendarModal'
 import ExameEditModal from '../ExameEditModal'
@@ -338,16 +338,17 @@ export default function PacientesArea({ escolherParceiro = false }) {
 
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Pacientes ({lista.length})</h3></div>
-        {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
+        {loading ? <Loading />
           : lista.length === 0 ? <EmptyState icon="groups" title="Nenhum paciente ainda" hint="Cadastre o primeiro paciente no formulário acima." />
           : <div className="divide-y divide-outline-variant/10">
               {lista.map(p => (
-                <div key={p.id} className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div><p className="font-semibold">{p.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{p.cpf}</p></div>
-                    <span className="text-sm text-on-surface-variant tabular-nums">{fmt((p.exames || []).reduce((s, e) => s + Number(e.valor || 0), 0))}</span>
+                <div key={p.id} className="px-6 py-4 hover:bg-black/[.02] transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(p.nome || '?').charAt(0).toUpperCase()}</div>
+                    <div className="min-w-0 flex-1"><p className="font-semibold truncate">{p.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{p.cpf}</p></div>
+                    <span className="text-sm font-semibold text-on-surface tabular-nums flex-none">{fmt((p.exames || []).reduce((s, e) => s + Number(e.valor || 0), 0))}</span>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-2.5 ml-[52px] flex flex-wrap gap-2">
                     {(p.exames || []).map(ex => {
                       const st = STATUS[ex.status] || STATUS.rascunho
                       const temQr = ['autorizado', 'realizado'].includes(ex.status)

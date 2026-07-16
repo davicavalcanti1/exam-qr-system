@@ -143,10 +143,13 @@ export default function CobrancasArea({ somenteLeitura = false }) {
               {lista.map(c => {
                 const st = ST[c.status] || ST.aberta
                 return (
-                  <div key={c.id} className="flex items-center justify-between gap-4 px-6 py-4">
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate">{c.parceiros?.nome || '—'}</p>
-                      <p className="text-[11px] text-on-surface-variant tabular-nums">{c.periodo_inicio} → {c.periodo_fim} · {c.qtd_exames} exame(s)</p>
+                  <div key={c.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-black/[.02] transition">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(c.parceiros?.nome || '?').charAt(0).toUpperCase()}</span>
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{c.parceiros?.nome || '—'}</p>
+                        <p className="text-[11px] text-on-surface-variant tabular-nums">{c.periodo_inicio} → {c.periodo_fim} · {c.qtd_exames} exame(s)</p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 flex-none">
                       <span className="tabular-nums font-semibold">{fmt(c.valor_total)}</span>
