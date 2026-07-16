@@ -81,9 +81,11 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
             <button key={k} onClick={() => trocarProvider(k)}
               className={`text-left p-4 rounded-xl ring-1 transition ${provider === k ? 'ring-2 ring-primary bg-primary/5' : 'ring-outline-variant/30 hover:ring-primary/40'}`}>
               <div className="flex items-center gap-2">
-                <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-none ${provider === k ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'}`}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{ICONE_PROVEDOR[k] || 'extension'}</span>
-                </span>
+                {k === 'netris'
+                  ? <span className="h-8 px-2 rounded-lg bg-[#151a2b] flex items-center flex-none"><img src="/netris-logo.png" alt="NetRis" className="h-4 object-contain" /></span>
+                  : <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-none ${provider === k ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'}`}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{ICONE_PROVEDOR[k] || 'extension'}</span>
+                    </span>}
                 <span className="font-bold text-sm flex-1">{v.label}</span>
                 {provider === k && <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
               </div>

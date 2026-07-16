@@ -33,6 +33,9 @@ export default function IntegracaoNetris() {
 
       <main className="max-w-3xl mx-auto px-6 py-10 space-y-12">
         <section className="text-center">
+          <span className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#151a2b] mb-4">
+            <img src="/netris-logo.png" alt="NetRis" className="h-5 object-contain" />
+          </span>
           <h1 className="font-display text-4xl font-extrabold tracking-tight">Como funciona a integração NetRis</h1>
           <p className="text-on-surface-variant mt-3 max-w-xl mx-auto">O ExameQR conversa com o NetRis (Netpacs) da clínica de ponta a ponta: cadastra o paciente, agenda o exame na agenda real e confirma a realização — tudo pelo próprio site.</p>
         </section>
