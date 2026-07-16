@@ -39,23 +39,27 @@ export default function Entrar() {
     <div className="min-h-screen flex">
       {/* Painel de marca (esquerda, desktop) */}
       <aside className="hidden lg:flex w-1/2 flex-col justify-between p-12 text-white relative overflow-hidden signature-gradient">
-        <div className="flex items-center gap-3">
+        <div className="absolute -right-24 -top-24 w-80 h-80 rounded-full bg-white/10" aria-hidden />
+        <div className="absolute right-6 bottom-6 opacity-25 animate-float pointer-events-none" aria-hidden>
+          <img src="/brotopay.png" alt="" className="w-56 h-56 object-contain drop-shadow-2xl" />
+        </div>
+
+        <div className="relative flex items-center gap-3">
           <img src="/brotopay.png" alt="ExameQR" className="w-16 h-16 object-contain" />
           <span className="font-display text-4xl font-extrabold tracking-tight">ExameQR</span>
         </div>
-        <div className="max-w-md">
-          <h1 className="font-display text-4xl font-extrabold tracking-tight leading-tight">Controle de exames por parceria, do jeito certo.</h1>
+        <div className="relative max-w-md">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight leading-tight text-balance">Controle de exames por parceria, do jeito certo.</h1>
           <ul className="mt-8 space-y-4">
             {DESTAQUES.map((d, i) => (
               <li key={i} className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center flex-none"><span className="material-symbols-outlined">{d.icon}</span></span>
+                <span className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-none"><span className="material-symbols-outlined">{d.icon}</span></span>
                 <span className="text-white/90 text-sm">{d.txt}</span>
               </li>
             ))}
           </ul>
         </div>
-        <p className="text-white/60 text-xs">ExameQR · Campina Grande — PB</p>
-        <div className="absolute -right-16 -bottom-16 w-72 h-72 rounded-full bg-white/10" aria-hidden />
+        <p className="relative text-white/60 text-xs">ExameQR · Campina Grande — PB</p>
       </aside>
 
       {/* Formulário (direita) */}
