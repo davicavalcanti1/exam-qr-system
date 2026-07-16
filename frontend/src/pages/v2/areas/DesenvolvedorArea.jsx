@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { adminApi } from '../../../lib/adminApi'
+import { Card, Button, Field, Input, Loading } from '../../../components/ui'
 import NetrisConsole from './NetrisConsole'
 import NetrisMapeamento from './NetrisMapeamento'
 
@@ -53,10 +54,9 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
     finally { setTestando(false) }
   }
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return <Loading />
 
   const def = providers[provider] || { fields: [] }
-  const input = 'w-full px-3 py-2.5 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary'
   const label = 'text-[11px] font-bold uppercase tracking-widest text-on-surface-variant'
 
   const ICONE_PROVEDOR = { manual: 'edit_calendar', netris: 'sync_alt' }
@@ -74,7 +74,7 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
       </div>
 
       {/* Seleção do método */}
-      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
+      <Card className="p-6">
         <span className={label}>Método de agendamento</span>
         <div className="grid gap-3 mt-3 sm:grid-cols-2">
           {Object.entries(providers).map(([k, v]) => (
@@ -91,41 +91,39 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
             </button>
           ))}
         </div>
-      </section>
+      </Card>
 
       {/* Config do provedor selecionado */}
       {def.fields.length > 0 && (
-        <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card space-y-4">
-          <div className="flex items-center justify-between">
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
             <span className={label}>Configuração — {def.label}</span>
-            <label className="flex items-center gap-2 text-sm font-bold cursor-pointer">
+            <label className="flex items-center gap-2 text-sm font-bold cursor-pointer flex-none">
               <input type="checkbox" checked={ativo} onChange={e => setAtivo(e.target.checked)} className="w-4 h-4 accent-primary" />
               Integração ativa
             </label>
           </div>
           {def.fields.map(f => (
-            <div key={f.key}>
-              <label className={label}>{f.label}{f.secret && <span className="ml-1 text-on-surface-variant/60 normal-case tracking-normal">(secreto)</span>}</label>
-              <input
+            <Field key={f.key} label={<>{f.label}{f.secret && <span className="ml-1 text-on-surface-variant/60 normal-case tracking-normal">(secreto)</span>}</>}>
+              <Input
                 type={f.type === 'password' ? 'password' : 'text'}
-                className={input}
                 placeholder={f.placeholder}
                 value={config[f.key] ?? ''}
                 onChange={e => setConfig(c => ({ ...c, [f.key]: e.target.value }))}
                 autoComplete="off"
               />
-            </div>
+            </Field>
           ))}
           <p className="text-[11px] text-on-surface-variant">Campos secretos aparecem mascarados (••••). Deixe como está para manter o valor salvo; digite por cima para trocar.</p>
-        </section>
+        </Card>
       )}
 
-      {msg && <div className="text-sm px-3 py-2 rounded-lg bg-surface-container text-on-surface">{msg}</div>}
-      {teste && <div className={`text-sm px-3 py-2 rounded-lg ${teste.ok ? 'bg-primary/10 text-primary' : 'bg-error-container/50 text-on-error-container'}`}>{teste.ok ? '✓ ' : '✕ '}{teste.mensagem}</div>}
+      {msg && <div className="text-sm px-3 py-2 rounded-xl bg-surface-container text-on-surface">{msg}</div>}
+      {teste && <div className={`text-sm px-3 py-2 rounded-xl ${teste.ok ? 'bg-primary/10 text-primary' : 'bg-error-container/50 text-on-error-container'}`}>{teste.ok ? '✓ ' : '✕ '}{teste.mensagem}</div>}
 
       <div className="flex gap-2">
-        <button disabled={saving} onClick={salvar} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Salvando…' : 'Salvar'}</button>
-        {provider !== 'manual' && <button disabled={testando} onClick={testar} className="px-5 py-2.5 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition disabled:opacity-50">{testando ? 'Testando…' : 'Testar conexão'}</button>}
+        <Button onClick={salvar} loading={saving} icon="save">Salvar</Button>
+        {provider !== 'manual' && <Button variant="secondary" onClick={testar} loading={testando} icon="wifi_tethering">Testar conexão</Button>}
       </div>
 
       {provider === 'netris' && <NetrisConsole key={`c-${empresaId || 'me'}-${ativo}`} empresaId={empresaId} />}
