@@ -34,15 +34,17 @@ export default function VisaoGeralArea() {
 
   useEffect(() => {
     (async () => {
-      const { data: exames } = await supabase.from('exames').select('status, valor')
+      const { data: exames } = await supabase.from('exames').select('status, valor, cobranca_id')
       const { count: pacientes } = await supabase.from('pacientes').select('id', { count: 'exact', head: true })
+      const { data: cobs } = await supabase.from('cobrancas').select('id, valor_total, status')
+      const pagasSet = new Set((cobs || []).filter(c => c.status === 'paga').map(c => c.id))
+
       const by = { aguardando_autorizacao: 0, autorizado: 0, realizado: 0 }
-      let realizado = 0
+      let realizado = 0 // realizado EM ABERTO (não faturado ou em lote ainda não pago)
       for (const e of exames || []) {
         if (by[e.status] !== undefined) by[e.status]++
-        if (e.status === 'realizado') realizado += Number(e.valor || 0)
+        if (e.status === 'realizado' && (!e.cobranca_id || !pagasSet.has(e.cobranca_id))) realizado += Number(e.valor || 0)
       }
-      const { data: cobs } = await supabase.from('cobrancas').select('valor_total, status')
       let aReceber = 0
       for (const cb of cobs || []) if (cb.status === 'aberta') aReceber += Number(cb.valor_total || 0)
 
@@ -78,7 +80,7 @@ export default function VisaoGeralArea() {
       <Card className="p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Valor realizado (dívida)</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Em aberto (dívida)</span>
             <div className="text-4xl font-extrabold tracking-tight tabular-nums mt-1 text-on-surface">{fmt(d.realizado)}</div>
           </div>
           {d.teto != null
