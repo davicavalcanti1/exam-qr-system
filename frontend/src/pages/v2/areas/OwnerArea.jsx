@@ -16,7 +16,7 @@ export default function OwnerArea() {
   const [selected, setSelected] = useState(null)
 
   async function load() {
-    const { data } = await supabase.from('empresas').select('id, nome, cnpj, slug, status, created_at, logo_url').order('created_at', { ascending: false })
+    const { data } = await supabase.from('empresas').select('*').order('created_at', { ascending: false })
     setEmpresas(data || []); setLoading(false)
   }
   useEffect(() => { load() }, [])
