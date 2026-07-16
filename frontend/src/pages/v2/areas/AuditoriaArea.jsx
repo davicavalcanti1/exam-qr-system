@@ -10,6 +10,8 @@ const ACOES = {
   'contrato.assinado': { label: 'Contrato assinado', icon: 'draw', cls: 'text-primary' },
   'cobranca.fechada': { label: 'Lote de cobrança fechado', icon: 'receipt_long', cls: 'text-on-surface' },
   'cobranca.paga': { label: 'Cobrança marcada paga', icon: 'paid', cls: 'text-primary' },
+  'paciente.exportado': { label: 'Dados do paciente exportados (LGPD)', icon: 'download', cls: 'text-on-surface-variant' },
+  'paciente.anonimizado': { label: 'Paciente anonimizado (LGPD)', icon: 'person_off', cls: 'text-error' },
 }
 const dataBR = (s) => new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 

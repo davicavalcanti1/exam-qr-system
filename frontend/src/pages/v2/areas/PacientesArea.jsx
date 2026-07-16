@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
 import { useToast, EmptyState, Loading } from '../../../components/ui'
+import { logAudit } from '../../../lib/audit'
 import QrModal from '../QrModal'
 import AgendarModal from '../AgendarModal'
 import ExameEditModal from '../ExameEditModal'
@@ -32,7 +33,7 @@ const STATUS = {
 }
 
 export default function PacientesArea({ escolherParceiro = false }) {
-  const { user, empresaId, parceiroId } = useAuth()
+  const { user, profile, empresaId, parceiroId } = useAuth()
   const toast = useToast()
   const [nome, setNome] = useState('')
   const [cpf, setCpf] = useState('')
@@ -74,7 +75,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   async function load() {
     const { data } = await supabase
       .from('pacientes')
-      .select('id, nome, cpf, created_at, exames(id, nome, valor, status, indicacao, scheduled_at, netris_atendimento_id)')
+      .select('id, nome, cpf, created_at, anonimizado, exames(id, nome, valor, status, indicacao, scheduled_at, netris_atendimento_id)')
       .order('created_at', { ascending: false })
     setLista(data || []); setLoading(false)
   }
@@ -156,6 +157,34 @@ export default function PacientesArea({ escolherParceiro = false }) {
     // guarda o slot num formato pronto pro agendar-exame
     const slot = { data: s.data, dataString: s.dataString, horarioString: s.horaInicial, idMedico: s.idMedico, idSala: s.idSala, nomeMedico: s.nomeMedico }
     setExames(x => x.map((y, idx) => idx === i ? { ...y, slot } : y))
+  }
+
+  // LGPD — direito de acesso/portabilidade: baixa todos os dados do paciente.
+  async function exportarPaciente(p) {
+    try {
+      const { data: pac } = await supabase.from('pacientes').select('*').eq('id', p.id).maybeSingle()
+      const { data: ex } = await supabase.from('exames').select('nome, valor, status, indicacao, scheduled_at, created_at').eq('paciente_id', p.id).order('created_at')
+      const pacote = { exportadoEm: new Date().toISOString(), paciente: pac, exames: ex || [] }
+      const blob = new Blob([JSON.stringify(pacote, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = `paciente-${(p.cpf || p.id).toString().replace(/\D/g, '') || p.id}.json`; a.click()
+      URL.revokeObjectURL(url)
+      logAudit({ empresaId: profile?.empresa_id, atorId: user?.id, atorNome: profile?.nome, acao: 'paciente.exportado', entidade: 'paciente', entidadeId: p.id, detalhe: { paciente: p.nome } })
+      toast.success('Dados do paciente exportados.')
+    } catch (e) { toast.error('Falha ao exportar: ' + e.message) }
+  }
+
+  // LGPD — direito de eliminação: anonimiza o PII, preservando o histórico financeiro.
+  async function anonimizarPaciente(p) {
+    if (!window.confirm(`Anonimizar ${p.nome}? Os dados pessoais (nome, CPF, contato) serão apagados de forma irreversível. O histórico de exames/cobrança é mantido por obrigação legal.`)) return
+    const { error } = await supabase.from('pacientes').update({
+      nome: 'Paciente anonimizado', cpf: '', sexo: null, data_nascimento: null,
+      telefone: null, netris_id_paciente: null, anonimizado: true,
+    }).eq('id', p.id)
+    if (error) return toast.error(error.message)
+    logAudit({ empresaId: profile?.empresa_id, atorId: user?.id, atorNome: profile?.nome, acao: 'paciente.anonimizado', entidade: 'paciente', entidadeId: p.id })
+    toast.success('Paciente anonimizado.'); await load()
   }
 
   async function cancelarAgendamento(ex) {
@@ -346,8 +375,12 @@ export default function PacientesArea({ escolherParceiro = false }) {
                 <div key={p.id} className="px-6 py-4 hover:bg-black/[.02] transition">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(p.nome || '?').charAt(0).toUpperCase()}</div>
-                    <div className="min-w-0 flex-1"><p className="font-semibold truncate">{p.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{p.cpf}</p></div>
+                    <div className="min-w-0 flex-1"><p className="font-semibold truncate">{p.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{p.anonimizado ? 'dados anonimizados' : p.cpf}</p></div>
                     <span className="text-sm font-semibold text-on-surface tabular-nums flex-none">{fmt((p.exames || []).reduce((s, e) => s + Number(e.valor || 0), 0))}</span>
+                    <div className="flex items-center gap-0.5 flex-none">
+                      <button onClick={() => exportarPaciente(p)} title="Exportar dados (LGPD)" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span></button>
+                      {!p.anonimizado && <button onClick={() => anonimizarPaciente(p)} title="Anonimizar (LGPD)" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_off</span></button>}
+                    </div>
                   </div>
                   <div className="mt-2.5 ml-[52px] flex flex-wrap gap-2">
                     {(p.exames || []).map(ex => {
