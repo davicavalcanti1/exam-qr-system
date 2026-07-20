@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { resolveLoginEmail } from '../../lib/supabase'
@@ -19,6 +19,14 @@ export default function Entrar() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const navigate = useNavigate()
+
+  // Login é neutro: usa o accent padrão (verde), não a cor pessoal do usuário.
+  // Restaura a preferência salva ao sair da tela — sem alterar o que está salvo.
+  useEffect(() => {
+    const prev = document.documentElement.dataset.accent
+    delete document.documentElement.dataset.accent
+    return () => { if (prev) document.documentElement.dataset.accent = prev }
+  }, [])
 
   async function handleGoogle() {
     setError(''); setGoogleLoading(true)
