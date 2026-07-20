@@ -29,6 +29,8 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const [admins, setAdmins] = useState(null)
   const [modal, setModal] = useState(false)
   const [logoInput, setLogoInput] = useState('')
+  const [nomeExib, setNomeExib] = useState('')
+  const [subindo, setSubindo] = useState(false)
 
   async function loadEmpresa() {
     const { data } = await supabase.from('empresas').select('*').eq('id', empresa.id).maybeSingle()
@@ -41,6 +43,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   }
   useEffect(() => { loadEmpresa() }, [empresa.id])
   useEffect(() => { setLogoInput(emp.logo_url || '') }, [emp.logo_url])
+  useEffect(() => { setNomeExib(emp.nome_exibicao || '') }, [emp.nome_exibicao])
   useEffect(() => { if (aba === 'usuarios' && admins === null) loadAdmins() }, [aba])
 
   async function salvarLogo(url) {
@@ -48,6 +51,24 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
     const { error } = await supabase.from('empresas').update({ logo_url: v }).eq('id', emp.id)
     if (error) return toast.error(error.message)
     setEmp(e => ({ ...e, logo_url: v })); onChange?.(); toast.success('Logo atualizada.')
+  }
+  async function enviarLogo(file) {
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) return toast.error('Imagem muito grande (máx. 2 MB).')
+    setSubindo(true)
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase()
+    const path = `${emp.id}/logo-${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type })
+    if (error) { setSubindo(false); return toast.error(error.message) }
+    const { data } = supabase.storage.from('logos').getPublicUrl(path)
+    setSubindo(false)
+    await salvarLogo(data.publicUrl)
+  }
+  async function salvarNomeExib() {
+    const v = nomeExib.trim() || null
+    const { error } = await supabase.from('empresas').update({ nome_exibicao: v }).eq('id', emp.id)
+    if (error) return toast.error(error.message)
+    setEmp(e => ({ ...e, nome_exibicao: v })); onChange?.(); toast.success('Nome de exibição atualizado.')
   }
   async function toggleStatus() {
     const novo = emp.status === 'ativa' ? 'inativa' : 'ativa'
@@ -106,16 +127,38 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
           <Linha label="E-mail" valor={emp.email} />
           <Linha label="Criada em" valor={dataBR(emp.created_at)} />
 
-          <div className="mt-5 pt-5 border-t border-outline-variant/10">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Logomarca</span>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="w-24 h-14 rounded-xl bg-surface ring-1 ring-outline-variant/20 flex items-center justify-center flex-none overflow-hidden">
-                {emp.logo_url ? <img src={emp.logo_url} alt="" className="max-h-10 max-w-[84px] object-contain" /> : <span className="material-symbols-outlined text-on-surface-variant/50">image</span>}
-              </span>
-              <input value={logoInput} onChange={e => setLogoInput(e.target.value)} placeholder="URL da logo (ex.: /imago-logo.png)" className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" />
-              <Button variant="secondary" onClick={() => salvarLogo(logoInput)} className="flex-none">Salvar</Button>
+          <div className="mt-5 pt-5 border-t border-outline-variant/10 space-y-4">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Marca (white-label)</span>
+
+            {/* Nome de exibição */}
+            <div>
+              <label className="text-xs font-semibold text-on-surface-variant">Nome de exibição <span className="font-normal">(aparece pro usuário; vazio = razão social)</span></label>
+              <div className="flex gap-2 mt-1">
+                <input value={nomeExib} onChange={e => setNomeExib(e.target.value)} placeholder={emp.nome} className="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" />
+                <Button variant="secondary" onClick={salvarNomeExib} className="flex-none">Salvar</Button>
+              </div>
             </div>
-            <button onClick={() => salvarLogo('/imago-logo.png')} className="text-xs font-bold text-primary hover:underline mt-2">Usar logo IMAGO</button>
+
+            {/* Logo: upload + URL */}
+            <div>
+              <label className="text-xs font-semibold text-on-surface-variant">Logomarca</label>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="w-24 h-14 rounded-xl bg-surface ring-1 ring-outline-variant/20 flex items-center justify-center flex-none overflow-hidden">
+                  {emp.logo_url ? <img src={emp.logo_url} alt="" className="max-h-10 max-w-[84px] object-contain" /> : <span className="material-symbols-outlined text-on-surface-variant/50">image</span>}
+                </span>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <label className={`inline-flex items-center gap-2 px-3.5 py-2 text-sm font-bold rounded-xl bg-surface-container hover:bg-surface-container-high transition cursor-pointer ${subindo ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <span className="material-symbols-outlined text-base">upload</span>{subindo ? 'Enviando…' : 'Enviar imagem'}
+                    <input type="file" accept="image/*" className="hidden" onChange={e => enviarLogo(e.target.files?.[0])} />
+                  </label>
+                  <div className="flex gap-2">
+                    <input value={logoInput} onChange={e => setLogoInput(e.target.value)} placeholder="ou cole uma URL" className="flex-1 min-w-0 px-3.5 py-2 text-xs rounded-xl bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" />
+                    <Button variant="ghost" size="sm" onClick={() => salvarLogo(logoInput)} className="flex-none">Usar URL</Button>
+                    {emp.logo_url && <Button variant="ghost" size="sm" onClick={() => salvarLogo(null)} className="flex-none text-error">Remover</Button>}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
       ))}

@@ -12,7 +12,7 @@ const ST = {
 }
 
 export default function ContratoModal({ contrato, podeAssinar = false, onClose, onChange }) {
-  const { user, profile } = useAuth()
+  const { user, profile, branding } = useAuth()
   const [nome, setNome] = useState(profile?.nome || '')
   const [aceite, setAceite] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -52,8 +52,8 @@ export default function ContratoModal({ contrato, podeAssinar = false, onClose, 
 
         <div id="contrato-print" className="flex-1 overflow-y-auto p-8">
           <div className="flex items-center gap-2 mb-5">
-            <img src="/brotopay.png" alt="ExameQR" className="w-8 h-8 object-contain" />
-            <span className="font-display text-xl font-extrabold tracking-tight text-primary">ExameQR</span>
+            {branding.logo && <img src={branding.logo} alt="" className="h-8 max-w-[150px] object-contain" />}
+            <span className="font-display text-xl font-extrabold tracking-tight text-primary">{branding.nome}</span>
           </div>
           <h1 className="text-xl font-bold mb-4">{contrato.titulo}</h1>
           <div className="text-sm text-on-surface whitespace-pre-wrap leading-relaxed">{contrato.conteudo}</div>
@@ -61,7 +61,7 @@ export default function ContratoModal({ contrato, podeAssinar = false, onClose, 
             <div className="mt-8 pt-4 border-t border-outline-variant/20 text-sm">
               <p className="font-bold">Assinado eletronicamente</p>
               <p className="text-on-surface-variant">{contrato.assinante_nome} · {dataBR(contrato.assinado_at)}</p>
-              <p className="text-[10px] text-on-surface-variant mt-1">Aceite eletrônico registrado no ExameQR (ID {contrato.id.slice(0, 8).toUpperCase()}).</p>
+              <p className="text-[10px] text-on-surface-variant mt-1">Aceite eletrônico registrado por {branding.nome} (ID {contrato.id.slice(0, 8).toUpperCase()}).</p>
             </div>
           )}
         </div>

@@ -96,7 +96,7 @@ function renderArea(role, k, irPara) {
 }
 
 export default function Painel() {
-  const { ready, loading, session, profile, role, signOut, reloadProfile } = useAuth()
+  const { ready, loading, session, profile, role, branding, signOut, reloadProfile } = useAuth()
   const [secao, setSecao] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
 
@@ -119,9 +119,11 @@ export default function Painel() {
       {/* Sidebar */}
       <aside className={`fixed z-40 inset-y-0 left-0 w-64 bg-surface-container-lowest border-r border-outline-variant/15 flex flex-col transition-transform lg:translate-x-0 ${menuAberto ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="px-5 py-5 flex items-center gap-2 border-b border-outline-variant/10">
-          <img src="/brotopay.png" alt="ExameQR" className="w-9 h-9 object-contain" />
-          <div className="leading-none">
-            <div className="font-display text-xl font-extrabold tracking-tight text-primary">ExameQR</div>
+          {branding.logo
+            ? <img src={branding.logo} alt={branding.nome} className="w-9 h-9 object-contain flex-none" />
+            : <span className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-none"><span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: "'FILL' 1" }}>business</span></span>}
+          <div className="leading-none min-w-0">
+            <div className="font-display text-xl font-extrabold tracking-tight text-primary truncate">{branding.nome}</div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mt-0.5">{ROLE_LABEL[role] || role}</div>
           </div>
         </div>

@@ -8,16 +8,28 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [empresa, setEmpresa] = useState(null)
   const [loading, setLoading] = useState(true)
 
   async function loadProfile(userId) {
-    if (!userId) { setProfile(null); return }
+    if (!userId) { setProfile(null); setEmpresa(null); return }
     const { data } = await supabase
       .from('profiles')
       .select('id, empresa_id, parceiro_id, nome, email, role, ativo, username, must_change_password')
       .eq('id', userId)
       .maybeSingle()
     setProfile(data || null)
+    // Marca do tenant: empresa do usuário (owner não tem empresa → marca da plataforma).
+    if (data?.empresa_id) {
+      const { data: emp } = await supabase
+        .from('empresas')
+        .select('id, nome, nome_exibicao, logo_url, status')
+        .eq('id', data.empresa_id)
+        .maybeSingle()
+      setEmpresa(emp || null)
+    } else {
+      setEmpresa(null)
+    }
   }
 
   useEffect(() => {
@@ -44,9 +56,14 @@ export function AuthProvider({ children }) {
     session,
     user: session?.user || null,
     profile,
+    empresa,
     role: profile?.role || null,
     empresaId: profile?.empresa_id || null,
     parceiroId: profile?.parceiro_id || null,
+    // Marca aplicada no workspace/documentos. Owner (sem empresa) = plataforma.
+    branding: empresa
+      ? { nome: empresa.nome_exibicao || empresa.nome, logo: empresa.logo_url || null, tenant: true }
+      : { nome: 'ExameQR', logo: '/brotopay.png', tenant: false },
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signOut: () => supabase.auth.signOut(),
     reloadProfile: () => loadProfile(session?.user?.id),

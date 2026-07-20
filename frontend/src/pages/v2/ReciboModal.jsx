@@ -12,7 +12,7 @@ export default function ReciboModal({ cobrancaId, onClose }) {
     (async () => {
       const { data: cob } = await supabase
         .from('cobrancas')
-        .select('id, periodo_inicio, periodo_fim, valor_total, qtd_exames, status, created_at, parceiros(nome, cnpj), empresas(nome, cnpj)')
+        .select('id, periodo_inicio, periodo_fim, valor_total, qtd_exames, status, created_at, parceiros(nome, cnpj), empresas(nome, nome_exibicao, cnpj, logo_url)')
         .eq('id', cobrancaId).maybeSingle()
       setC(cob)
       const { data: ex } = await supabase
@@ -37,11 +37,11 @@ export default function ReciboModal({ cobrancaId, onClose }) {
           <>
             <div id="recibo-print" className="p-8">
               <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-5">
-                <div className="flex items-center gap-2">
-                  <img src="/brotopay.png" alt="ExameQR" className="w-9 h-9 object-contain" />
-                  <span className="font-display text-2xl font-extrabold tracking-tight text-primary">ExameQR</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  {c.empresas?.logo_url && <img src={c.empresas.logo_url} alt="" className="h-9 max-w-[160px] object-contain" />}
+                  <span className="font-display text-2xl font-extrabold tracking-tight text-primary truncate">{c.empresas?.nome_exibicao || c.empresas?.nome || '—'}</span>
                 </div>
-                <div className="text-right text-[11px] text-on-surface-variant">
+                <div className="text-right text-[11px] text-on-surface-variant flex-none">
                   Recibo de lote<br /><span className="tabular-nums">#{c.id.slice(0, 8).toUpperCase()}</span>
                 </div>
               </div>
@@ -86,7 +86,7 @@ export default function ReciboModal({ cobrancaId, onClose }) {
                 <span className="text-sm font-bold">Total ({c.qtd_exames} exames)</span>
                 <span className="text-2xl font-extrabold tracking-tight tabular-nums text-primary">{fmt(c.valor_total)}</span>
               </div>
-              <p className="text-[10px] text-on-surface-variant mt-4">Status: {c.status} · Emitido em {dataBR(c.created_at)} · Gerado por ExameQR</p>
+              <p className="text-[10px] text-on-surface-variant mt-4">Status: {c.status} · Emitido em {dataBR(c.created_at)}</p>
             </div>
 
             <div className="no-print flex justify-end gap-2 px-8 pb-6">
