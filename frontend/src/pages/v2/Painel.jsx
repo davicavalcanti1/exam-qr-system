@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { Button, Field, Input, Loading } from '../../components/ui'
 import BuscaGlobal from '../../components/BuscaGlobal'
 import PerfilMenu from './PerfilMenu'
+import AceiteDPA from './AceiteDPA'
+import { DPA_VERSAO } from '../../legal/dpa'
 import OwnerArea from './areas/OwnerArea'
 import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
@@ -99,11 +101,21 @@ export default function Painel() {
   const { ready, loading, session, profile, role, branding, signOut, reloadProfile } = useAuth()
   const [secao, setSecao] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
+  const [dpaOk, setDpaOk] = useState(null) // null=carregando; true=aceito/não aplicável; false=pendente
+
+  useEffect(() => {
+    if (role !== 'empresa_admin' || !profile?.empresa_id) { setDpaOk(true); return }
+    setDpaOk(null)
+    supabase.from('dpa_aceites').select('id').eq('empresa_id', profile.empresa_id).eq('versao', DPA_VERSAO).limit(1)
+      .then(({ data }) => setDpaOk((data?.length || 0) > 0))
+  }, [role, profile?.empresa_id])
 
   if (!ready) return <div className="p-10 text-center text-on-surface-variant">Supabase não configurado.</div>
   if (loading) return <div className="min-h-screen bg-surface"><Loading /></div>
   if (!session) return <Navigate to="/entrar" replace />
   if (profile?.must_change_password) return <TrocarSenha onDone={reloadProfile} />
+  if (role === 'empresa_admin' && dpaOk === null) return <div className="min-h-screen bg-surface"><Loading /></div>
+  if (role === 'empresa_admin' && dpaOk === false) return <AceiteDPA onDone={() => setDpaOk(true)} />
 
   const nav = NAV[role] || []
   const sec = nav.some(n => n.k === secao) ? secao : nav[0]?.k

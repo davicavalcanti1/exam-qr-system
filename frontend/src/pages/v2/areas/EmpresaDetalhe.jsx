@@ -31,11 +31,16 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const [logoInput, setLogoInput] = useState('')
   const [nomeExib, setNomeExib] = useState('')
   const [subindo, setSubindo] = useState(false)
+  const [dpa, setDpa] = useState(undefined) // undefined=carregando, null=pendente, obj=aceito
 
   async function loadEmpresa() {
     const { data } = await supabase.from('empresas').select('*').eq('id', empresa.id).maybeSingle()
     if (data) setEmp(data)
     setCarregando(false)
+    const { data: aceite } = await supabase
+      .from('dpa_aceites').select('versao, assinante_nome, aceito_at')
+      .eq('empresa_id', empresa.id).order('aceito_at', { ascending: false }).limit(1).maybeSingle()
+    setDpa(aceite || null)
   }
   async function loadAdmins() {
     const { data } = await supabase.from('profiles').select('id, nome, username, email, role, ativo').eq('empresa_id', empresa.id).order('created_at', { ascending: false })
@@ -126,6 +131,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
           <Linha label="Telefone" valor={emp.telefone} />
           <Linha label="E-mail" valor={emp.email} />
           <Linha label="Criada em" valor={dataBR(emp.created_at)} />
+          <Linha label="Termo de Dados (DPA)" valor={dpa === undefined ? '…' : dpa ? `Aceito ${dpa.versao} · ${dataBR(dpa.aceito_at)}` : 'Pendente'} />
 
           <div className="mt-5 pt-5 border-t border-outline-variant/10 space-y-4">
             <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Marca (white-label)</span>

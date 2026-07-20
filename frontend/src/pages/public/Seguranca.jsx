@@ -8,7 +8,7 @@ export default function Seguranca() {
       updated="16/07/2026"
     >
       <H2>Onde os dados ficam</H2>
-      <P>Os dados são armazenados em banco de dados <b>PostgreSQL gerenciado (Supabase)</b>, com backups do provedor e acesso controlado. O sistema é multiempresa: cada empresa enxerga apenas os seus próprios dados.</P>
+      <P>Os dados são armazenados em banco de dados <b>PostgreSQL gerenciado (Supabase)</b>, na <b>região Brasil (São Paulo)</b> — sem transferência internacional —, com backups automáticos do provedor e acesso controlado. O sistema é multiempresa: cada empresa enxerga apenas os seus próprios dados.</P>
 
       <H2>Isolamento por empresa (RLS)</H2>
       <P>O isolamento é feito no próprio banco, com <b>Row Level Security</b>: cada consulta é filtrada pela empresa/perfil do usuário autenticado. Um usuário de uma empresa não consegue ler dados de outra — a regra vive no banco, não só na aplicação.</P>

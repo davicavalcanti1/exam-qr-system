@@ -11,7 +11,7 @@ export default function Privacidade() {
       <P>O ExameQR é uma plataforma de controle de exames realizados por parceria. Nesse modelo:</P>
       <UL>
         <li><b>Controlador</b>: a clínica/empresa contratante, que decide quais dados de pacientes são inseridos e para quê.</li>
-        <li><b>Operador</b>: o ExameQR, que trata os dados <b>em nome da empresa contratante</b>, conforme esta política e o contrato de uso.</li>
+        <li><b>Operador</b>: o ExameQR, que trata os dados <b>em nome da empresa contratante</b>, conforme esta política e o <a href="/tratamento-de-dados" className="text-primary font-bold hover:underline">Termo de Tratamento de Dados (DPA)</a> aceito por cada empresa.</li>
       </UL>
 
       <H2>2. Quais dados coletamos</H2>
@@ -36,7 +36,8 @@ export default function Privacidade() {
       <H2>5. Com quem compartilhamos</H2>
       <UL>
         <li><b>Sistema da clínica (NetRis/Netpacs)</b>, quando a empresa ativa a integração, para agendar o exame — apenas os dados necessários para a marcação.</li>
-        <li><b>Provedor de infraestrutura (Supabase)</b>, onde os dados ficam armazenados com segurança.</li>
+        <li><b>Provedor de infraestrutura (Supabase)</b> — banco de dados e armazenamento na <b>região Brasil (São Paulo)</b>, sem transferência internacional dos dados.</li>
+        <li><b>Provedor de e-mail (Resend)</b> — envio de e-mails transacionais (convites, redefinição de senha).</li>
         <li>Não vendemos nem cedemos dados a terceiros para fins de marketing.</li>
       </UL>
 
@@ -44,7 +45,7 @@ export default function Privacidade() {
       <P>Os dados ficam em banco de dados gerenciado (PostgreSQL/Supabase), isolados <b>por empresa</b> através de regras de acesso no próprio banco (RLS), com tráfego criptografado (HTTPS) e credenciais sensíveis mantidas apenas no servidor. Detalhes em <a href="/seguranca" className="text-primary font-bold hover:underline">Segurança &amp; dados</a>.</P>
 
       <H2>7. Por quanto tempo</H2>
-      <P>Mantemos os dados enquanto durar a relação com a empresa contratante e pelo prazo necessário ao cumprimento de obrigações legais. Encerrada a finalidade, os dados são eliminados ou anonimizados, salvo obrigação de guarda.</P>
+      <P>Mantemos os dados enquanto durar a relação com a empresa contratante e pelo prazo necessário ao cumprimento de obrigações legais. Como referência: registros <b>financeiros/fiscais</b> são mantidos por <b>5 anos</b>; dados pessoais de pacientes tornam-se <b>elegíveis a anonimização</b> ao encerramento da finalidade ou do vínculo, preservando-se o histórico financeiro de forma anonimizada.</P>
 
       <H2>8. Direitos do titular</H2>
       <P>Nos termos da LGPD, o titular pode solicitar: confirmação e acesso aos dados, correção, anonimização/eliminação, portabilidade, informação sobre compartilhamentos e <b>revogação do consentimento</b>. Como o ExameQR atua como operador, os pedidos são atendidos em conjunto com a clínica/empresa responsável.</P>

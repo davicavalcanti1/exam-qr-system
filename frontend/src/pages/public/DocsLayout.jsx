@@ -4,6 +4,7 @@ const NAV = [
   { to: '/documentacao', label: 'Documentação' },
   { to: '/privacidade', label: 'Privacidade (LGPD)' },
   { to: '/seguranca', label: 'Segurança & dados' },
+  { to: '/tratamento-de-dados', label: 'Tratamento de dados (DPA)' },
   { to: '/termos', label: 'Termos de uso' },
 ]
 
