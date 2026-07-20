@@ -36,7 +36,7 @@ export default function AparenciaControls() {
               <button key={p.k} onClick={() => setAccent(p.k)} title={p.label}
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition ring-2 ring-offset-2 ring-offset-surface-container-lowest ${on ? 'ring-on-surface' : 'ring-transparent hover:ring-outline-variant'}`}
                 style={{ background: p.cor }}>
-                {on && <span className="material-symbols-outlined text-white" style={{ fontSize: '18px', color: p.k === 'amarelo' || p.k === 'branco' ? '#1f2937' : '#fff' }}>check</span>}
+                {on && <span className="material-symbols-outlined" style={{ fontSize: '18px', color: p.k === 'amarelo' ? '#1f2937' : '#fff' }}>check</span>}
               </button>
             )
           })}
