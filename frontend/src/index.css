@@ -63,7 +63,7 @@ h1, h2, h3, .font-headline, .font-display {
 }
 
 .signature-gradient {
-  background: linear-gradient(120deg, #0C7E3E 0%, #1CA94F 48%, #FFCE1F 108%);
+  background: linear-gradient(120deg, rgb(var(--primary-container)) 0%, rgb(var(--primary)) 58%, rgb(var(--primary-fixed-dim)) 120%);
 }
 
 .glass-gradient {
@@ -71,10 +71,7 @@ h1, h2, h3, .font-headline, .font-display {
 }
 
 .soft-bg-gradient {
-  background: linear-gradient(180deg, #EFFBF2 0%, #FBF6DE 100%);
-}
-.dark .soft-bg-gradient {
-  background: linear-gradient(180deg, #0E1613 0%, #0C120F 100%);
+  background: linear-gradient(165deg, rgb(var(--surface)) 0%, rgb(var(--surface-container)) 55%, rgb(var(--primary-fixed)) 140%);
 }
 
 .pix-gradient {
