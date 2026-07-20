@@ -44,7 +44,7 @@ export default function CreateUserModal({ open, title, role, empresaId, parceiro
               <div><span className="text-on-surface-variant">Senha inicial: </span><b className="tabular-nums">{result.senha_inicial}</b></div>
               <p className="text-xs text-on-surface-variant">Repasse essas credenciais. No 1º acesso o sistema pede troca de senha.</p>
             </div>
-            <button onClick={onClose} className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary-container transition">Fechar</button>
+            <button onClick={onClose} className="w-full bg-primary text-on-primary font-bold py-2.5 rounded-lg hover:bg-primary-container transition">Fechar</button>
           </div>
         ) : (
           <form onSubmit={submit} className="p-6 space-y-4">
@@ -55,7 +55,7 @@ export default function CreateUserModal({ open, title, role, empresaId, parceiro
             </div>
             <div><label className={label}>Senha inicial (opcional)</label><input className={input} value={senha} onChange={e => setSenha(e.target.value)} placeholder="padrão do sistema" /></div>
             {err && <p className="text-sm text-error">{err}</p>}
-            <button disabled={loading} className="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-primary-container transition disabled:opacity-50">
+            <button disabled={loading} className="w-full bg-primary text-on-primary font-bold py-2.5 rounded-lg hover:bg-primary-container transition disabled:opacity-50">
               {loading ? 'Criando…' : 'Criar usuário'}
             </button>
           </form>

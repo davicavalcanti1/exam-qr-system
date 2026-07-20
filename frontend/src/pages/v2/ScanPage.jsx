@@ -140,7 +140,7 @@ export default function ScanPage() {
               </>
             )}
 
-            <button onClick={() => { setResult(null); start() }} className="mt-5 w-full bg-primary text-white font-bold py-3.5 rounded-2xl active:scale-[.98] transition flex items-center justify-center gap-2">
+            <button onClick={() => { setResult(null); start() }} className="mt-5 w-full bg-primary text-on-primary font-bold py-3.5 rounded-2xl active:scale-[.98] transition flex items-center justify-center gap-2">
               <span className="material-symbols-outlined text-xl">qr_code_scanner</span>Escanear outro
             </button>
           </div>

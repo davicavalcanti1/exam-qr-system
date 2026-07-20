@@ -1,110 +1,80 @@
-// Paleta ExameQR — bandeira de Campina Grande (verde + ouro), tons pastel/neon.
-// Os tokens Material mantêm as MESMAS chaves de antes; só mudam os valores,
-// então todos os componentes herdam a nova cara sem edição individual.
+// Paleta ExameQR — Campina Grande (verde + ouro).
+// Os tokens Material agora são VARIÁVEIS CSS (definidas em index.css para claro/escuro),
+// então todo o app adapta ao tema sem editar componente. Formato "R G B" p/ suportar
+// modificadores de opacidade do Tailwind (ex.: bg-primary/10).
 
-// Rampa verde usada também para sobrescrever indigo/blue/violet/purple,
-// de modo que qualquer classe hardcoded (ex: text-indigo-700) vire verde.
 const verde = {
-  50: '#ECFDF3',
-  100: '#D1F5E0',
-  200: '#A7EBC5',
-  300: '#6FDDA1',
-  400: '#34CD7C',
-  500: '#16B85E',
-  600: '#0E9E4E',
-  700: '#0C7E3E',
-  800: '#0C5F30',
-  900: '#0E4A28',
-  950: '#123524',
+  50: '#ECFDF3', 100: '#D1F5E0', 200: '#A7EBC5', 300: '#6FDDA1', 400: '#34CD7C',
+  500: '#16B85E', 600: '#0E9E4E', 700: '#0C7E3E', 800: '#0C5F30', 900: '#0E4A28', 950: '#123524',
 }
-
-// Ouro da bandeira de Campina Grande — usado para reequilibrar o verde.
-// Sobrescreve yellow/amber, então todo yellow-* vira ouro da marca.
 const ouro = {
-  50: '#FEF9E7',
-  100: '#FBF1B8',
-  200: '#F7E48A',
-  300: '#F2D24E',
-  400: '#FFCE1F', // neon — barras, pontos, destaques
-  500: '#E8B90A',
-  600: '#C08A00', // legível como texto sobre branco
-  700: '#9A6E00',
-  800: '#7A5700',
-  900: '#5F4400',
-  950: '#3D2C00',
+  50: '#FEF9E7', 100: '#FBF1B8', 200: '#F7E48A', 300: '#F2D24E', 400: '#FFCE1F',
+  500: '#E8B90A', 600: '#C08A00', 700: '#9A6E00', 800: '#7A5700', 900: '#5F4400', 950: '#3D2C00',
 }
+const t = (name) => `rgb(var(${name}) / <alpha-value>)`
 
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        // escalas padrão remapeadas para verde (mata todo azul/roxo hardcoded)
-        indigo: verde,
-        blue: verde,
-        violet: verde,
-        purple: verde,
-        // amarelo/âmbar viram o ouro da marca
-        yellow: ouro,
-        amber: ouro,
+        indigo: verde, blue: verde, violet: verde, purple: verde,
+        yellow: ouro, amber: ouro,
 
-        // ── Tokens Material (mesmas chaves, valores Campina) ──
-        "background": "#FBFCF8",
-        "surface": "#FBFCF8",
-        "surface-bright": "#FBFCF8",
-        "surface-container-lowest": "#ffffff",
-        "surface-container-low": "#F1FAF4",
-        "surface-container": "#EAF7EF",
-        "surface-container-high": "#DFF3E7",
-        "surface-container-highest": "#D3EEDD",
-        "surface-dim": "#D3E4D8",
-        "surface-variant": "#E3F0E7",
-        "surface-tint": "#16B85E",
+        background: t('--background'),
+        surface: t('--surface'),
+        'surface-bright': t('--surface-bright'),
+        'surface-container-lowest': t('--surface-container-lowest'),
+        'surface-container-low': t('--surface-container-low'),
+        'surface-container': t('--surface-container'),
+        'surface-container-high': t('--surface-container-high'),
+        'surface-container-highest': t('--surface-container-highest'),
+        'surface-dim': t('--surface-dim'),
+        'surface-variant': t('--surface-variant'),
+        'surface-tint': t('--primary'),
 
-        "on-background": "#123524",
-        "on-surface": "#123524",
-        "on-surface-variant": "#4E6155",
-        "outline": "#7E8F83",
-        "outline-variant": "#C9DACE",
+        'on-background': t('--on-surface'),
+        'on-surface': t('--on-surface'),
+        'on-surface-variant': t('--on-surface-variant'),
+        outline: t('--outline'),
+        'outline-variant': t('--outline-variant'),
 
-        "primary": "#0E9E4E",
-        "on-primary": "#ffffff",
-        "primary-container": "#16B85E",
-        "on-primary-container": "#E9FCEF",
-        "primary-fixed": "#CFF5DE",
-        "primary-fixed-dim": "#A7EBC5",
-        "on-primary-fixed": "#06371C",
-        "on-primary-fixed-variant": "#0C7E3E",
-        "inverse-primary": "#6FDDA1",
+        primary: t('--primary'),
+        'on-primary': t('--on-primary'),
+        'primary-container': t('--primary-container'),
+        'on-primary-container': t('--on-primary-container'),
+        'primary-fixed': t('--primary-fixed'),
+        'primary-fixed-dim': t('--primary-fixed-dim'),
+        'on-primary-fixed': t('--on-primary-fixed'),
+        'on-primary-fixed-variant': t('--on-primary-fixed-variant'),
+        'inverse-primary': t('--inverse-primary'),
 
-        // secundária = ouro da bandeira
-        "secondary": "#B78A00",
-        "on-secondary": "#2E2400",
-        "secondary-container": "#FBF1B8",
-        "on-secondary-container": "#5C4A00",
-        "secondary-fixed": "#FBF1B8",
-        "secondary-fixed-dim": "#F4E08A",
-        "on-secondary-fixed": "#241C00",
-        "on-secondary-fixed-variant": "#6B5300",
+        secondary: t('--secondary'),
+        'on-secondary': t('--on-secondary'),
+        'secondary-container': t('--secondary-container'),
+        'on-secondary-container': t('--on-secondary-container'),
+        'secondary-fixed': t('--secondary-container'),
+        'secondary-fixed-dim': t('--secondary-fixed-dim'),
+        'on-secondary-fixed': t('--on-secondary-fixed'),
+        'on-secondary-fixed-variant': t('--on-secondary-fixed-variant'),
 
-        // terciária = verde de apoio
-        "tertiary": "#0C7E3E",
-        "on-tertiary": "#ffffff",
-        "tertiary-container": "#CFF5DE",
-        "on-tertiary-container": "#06371C",
-        "tertiary-fixed": "#B7F2CF",
-        "tertiary-fixed-dim": "#6FDDA1",
-        "on-tertiary-fixed": "#052616",
-        "on-tertiary-fixed-variant": "#0C5F30",
+        tertiary: t('--tertiary'),
+        'on-tertiary': t('--on-primary'),
+        'tertiary-container': t('--primary-fixed'),
+        'on-tertiary-container': t('--on-primary-fixed'),
+        'tertiary-fixed': t('--tertiary-fixed'),
+        'tertiary-fixed-dim': t('--tertiary-fixed-dim'),
+        'on-tertiary-fixed': t('--on-tertiary-fixed'),
+        'on-tertiary-fixed-variant': t('--on-tertiary-fixed-variant'),
 
-        // erro / bloqueio = coral
-        "error": "#D93A2B",
-        "on-error": "#ffffff",
-        "error-container": "#FFDAD5",
-        "on-error-container": "#B23124",
+        error: t('--error'),
+        'on-error': t('--on-error'),
+        'error-container': t('--error-container'),
+        'on-error-container': t('--on-error-container'),
 
-        "inverse-surface": "#0E2A1A",
-        "inverse-on-surface": "#E9F7EE",
+        'inverse-surface': t('--inverse-surface'),
+        'inverse-on-surface': t('--inverse-on-surface'),
       },
       fontFamily: {
         headline: ['Fustat', 'Inter', 'sans-serif'],
@@ -112,18 +82,8 @@ export default {
         body: ['Inter', 'sans-serif'],
         label: ['Inter', 'sans-serif'],
       },
-      borderRadius: {
-        DEFAULT: '0.125rem',
-        sm: '4px',
-        lg: '8px',
-        xl: '12px',
-        '2xl': '16px',
-        '3xl': '24px',
-        full: '9999px',
-      },
-      boxShadow: {
-        card: '0 20px 40px -10px rgba(18,53,36,0.08)',
-      }
+      borderRadius: { DEFAULT: '0.125rem', sm: '4px', lg: '8px', xl: '12px', '2xl': '16px', '3xl': '24px', full: '9999px' },
+      boxShadow: { card: '0 20px 40px -10px rgba(18,53,36,0.08)' },
     },
   },
   plugins: [],

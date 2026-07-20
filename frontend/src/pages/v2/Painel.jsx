@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { Button, Field, Input, Loading } from '../../components/ui'
 import BuscaGlobal from '../../components/BuscaGlobal'
+import PerfilMenu from './PerfilMenu'
 import OwnerArea from './areas/OwnerArea'
 import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
@@ -107,7 +108,6 @@ export default function Painel() {
   const nav = NAV[role] || []
   const sec = nav.some(n => n.k === secao) ? secao : nav[0]?.k
   const atual = nav.find(n => n.k === sec)
-  const inicial = (profile?.nome || profile?.email || '?').charAt(0).toUpperCase()
 
   const irPara = (k) => { setSecao(k); setMenuAberto(false) }
 
@@ -140,13 +140,7 @@ export default function Painel() {
           })}
         </nav>
 
-        <div className="p-3 border-t border-outline-variant/10 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{inicial}</div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold truncate">{profile?.nome || profile?.email}</p>
-            <button onClick={signOut} className="text-[11px] font-bold text-on-surface-variant hover:text-error flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>logout</span>Sair</button>
-          </div>
-        </div>
+        <PerfilMenu profile={profile} role={role} signOut={signOut} reloadProfile={reloadProfile} />
       </aside>
 
       {/* Conteúdo */}

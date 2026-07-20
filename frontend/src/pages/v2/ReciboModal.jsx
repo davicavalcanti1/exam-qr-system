@@ -91,7 +91,7 @@ export default function ReciboModal({ cobrancaId, onClose }) {
 
             <div className="no-print flex justify-end gap-2 px-8 pb-6">
               <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-on-surface-variant hover:text-on-surface rounded-lg">Fechar</button>
-              <button onClick={() => window.print()} className="px-5 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir / PDF</button>
+              <button onClick={() => window.print()} className="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir / PDF</button>
             </div>
           </>
         )}

@@ -84,7 +84,7 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
                 {k === 'netris'
                   ? <img src="/netris-logo.png" alt="NetRis" className="h-5 object-contain flex-1" style={{ objectPosition: 'left', filter: 'brightness(0) opacity(0.85)' }} />
                   : <>
-                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-none ${provider === k ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'}`}>
+                      <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-none ${provider === k ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{ICONE_PROVEDOR[k] || 'extension'}</span>
                       </span>
                       <span className="font-bold text-sm flex-1">{v.label}</span>

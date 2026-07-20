@@ -100,7 +100,7 @@ export default function VisaoGeralArea({ irPara }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {atalhos.map(a => (
-            <button key={a.k} onClick={() => irPara?.(a.k)} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-container transition">
+            <button key={a.k} onClick={() => irPara?.(a.k)} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-on-primary text-sm font-bold hover:bg-primary-container transition">
               <span className="material-symbols-outlined text-base">{a.icon}</span>{a.label}
             </button>
           ))}

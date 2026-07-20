@@ -76,13 +76,13 @@ export default function ContratoModal({ contrato, podeAssinar = false, onClose, 
               </label>
               <div className="flex gap-2">
                 <input className="flex-1 px-3 py-2.5 text-sm rounded-lg bg-surface ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" placeholder="Seu nome completo" value={nome} onChange={e => setNome(e.target.value)} />
-                <button disabled={saving} onClick={assinar} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50 flex items-center gap-1.5"><span className="material-symbols-outlined text-base">draw</span>{saving ? 'Assinando…' : 'Assinar'}</button>
+                <button disabled={saving} onClick={assinar} className="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50 flex items-center gap-1.5"><span className="material-symbols-outlined text-base">draw</span>{saving ? 'Assinando…' : 'Assinar'}</button>
               </div>
             </>
           ) : (
             <div className="flex justify-end gap-2">
               <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-on-surface-variant hover:text-on-surface rounded-lg">Fechar</button>
-              <button onClick={() => window.print()} className="px-5 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir / PDF</button>
+              <button onClick={() => window.print()} className="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir / PDF</button>
             </div>
           )}
         </div>

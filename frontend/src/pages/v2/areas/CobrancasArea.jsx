@@ -127,7 +127,7 @@ export default function CobrancasArea({ somenteLeitura = false }) {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-on-surface-variant">{preview.itens.length} exame(s) · Total <b className="text-on-surface tabular-nums">{fmt(preview.total)}</b></span>
-                    <button disabled={busy} onClick={fechar} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{busy ? 'Fechando…' : 'Fechar lote'}</button>
+                    <button disabled={busy} onClick={fechar} className="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{busy ? 'Fechando…' : 'Fechar lote'}</button>
                   </div>
                 </>}
           </div>
@@ -156,7 +156,7 @@ export default function CobrancasArea({ somenteLeitura = false }) {
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
                       <button onClick={() => setRecibo(c.id)} className="p-2 text-on-surface-variant hover:text-primary" title="Recibo"><span className="material-symbols-outlined">receipt_long</span></button>
                       {!somenteLeitura && c.status === 'aberta' && <>
-                        <button onClick={() => marcarPaga(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-white rounded-md hover:bg-primary-container transition">Marcar paga</button>
+                        <button onClick={() => marcarPaga(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-on-primary rounded-md hover:bg-primary-container transition">Marcar paga</button>
                         <button onClick={() => cancelar(c.id)} className="p-2 text-on-surface-variant hover:text-error" title="Cancelar lote"><span className="material-symbols-outlined">close</span></button>
                       </>}
                     </div>

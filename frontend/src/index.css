@@ -2,7 +2,44 @@
 @tailwind utilities;
 @tailwind components;
 
-body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+/* ===== Tokens de cor — claro (padrão) ===== */
+:root {
+  --background: 251 252 248; --surface: 251 252 248; --surface-bright: 251 252 248;
+  --surface-container-lowest: 255 255 255; --surface-container-low: 241 250 244;
+  --surface-container: 234 247 239; --surface-container-high: 223 243 231; --surface-container-highest: 211 238 221;
+  --surface-dim: 211 228 216; --surface-variant: 227 240 231;
+  --on-surface: 18 53 36; --on-surface-variant: 78 97 85;
+  --outline: 126 143 131; --outline-variant: 201 218 206;
+  --primary: 14 158 78; --on-primary: 255 255 255; --primary-container: 22 184 94; --on-primary-container: 233 252 239;
+  --primary-fixed: 207 245 222; --primary-fixed-dim: 167 235 197; --on-primary-fixed: 6 55 28; --on-primary-fixed-variant: 12 126 62;
+  --inverse-primary: 111 221 161;
+  --secondary: 183 138 0; --on-secondary: 46 36 0; --secondary-container: 251 241 184; --on-secondary-container: 92 74 0;
+  --secondary-fixed-dim: 244 224 138; --on-secondary-fixed: 36 28 0; --on-secondary-fixed-variant: 107 83 0;
+  --tertiary: 12 126 62; --tertiary-fixed: 183 242 207; --tertiary-fixed-dim: 111 221 161; --on-tertiary-fixed: 5 38 22; --on-tertiary-fixed-variant: 12 95 48;
+  --error: 217 58 43; --on-error: 255 255 255; --error-container: 255 218 213; --on-error-container: 178 49 36;
+  --inverse-surface: 14 42 26; --inverse-on-surface: 233 247 238;
+}
+
+/* ===== Tokens de cor — escuro ===== */
+.dark {
+  color-scheme: dark;
+  --background: 13 21 18; --surface: 14 22 19; --surface-bright: 30 40 34;
+  --surface-container-lowest: 21 29 25; --surface-container-low: 18 26 22;
+  --surface-container: 24 33 28; --surface-container-high: 30 40 34; --surface-container-highest: 36 48 41;
+  --surface-dim: 12 18 15; --surface-variant: 38 51 44;
+  --on-surface: 233 247 238; --on-surface-variant: 169 189 176;
+  --outline: 107 125 113; --outline-variant: 51 64 58;
+  --primary: 52 205 124; --on-primary: 6 55 28; --primary-container: 22 184 94; --on-primary-container: 201 245 222;
+  --primary-fixed: 16 64 42; --primary-fixed-dim: 22 184 94; --on-primary-fixed: 201 245 222; --on-primary-fixed-variant: 111 221 161;
+  --inverse-primary: 14 158 78;
+  --secondary: 242 210 78; --on-secondary: 46 36 0; --secondary-container: 74 59 0; --on-secondary-container: 251 241 184;
+  --secondary-fixed-dim: 244 224 138; --on-secondary-fixed: 251 241 184; --on-secondary-fixed-variant: 244 224 138;
+  --tertiary: 111 221 161; --tertiary-fixed: 30 77 54; --tertiary-fixed-dim: 46 107 73; --on-tertiary-fixed: 201 245 222; --on-tertiary-fixed-variant: 167 235 197;
+  --error: 255 180 168; --on-error: 105 0 5; --error-container: 140 29 24; --on-error-container: 255 218 213;
+  --inverse-surface: 233 247 238; --inverse-on-surface: 14 42 26;
+}
+
+body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; background: rgb(var(--background)); color: rgb(var(--on-surface)); }
 ::selection { background: #A7EBC5; color: #0C5F30; }
 
 /* animações base do kit */
@@ -35,6 +72,9 @@ h1, h2, h3, .font-headline, .font-display {
 
 .soft-bg-gradient {
   background: linear-gradient(180deg, #EFFBF2 0%, #FBF6DE 100%);
+}
+.dark .soft-bg-gradient {
+  background: linear-gradient(180deg, #0E1613 0%, #0C120F 100%);
 }
 
 .pix-gradient {

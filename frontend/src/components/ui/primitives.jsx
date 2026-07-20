@@ -18,7 +18,7 @@ export function Loading({ label = 'Carregando…' }) {
 
 const BTN_SIZES = { sm: 'text-xs px-3 py-1.5 gap-1', md: 'text-sm px-5 py-2.5 gap-1.5', lg: 'text-base px-6 py-3 gap-2' }
 const BTN_VARIANTS = {
-  primary: 'bg-primary text-white hover:bg-primary-container shadow-sm shadow-primary/20',
+  primary: 'bg-primary text-on-primary hover:bg-primary-container shadow-sm shadow-primary/20',
   secondary: 'bg-surface-container text-on-surface hover:bg-surface-container-high',
   ghost: 'text-on-surface-variant hover:text-primary hover:bg-primary/5',
   outline: 'ring-1 ring-outline-variant/40 text-on-surface hover:ring-primary hover:text-primary',

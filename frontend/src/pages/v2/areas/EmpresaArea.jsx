@@ -74,7 +74,7 @@ export default function EmpresaArea() {
           <div><label className={label}>Nome do parceiro</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="ex.: Dr. Fulano / Prefeitura de…" required /></div>
           <div><label className={label}>Teto (R$)</label><input className={input} type="number" min="0" step="100" value={form.teto} onChange={e => setForm({ ...form, teto: e.target.value })} /></div>
           {err && <div className="md:col-span-2 text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
-          <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Criando…' : 'Criar parceiro'}</button></div>
+          <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Criando…' : 'Criar parceiro'}</button></div>
         </form>
       </section>
 
@@ -98,7 +98,7 @@ export default function EmpresaArea() {
                             <option value="ativo">Ativo</option><option value="bloqueado">Bloqueado</option><option value="suspenso">Suspenso</option>
                           </select>
                         </div>
-                        <button onClick={() => salvarParceiro(p)} disabled={savingP === p.id} className="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingP === p.id ? 'Salvando…' : 'Salvar'}</button>
+                        <button onClick={() => salvarParceiro(p)} disabled={savingP === p.id} className="px-4 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingP === p.id ? 'Salvando…' : 'Salvar'}</button>
                       </div>
                       <div className="flex items-center justify-between py-3">
                         <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Usuários do parceiro</span>

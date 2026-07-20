@@ -46,7 +46,7 @@ export default function IntegracaoNetris() {
             <ol className="space-y-4">
               {PASSOS.map((p, i) => (
                 <li key={i} className="relative flex gap-4">
-                  <div className="relative z-10 flex-none w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-sm">
+                  <div className="relative z-10 flex-none w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-sm">
                     <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>{p.icon}</span>
                   </div>
                   <div className="bg-surface-container-lowest rounded-2xl shadow-card p-4 flex-1">

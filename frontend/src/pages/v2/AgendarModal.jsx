@@ -68,14 +68,14 @@ export default function AgendarModal({ exame, onClose, onDone }) {
             <h2 className="text-xl font-bold">Agendado no NetRis!</h2>
             <p className="text-sm text-on-surface-variant">{diaLabel(ok.data)} às {ok.horaInicial} · {ok.nomeMedico}</p>
             <p className="text-[11px] text-on-surface-variant">Protocolo NetRis: {ok.agendamentoId || '—'}</p>
-            <button onClick={() => { onDone?.(); onClose() }} className="mt-2 px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition">Concluir</button>
+            <button onClick={() => { onDone?.(); onClose() }} className="mt-2 px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition">Concluir</button>
           </div>
         ) : cancelado ? (
           <div className="p-8 text-center space-y-3">
             <span className="material-symbols-outlined text-6xl text-error" style={{ fontVariationSettings: "'FILL' 1" }}>event_busy</span>
             <h2 className="text-xl font-bold">Agendamento cancelado</h2>
             <p className="text-sm text-on-surface-variant">O horário foi liberado no NetRis.</p>
-            <button onClick={() => { onClose() }} className="mt-2 px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition">Concluir</button>
+            <button onClick={() => { onClose() }} className="mt-2 px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition">Concluir</button>
           </div>
         ) : (
           <>
@@ -91,7 +91,7 @@ export default function AgendarModal({ exame, onClose, onDone }) {
             <div className="p-5 flex items-end gap-2 border-b border-outline-variant/10">
               <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">De</label><input type="date" className={input} value={ini} onChange={e => setIni(e.target.value)} /></div>
               <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Até</label><input type="date" className={input} value={fim} onChange={e => setFim(e.target.value)} /></div>
-              <button onClick={buscar} disabled={loading} className="px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{loading ? 'Buscando…' : 'Buscar horários'}</button>
+              <button onClick={buscar} disabled={loading} className="px-4 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{loading ? 'Buscando…' : 'Buscar horários'}</button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5">

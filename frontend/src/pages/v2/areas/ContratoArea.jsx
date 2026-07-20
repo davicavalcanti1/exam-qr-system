@@ -43,7 +43,7 @@ export default function ContratoArea() {
                 </span>
                 {c.status === 'assinado' && <p className="text-xs text-on-surface-variant mt-2">Assinado por {c.assinante_nome} em {dataBR(c.assinado_at)}.</p>}
               </div>
-              <button onClick={() => setVer(c)} className={`px-4 py-2 font-bold text-sm rounded-lg transition flex-none ${c.status === 'pendente' ? 'bg-primary text-white hover:bg-primary-container' : 'bg-surface-container text-on-surface hover:bg-surface-container-high'}`}>
+              <button onClick={() => setVer(c)} className={`px-4 py-2 font-bold text-sm rounded-lg transition flex-none ${c.status === 'pendente' ? 'bg-primary text-on-primary hover:bg-primary-container' : 'bg-surface-container text-on-surface hover:bg-surface-container-high'}`}>
                 {c.status === 'pendente' ? 'Ler e assinar' : 'Ver contrato'}
               </button>
             </div>

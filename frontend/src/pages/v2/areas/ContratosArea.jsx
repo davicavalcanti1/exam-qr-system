@@ -90,7 +90,7 @@ export default function ContratosArea() {
         <div><label className={label}>Título</label><input className={input} value={modelo.titulo} onChange={e => setModelo(m => ({ ...m, titulo: e.target.value }))} /></div>
         <div><label className={label}>Texto</label><textarea className={`${input} font-mono`} rows={10} value={modelo.conteudo} onChange={e => setModelo(m => ({ ...m, conteudo: e.target.value }))} /></div>
         <div className="flex items-center gap-3">
-          <button disabled={savingModelo} onClick={salvarModelo} className="px-5 py-2.5 bg-primary text-white font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingModelo ? 'Salvando…' : 'Salvar modelo'}</button>
+          <button disabled={savingModelo} onClick={salvarModelo} className="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingModelo ? 'Salvando…' : 'Salvar modelo'}</button>
           {modeloMsg && <span className="text-sm text-on-surface-variant">{modeloMsg}</span>}
         </div>
       </section>
@@ -116,7 +116,7 @@ export default function ContratosArea() {
                             <button onClick={() => setVer(c)} className="p-2 text-on-surface-variant hover:text-primary" title="Ver contrato"><span className="material-symbols-outlined">description</span></button>
                             {c.status !== 'assinado' && <button onClick={() => cancelar(c.id)} className="p-2 text-on-surface-variant hover:text-error" title="Cancelar"><span className="material-symbols-outlined">close</span></button>}
                           </>
-                        : <button disabled={gerando === p.id} onClick={() => gerar(p)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-white rounded-md hover:bg-primary-container transition disabled:opacity-50">{gerando === p.id ? 'Gerando…' : 'Gerar contrato'}</button>}
+                        : <button disabled={gerando === p.id} onClick={() => gerar(p)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-on-primary rounded-md hover:bg-primary-container transition disabled:opacity-50">{gerando === p.id ? 'Gerando…' : 'Gerar contrato'}</button>}
                     </div>
                   </div>
                 )
