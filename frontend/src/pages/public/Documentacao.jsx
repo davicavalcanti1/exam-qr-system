@@ -1,20 +1,35 @@
 import { Link } from 'react-router-dom'
-import DocsLayout, { H2, P } from './DocsLayout'
+import DocsLayout, { H2, P, UL, Nota } from './DocsLayout'
 
-const CARDS = [
-  { to: '/privacidade', icon: 'shield_lock', titulo: 'Política de Privacidade (LGPD)', txt: 'Quais dados tratamos, para quê, base legal e seus direitos.' },
-  { to: '/seguranca', icon: 'security', titulo: 'Segurança & armazenamento', txt: 'Onde os dados ficam, isolamento por empresa, credenciais e auditoria.' },
-  { to: '/termos', icon: 'gavel', titulo: 'Termos de Uso', txt: 'Condições e responsabilidades no uso da plataforma.' },
-  { to: '/integracao-netris', icon: 'sync_alt', titulo: 'Integração NetRis', txt: 'Como o agendamento conversa com o sistema da clínica.' },
+const ATALHOS = [
+  { to: '/docs/como-funciona', icon: 'account_tree', titulo: 'Como funciona', txt: 'O fluxo do teto ao recibo, ponta a ponta.' },
+  { to: '/docs/modulos', icon: 'widgets', titulo: 'Módulos', txt: 'O que cada parte do sistema faz.' },
+  { to: '/docs/netris', icon: 'sync_alt', titulo: 'Integração NetRis', txt: 'Agendamento real no sistema da clínica.' },
+  { to: '/docs/arquitetura', icon: 'architecture', titulo: 'Arquitetura & stack', txt: 'Como o sistema é construído por dentro.' },
 ]
 
 export default function Documentacao() {
   return (
-    <DocsLayout title="Documentação" subtitle="Transparência sobre como o ExameQR funciona e trata seus dados.">
-      <P>O ExameQR controla exames realizados por parceria: um parceiro custeia exames de pacientes até um teto, o valor só é debitado quando o exame é confirmado por QR, e as cobranças são fechadas por período. Abaixo, a documentação pública.</P>
+    <DocsLayout title="Documentação" subtitle="Tudo sobre o ExameQR: o produto, os módulos, as integrações, a segurança e a engenharia por trás.">
+      <P>O <b>ExameQR</b> é uma plataforma para <b>controle financeiro de exames realizados por parceria</b>. Um parceiro (clínica, consultório ou médico que encaminha) custeia exames de seus pacientes até um <b>teto de crédito</b>; o valor de cada exame só é <b>debitado quando o exame é confirmado pela leitura de um QR Code</b>; e a cobrança é fechada <b>por período</b>, com recibo.</P>
+
+      <Nota>Esta é a documentação da <b>versão piloto</b>. O produto está em uso real e evolui a cada semana — as funcionalidades descritas aqui refletem o que já está no ar.</Nota>
+
+      <H2>O problema que resolve</H2>
+      <P>Clínicas que trabalham com encaminhamento por parceria perdem receita e controle: exames autorizados e não realizados, cobranças manuais em planilha, falta de rastreabilidade de quem autorizou o quê, e nenhum limite real de crédito por parceiro. O ExameQR fecha essas brechas com um fluxo digital, auditável e com débito só na confirmação.</P>
+
+      <H2>Diferenciais</H2>
+      <UL>
+        <li><b>Débito no scan</b>: o exame só consome o teto quando o QR é lido — não se cobra o que não foi feito.</li>
+        <li><b>Teto por parceiro</b>: crédito controlado, com trava ao atingir o limite.</li>
+        <li><b>Cobrança por lote</b>: fecha o período, soma os exames confirmados e gera recibo.</li>
+        <li><b>Agendamento real</b>: integração opcional com o NetRis/Netpacs da clínica.</li>
+        <li><b>Multiempresa e white-label</b>: cada clínica isolada e com a própria marca.</li>
+        <li><b>Seguro e conforme a LGPD</b>: isolamento por empresa, consentimento, auditoria e DPA.</li>
+      </UL>
 
       <div className="grid sm:grid-cols-2 gap-4 mt-6 not-prose">
-        {CARDS.map(c => (
+        {ATALHOS.map(c => (
           <Link key={c.to} to={c.to} className="group flex items-start gap-3 p-5 rounded-2xl bg-surface-container-lowest shadow-card ring-1 ring-transparent hover:ring-primary/30 transition">
             <span className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-none"><span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{c.icon}</span></span>
             <span>
@@ -24,9 +39,6 @@ export default function Documentacao() {
           </Link>
         ))}
       </div>
-
-      <H2>Compromisso com a LGPD</H2>
-      <P>Levamos a proteção de dados a sério — especialmente por lidarmos com dados sensíveis de saúde. Isolamos os dados por empresa, coletamos consentimento do paciente, registramos auditoria das ações e mantemos as credenciais fora do navegador. Veja os detalhes em Privacidade e em Segurança &amp; dados.</P>
     </DocsLayout>
   )
 }
