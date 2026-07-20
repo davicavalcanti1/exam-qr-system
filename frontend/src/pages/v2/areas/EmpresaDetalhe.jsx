@@ -4,10 +4,12 @@ import { adminApi } from '../../../lib/adminApi'
 import { Card, Button, Badge, Loading, EmptyState, useToast } from '../../../components/ui'
 import CreateUserModal from '../CreateUserModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
+import ConsumoEmpresa from './ConsumoEmpresa'
 
 const dataBR = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '—'
 const ABAS = [
   { k: 'info', label: 'Informações', icon: 'info' },
+  { k: 'consumo', label: 'Consumo', icon: 'monitoring' },
   { k: 'usuarios', label: 'Usuários', icon: 'group' },
   { k: 'integracao', label: 'Integração', icon: 'terminal' },
 ]
@@ -111,7 +113,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       <div className="flex gap-1 bg-surface-container rounded-xl p-1 w-fit">
         {ABAS.map(a => (
           <button key={a.k} onClick={() => setAba(a.k)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition ${aba === a.k ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition ${aba === a.k ? 'bg-surface-container-lowest text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{a.icon}</span>{a.label}
           </button>
         ))}
@@ -168,6 +170,8 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
           </div>
         </Card>
       ))}
+
+      {aba === 'consumo' && <Card className="p-6"><ConsumoEmpresa empresaId={emp.id} /></Card>}
 
       {aba === 'usuarios' && (
         <Card className="overflow-hidden">

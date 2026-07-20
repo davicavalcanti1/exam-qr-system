@@ -19,6 +19,7 @@ import AgendaArea from './areas/AgendaArea'
 import ContratosArea from './areas/ContratosArea'
 import ContratoArea from './areas/ContratoArea'
 import AuditoriaArea from './areas/AuditoriaArea'
+import UsoArea from './areas/UsoArea'
 
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
@@ -53,7 +54,10 @@ function TrocarSenha({ onDone }) {
 
 // Navegação por papel: cada item {k, label, icon}. Ordem = ordem na sidebar.
 const NAV = {
-  owner: [{ k: 'empresas', label: 'Empresas', icon: 'business' }],
+  owner: [
+    { k: 'empresas', label: 'Empresas', icon: 'business' },
+    { k: 'uso', label: 'Consumo', icon: 'monitoring' },
+  ],
   empresa_admin: [
     { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
     { k: 'parceiros', label: 'Parceiros', icon: 'handshake' },
@@ -81,6 +85,7 @@ const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Empresa', parceiro_coordenad
 function renderArea(role, k, irPara) {
   const map = {
     empresas: <OwnerArea />,
+    uso: <UsoArea />,
     visao: <VisaoGeralArea irPara={irPara} />,
     parceiros: <EmpresaArea />,
     agendamentos: <PacientesArea escolherParceiro />,
