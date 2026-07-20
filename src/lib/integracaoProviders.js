@@ -31,6 +31,17 @@ export const PROVIDERS = {
 
 export const MASK = '••••••••'
 
+// config agora é um mapa { netris: {...}, feegow: {...} }. Devolve a sub-config do
+// provedor pedido; tolera o formato antigo (plano) de linhas ainda não migradas.
+export function subConfig(config, provider) {
+  if (config && typeof config === 'object' && !Array.isArray(config)) {
+    if (config[provider] && typeof config[provider] === 'object') return config[provider]
+    // formato antigo plano: sem chaves de provedor conhecidas → é a config do ativo
+    if (!('netris' in config) && !('feegow' in config) && !('manual' in config)) return config
+  }
+  return {}
+}
+
 // Registro seguro para o frontend (sem nada sensível — só rótulos/campos).
 export function providersPublicos() {
   return Object.fromEntries(

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { supabaseAdmin, getCaller } from '../lib/supabaseAdmin.js'
-import { PROVIDERS, providersPublicos, mascarar, mesclar } from '../lib/integracaoProviders.js'
+import { PROVIDERS, providersPublicos, mascarar, mesclar, subConfig } from '../lib/integracaoProviders.js'
 
 const router = Router()
 
@@ -29,11 +29,16 @@ router.get('/', async (req, res) => {
     .from('integracao_configs').select('provider, config, ativo, updated_at').eq('empresa_id', empresa_id).maybeSingle()
 
   const provider = data?.provider || 'manual'
+  // provedores que já têm credenciais salvas (pro painel sinalizar "salvo")
+  const salvos = data?.config && typeof data.config === 'object'
+    ? Object.keys(PROVIDERS).filter(k => k !== 'manual' && data.config[k] && Object.keys(data.config[k]).length)
+    : []
   res.json({
     empresaId: empresa_id,
     provider,
     ativo: data?.ativo || false,
-    config: mascarar(provider, data?.config || {}),
+    config: mascarar(provider, subConfig(data?.config, provider)),
+    configurados: salvos,
     updatedAt: data?.updated_at || null,
   })
 })
@@ -50,14 +55,17 @@ router.put('/', async (req, res) => {
   if (!empresa_id) return res.status(400).json({ error: 'empresaId ausente' })
   if (!PROVIDERS[provider]) return res.status(400).json({ error: 'Provedor inválido' })
 
-  // mescla credenciais mascaradas com o que já estava salvo
+  // Config é um mapa por provedor. Atualiza SÓ a sub-config do provedor escolhido
+  // e preserva as dos outros (trocar de provedor não apaga as credenciais antigas).
   const { data: atual } = await supabaseAdmin
     .from('integracao_configs').select('config, provider').eq('empresa_id', empresa_id).maybeSingle()
-  const salvo = (atual?.provider === provider) ? (atual?.config || {}) : {}
-  const merged = mesclar(provider, salvo, config)
+  const src = (atual?.config && typeof atual.config === 'object' && !Array.isArray(atual.config)) ? atual.config : {}
+  const mapa = {}
+  for (const k of Object.keys(PROVIDERS)) if (src[k] && typeof src[k] === 'object') mapa[k] = src[k]
+  mapa[provider] = mesclar(provider, mapa[provider] || subConfig(atual?.config, provider), config)
 
   const { error: upErr } = await supabaseAdmin.from('integracao_configs').upsert({
-    empresa_id, provider, config: merged, ativo: provider === 'manual' ? false : !!ativo,
+    empresa_id, provider, config: mapa, ativo: provider === 'manual' ? false : !!ativo,
     updated_at: new Date().toISOString(), updated_by: p.id,
   }, { onConflict: 'empresa_id' })
   if (upErr) return res.status(400).json({ error: upErr.message })
@@ -79,11 +87,13 @@ router.post('/testar', async (req, res) => {
     .from('integracao_configs').select('provider, config').eq('empresa_id', empresa_id).maybeSingle()
   if (!data) return res.json({ ok: false, mensagem: 'Nenhuma configuração salva.' })
 
+  const cfg = subConfig(data.config, data.provider)
+
   if (data.provider === 'manual') return res.json({ ok: true, mensagem: 'Método manual — nenhuma conexão externa necessária.' })
 
   if (data.provider === 'netris') {
-    const base = (data.config?.baseUrl || '').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
-    const token = data.config?.token
+    const base = (cfg.baseUrl || '').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
+    const token = cfg.token
     if (!base) return res.json({ ok: false, mensagem: 'URL base não configurada.' })
     try {
       const ctrl = new AbortController()
@@ -101,8 +111,8 @@ router.post('/testar', async (req, res) => {
   }
 
   if (data.provider === 'feegow') {
-    const base = (data.config?.baseUrl || 'https://api.feegow.com/v1').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
-    const token = data.config?.token
+    const base = (cfg.baseUrl || 'https://api.feegow.com/v1').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
+    const token = cfg.token
     if (!token) return res.json({ ok: false, mensagem: 'Token (x-access-token) não configurado.' })
     try {
       const ctrl = new AbortController()

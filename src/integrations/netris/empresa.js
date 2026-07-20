@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js'
+import { subConfig } from '../../lib/integracaoProviders.js'
 import { createNetrisClient } from './client.js'
 
 // Carrega a config de integração de uma empresa e devolve um cliente NetRis
@@ -11,7 +12,7 @@ export async function netrisParaEmpresa(empresaId) {
     .eq('empresa_id', empresaId)
     .maybeSingle()
   if (!data || data.provider !== 'netris' || !data.ativo) return null
-  const c = data.config || {}
+  const c = subConfig(data.config, 'netris')
   if (!c.baseUrl || !c.token) return null
   try {
     return createNetrisClient({

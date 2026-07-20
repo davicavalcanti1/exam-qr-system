@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js'
+import { subConfig } from '../../lib/integracaoProviders.js'
 import { createFeegowClient } from './client.js'
 
 // Carrega a config de integração de uma empresa e devolve um cliente Feegow
@@ -12,7 +13,7 @@ export async function feegowParaEmpresa(empresaId) {
     .eq('empresa_id', empresaId)
     .maybeSingle()
   if (!data || data.provider !== 'feegow' || !data.ativo) return null
-  const c = data.config || {}
+  const c = subConfig(data.config, 'feegow')
   if (!c.token) return null
   try {
     return createFeegowClient({ baseUrl: c.baseUrl || 'https://api.feegow.com/v1', token: c.token })
