@@ -55,6 +55,7 @@ export default function UsoArea() {
                 <thead>
                   <tr className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant border-b border-outline-variant/15">
                     <th className="text-left py-3 px-5">Empresa</th>
+                    <th className="text-left py-3 px-3">Plano</th>
                     <th className="text-right py-3 px-3">Parceiros</th>
                     <th className="text-right py-3 px-3">Usuários</th>
                     <th className="text-right py-3 px-3">Pacientes</th>
@@ -68,6 +69,7 @@ export default function UsoArea() {
                   {uso.map(u => (
                     <tr key={u.empresa_id} className="border-b border-outline-variant/10 hover:bg-black/[.02]">
                       <td className="py-3 px-5 font-semibold">{u.nome}</td>
+                      <td className="py-3 px-3"><span className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant">{u.plano || '—'}</span></td>
                       <td className="py-3 px-3 text-right tabular-nums">{u.parceiros_ativos}/{u.parceiros}</td>
                       <td className="py-3 px-3 text-right tabular-nums">{u.usuarios_ativos}/{u.usuarios}</td>
                       <td className="py-3 px-3 text-right tabular-nums">{u.pacientes}</td>

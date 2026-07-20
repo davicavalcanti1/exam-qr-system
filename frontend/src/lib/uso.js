@@ -7,6 +7,15 @@ export async function carregarUso() {
   return data || []
 }
 
+export async function carregarMensal(empresaId) {
+  const { data, error } = await supabase.rpc('get_empresa_exames_mensal', { p_empresa_id: empresaId })
+  if (error) throw error
+  return data || []
+}
+
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+export const rotuloMes = (iso) => { const d = new Date(iso + 'T00:00:00'); return `${MESES[d.getMonth()]}/${String(d.getFullYear()).slice(2)}` }
+
 export function fmtBytes(n) {
   n = Number(n || 0)
   if (n < 1024) return `${n} B`

@@ -81,6 +81,12 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
     if (error) return toast.error(error.message)
     setEmp(e => ({ ...e, nome_exibicao: v })); onChange?.(); toast.success('Nome de exibição atualizado.')
   }
+  async function salvarPlano(v) {
+    const plano = v || null
+    const { error } = await supabase.from('empresas').update({ plano }).eq('id', emp.id)
+    if (error) return toast.error(error.message)
+    setEmp(e => ({ ...e, plano })); onChange?.(); toast.success('Plano atualizado.')
+  }
   async function toggleStatus() {
     const novo = emp.status === 'ativa' ? 'inativa' : 'ativa'
     const { error } = await supabase.from('empresas').update({ status: novo }).eq('id', emp.id)
@@ -138,6 +144,15 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
           <Linha label="E-mail" valor={emp.email} />
           <Linha label="Criada em" valor={dataBR(emp.created_at)} />
           <Linha label="Termo de Dados (DPA)" valor={dpa === undefined ? '…' : dpa ? `Aceito ${dpa.versao} · ${dataBR(dpa.aceito_at)}` : 'Pendente'} />
+          <div className="flex items-center justify-between gap-3 py-2.5 border-b border-outline-variant/10">
+            <span className="text-sm text-on-surface-variant flex-none">Plano comercial</span>
+            <select value={emp.plano || ''} onChange={e => salvarPlano(e.target.value)} className="text-sm font-semibold bg-surface rounded-lg px-2.5 py-1.5 ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary">
+              <option value="">—</option>
+              <option value="Básico">Básico</option>
+              <option value="Pro">Pro</option>
+              <option value="Enterprise">Enterprise</option>
+            </select>
+          </div>
 
           <div className="mt-5 pt-5 border-t border-outline-variant/10 space-y-4">
             <span className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Marca (white-label)</span>
