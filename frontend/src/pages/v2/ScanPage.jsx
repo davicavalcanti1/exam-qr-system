@@ -65,8 +65,8 @@ export default function ScanPage() {
       {/* Cabeçalho */}
       <header className="flex items-center justify-between px-5 pt-6 pb-2">
         <div className="flex items-center gap-2">
-          <img src="/brotopay.png" alt="ExameQR" className="w-8 h-8 object-contain" />
-          <span className="font-display text-xl font-extrabold tracking-tight">ExameQR</span>
+          <span className="material-symbols-outlined text-emerald-300" style={{ fontVariationSettings: "'FILL' 1" }}>qr_code_scanner</span>
+          <span className="font-display text-xl font-extrabold tracking-tight">Leitor de QR</span>
         </div>
         <span className="text-[10px] font-bold uppercase tracking-widest bg-white/10 px-3 py-1 rounded-full flex items-center gap-1.5">
           <span className={`w-1.5 h-1.5 rounded-full ${scanning ? 'bg-emerald-400 animate-pulse' : 'bg-white/40'}`} />Leitor
@@ -126,6 +126,13 @@ export default function ScanPage() {
 
             {result.ok ? (
               <>
+                {result.empresa && (
+                  <div className="flex items-center justify-center mb-2">
+                    {result.empresa.logo
+                      ? <img src={result.empresa.logo} alt={result.empresa.nome} className="h-9 max-w-[180px] object-contain" />
+                      : <span className="font-display text-lg font-extrabold tracking-tight">{result.empresa.nome}</span>}
+                  </div>
+                )}
                 <h2 className="font-display text-2xl font-extrabold mt-1">Exame confirmado</h2>
                 <div className="mt-4 bg-black/20 rounded-2xl divide-y divide-white/10 text-left">
                   <div className="flex justify-between px-4 py-3"><span className="text-white/50 text-xs uppercase tracking-widest font-bold">Paciente</span><span className="font-semibold text-sm text-right">{result.paciente}</span></div>

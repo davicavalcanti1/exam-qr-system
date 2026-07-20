@@ -79,9 +79,14 @@ router.post('/validar', async (req, res) => {
     } catch { netris = 'falhou' }
   }
 
+  // Marca da empresa (white-label) para exibir na confirmação.
+  const { data: emp } = await supabaseAdmin
+    .from('empresas').select('nome, nome_exibicao, logo_url').eq('id', exame.empresa_id).maybeSingle()
+  const empresa = emp ? { nome: emp.nome_exibicao || emp.nome, logo: emp.logo_url || null } : null
+
   logAudit({ empresaId: exame.empresa_id, atorNome: 'Leitor (scan público)', acao: 'qr.validado', entidade: 'exame', entidadeId: exame.id, detalhe: { paciente: exame?.pacientes?.nome, exame: exame?.nome, netris } })
 
-  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', valor: exame?.valor ?? null, netris })
+  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', valor: exame?.valor ?? null, empresa, netris })
 })
 
 export default router

@@ -20,6 +20,7 @@ import ContratosArea from './areas/ContratosArea'
 import ContratoArea from './areas/ContratoArea'
 import AuditoriaArea from './areas/AuditoriaArea'
 import UsoArea from './areas/UsoArea'
+import ConfiguracoesArea from './areas/ConfiguracoesArea'
 
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
@@ -81,6 +82,7 @@ const NAV = {
     { k: 'cobrancas', label: 'Cobranças', icon: 'receipt_long' },
     { k: 'contratos', label: 'Contratos', icon: 'description' },
     { k: 'auditoria', label: 'Auditoria', icon: 'history' },
+    { k: 'config', label: 'Configurações', icon: 'settings' },
   ],
   parceiro_coordenador: [
     { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
@@ -100,6 +102,7 @@ function renderArea(role, k, irPara) {
   const map = {
     empresas: <OwnerArea />,
     uso: <UsoArea />,
+    config: <ConfiguracoesArea />,
     visao: <VisaoGeralArea irPara={irPara} />,
     parceiros: <EmpresaArea />,
     agendamentos: <PacientesArea escolherParceiro />,

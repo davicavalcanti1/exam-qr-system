@@ -7,10 +7,11 @@ import CreateUserModal from '../CreateUserModal'
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function EmpresaArea() {
-  const { empresaId } = useAuth()
+  const { empresaId, empresa } = useAuth()
+  const tetoPadrao = empresa?.teto_padrao ?? 2000
   const [parceiros, setParceiros] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ nome: '', teto: 2000 })
+  const [form, setForm] = useState({ nome: '', teto: tetoPadrao })
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [expanded, setExpanded] = useState(null)
@@ -57,8 +58,8 @@ export default function EmpresaArea() {
   async function createParceiro(e) {
     e.preventDefault(); setErr(''); setSaving(true)
     try {
-      await adminApi.createParceiro({ nome: form.nome, teto: Number(form.teto) || 2000 })
-      setForm({ nome: '', teto: 2000 }); await load()
+      await adminApi.createParceiro({ nome: form.nome, teto: Number(form.teto) || tetoPadrao })
+      setForm({ nome: '', teto: tetoPadrao }); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
 

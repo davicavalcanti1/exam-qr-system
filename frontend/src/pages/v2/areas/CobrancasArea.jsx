@@ -7,6 +7,7 @@ import ReciboModal from '../ReciboModal'
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const hoje = () => new Date().toISOString().slice(0, 10)
 const primeiroDia = () => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10) }
+const diasAtras = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10) }
 
 const ST = {
   aberta: { label: 'Aberta', cls: 'bg-yellow-50 text-yellow-700' },
@@ -15,10 +16,10 @@ const ST = {
 }
 
 export default function CobrancasArea({ somenteLeitura = false }) {
-  const { user, profile, empresaId } = useAuth()
+  const { user, profile, empresaId, empresa } = useAuth()
   const [parceiros, setParceiros] = useState([])
   const [parceiroSel, setParceiroSel] = useState('')
-  const [ini, setIni] = useState(primeiroDia())
+  const [ini, setIni] = useState(() => empresa?.periodo_cobranca_dias ? diasAtras(empresa.periodo_cobranca_dias) : primeiroDia())
   const [fim, setFim] = useState(hoje())
   const [preview, setPreview] = useState(null)
   const [busy, setBusy] = useState(false)

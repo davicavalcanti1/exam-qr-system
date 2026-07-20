@@ -86,6 +86,11 @@ export default function PerfilMenu({ profile, role, signOut, reloadProfile }) {
             <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>manage_accounts</span>
             Configurações do perfil
           </button>
+          <a href="/documentacao" target="_blank" rel="noreferrer" onClick={() => setAberto(false)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-on-surface hover:bg-black/[.04] transition">
+            <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '20px' }}>menu_book</span>
+            Documentação
+          </a>
 
           <div className="px-3 pt-3 pb-1">
             <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Tema</span>

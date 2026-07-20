@@ -6,10 +6,12 @@ import CreateUserModal from '../CreateUserModal'
 import ConvidarModal from '../ConvidarModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
 import ConsumoEmpresa from './ConsumoEmpresa'
+import ConfiguracoesEmpresa from './ConfiguracoesEmpresa'
 
 const dataBR = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '—'
 const ABAS = [
   { k: 'info', label: 'Informações', icon: 'info' },
+  { k: 'config', label: 'Configurações', icon: 'settings' },
   { k: 'consumo', label: 'Consumo', icon: 'monitoring' },
   { k: 'usuarios', label: 'Usuários', icon: 'group' },
   { k: 'integracao', label: 'Integração', icon: 'terminal' },
@@ -172,6 +174,8 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
           </div>
         </Card>
       ))}
+
+      {aba === 'config' && <ConfiguracoesEmpresa empresa={emp} onSaved={loadEmpresa} />}
 
       {aba === 'consumo' && <Card className="p-6"><ConsumoEmpresa empresaId={emp.id} /></Card>}
 
