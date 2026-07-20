@@ -9,10 +9,11 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [empresa, setEmpresa] = useState(null)
+  const [parceiro, setParceiro] = useState(null)
   const [loading, setLoading] = useState(true)
 
   async function loadProfile(userId) {
-    if (!userId) { setProfile(null); setEmpresa(null); return }
+    if (!userId) { setProfile(null); setEmpresa(null); setParceiro(null); return }
     const { data } = await supabase
       .from('profiles')
       .select('id, empresa_id, parceiro_id, nome, email, role, ativo, username, must_change_password')
@@ -21,14 +22,17 @@ export function AuthProvider({ children }) {
     setProfile(data || null)
     // Marca do tenant: empresa do usuário (owner não tem empresa → marca da plataforma).
     if (data?.empresa_id) {
-      const { data: emp } = await supabase
-        .from('empresas')
-        .select('*')
-        .eq('id', data.empresa_id)
-        .maybeSingle()
+      const { data: emp } = await supabase.from('empresas').select('*').eq('id', data.empresa_id).maybeSingle()
       setEmpresa(emp || null)
     } else {
       setEmpresa(null)
+    }
+    // Usuário do parceiro carrega a marca do próprio parceiro.
+    if (data?.parceiro_id) {
+      const { data: parc } = await supabase.from('parceiros').select('id, nome, nome_exibicao, logo_url').eq('id', data.parceiro_id).maybeSingle()
+      setParceiro(parc || null)
+    } else {
+      setParceiro(null)
     }
   }
 
@@ -57,13 +61,16 @@ export function AuthProvider({ children }) {
     user: session?.user || null,
     profile,
     empresa,
+    parceiro,
     role: profile?.role || null,
     empresaId: profile?.empresa_id || null,
     parceiroId: profile?.parceiro_id || null,
-    // Marca aplicada no workspace/documentos. Owner (sem empresa) = plataforma.
-    branding: empresa
-      ? { nome: empresa.nome_exibicao || empresa.nome, logo: empresa.logo_url || null, tenant: true }
-      : { nome: 'ExameQR', logo: '/brotopay.png', tenant: false },
+    // Marca no workspace: parceiro > empresa > plataforma (owner).
+    branding: parceiro
+      ? { nome: parceiro.nome_exibicao || parceiro.nome, logo: parceiro.logo_url || null, tenant: true }
+      : empresa
+        ? { nome: empresa.nome_exibicao || empresa.nome, logo: empresa.logo_url || null, tenant: true }
+        : { nome: 'ExameQR', logo: '/brotopay.png', tenant: false },
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signInGoogle: () => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/painel' } }),
     signOut: () => supabase.auth.signOut(),
