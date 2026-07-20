@@ -3,12 +3,14 @@ import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
 import CreateUserModal from '../CreateUserModal'
+import ConvidarModal from '../ConvidarModal'
 
 export default function ParceiroArea() {
   const { empresaId, parceiroId } = useAuth()
   const [funcs, setFuncs] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
+  const [convidar, setConvidar] = useState(false)
 
   async function load() {
     const { data } = await supabase.from('profiles')
@@ -35,9 +37,14 @@ export default function ParceiroArea() {
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-6 border-b border-outline-variant/10 flex items-center justify-between">
           <h3 className="text-lg font-semibold">Funcionários ({funcs.length})</h3>
-          <button onClick={() => setModal(true)} className="px-4 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">add</span>Criar funcionário
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setConvidar(true)} className="px-4 py-2 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">mail</span>Convidar por e-mail
+            </button>
+            <button onClick={() => setModal(true)} className="px-4 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">add</span>Criar funcionário
+            </button>
+          </div>
         </div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
           : funcs.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum funcionário ainda.</p>
@@ -66,6 +73,15 @@ export default function ParceiroArea() {
         onClose={() => setModal(false)}
         onCreated={load}
       />
+
+      {convidar && (
+        <ConvidarModal
+          empresaId={empresaId}
+          parceiroId={parceiroId}
+          roles={[{ value: 'parceiro_funcionario', label: 'Funcionário' }, { value: 'parceiro_coordenador', label: 'Coordenador' }]}
+          onClose={() => setConvidar(false)}
+        />
+      )}
     </div>
   )
 }

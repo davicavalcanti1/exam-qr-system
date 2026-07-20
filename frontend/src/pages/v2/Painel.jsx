@@ -52,6 +52,20 @@ function TrocarSenha({ onDone }) {
   )
 }
 
+// Conta autenticada mas sem papel (ex.: entrou com Google sem convite).
+function SemAcesso({ nome, onSignOut }) {
+  return (
+    <div className="min-h-screen soft-bg-gradient flex items-center justify-center p-4">
+      <div className="bg-surface-container-lowest rounded-2xl shadow-card p-8 w-full max-w-sm text-center">
+        <span className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-surface-container flex items-center justify-center"><span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: '28px' }}>lock_person</span></span>
+        <h2 className="font-display text-xl font-extrabold tracking-tight">Conta sem acesso</h2>
+        <p className="text-sm text-on-surface-variant mt-2">Olá{nome ? `, ${nome}` : ''}. Seu login funcionou, mas este e-mail ainda não foi convidado por nenhuma empresa. Peça ao administrador para convidar <b>este mesmo e-mail</b>.</p>
+        <button onClick={onSignOut} className="mt-6 w-full py-3 rounded-xl bg-surface-container font-bold text-sm hover:bg-surface-container-high transition">Sair</button>
+      </div>
+    </div>
+  )
+}
+
 // Navegação por papel: cada item {k, label, icon}. Ordem = ordem na sidebar.
 const NAV = {
   owner: [
@@ -118,6 +132,7 @@ export default function Painel() {
   if (!ready) return <div className="p-10 text-center text-on-surface-variant">Supabase não configurado.</div>
   if (loading) return <div className="min-h-screen bg-surface"><Loading /></div>
   if (!session) return <Navigate to="/entrar" replace />
+  if (profile && !role) return <SemAcesso nome={profile.nome} onSignOut={signOut} />
   if (profile?.must_change_password) return <TrocarSenha onDone={reloadProfile} />
   if (role === 'empresa_admin' && dpaOk === null) return <div className="min-h-screen bg-surface"><Loading /></div>
   if (role === 'empresa_admin' && dpaOk === false) return <AceiteDPA onDone={() => setDpaOk(true)} />

@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { adminApi } from '../../../lib/adminApi'
 import { Card, Button, Badge, Loading, EmptyState, useToast } from '../../../components/ui'
 import CreateUserModal from '../CreateUserModal'
+import ConvidarModal from '../ConvidarModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
 import ConsumoEmpresa from './ConsumoEmpresa'
 
@@ -30,6 +31,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const [carregando, setCarregando] = useState(true)
   const [admins, setAdmins] = useState(null)
   const [modal, setModal] = useState(false)
+  const [convidar, setConvidar] = useState(false)
   const [logoInput, setLogoInput] = useState('')
   const [nomeExib, setNomeExib] = useState('')
   const [subindo, setSubindo] = useState(false)
@@ -177,7 +179,10 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
         <Card className="overflow-hidden">
           <div className="p-6 border-b border-outline-variant/10 flex items-center justify-between">
             <h3 className="text-lg font-semibold">Administradores</h3>
-            <Button size="sm" icon="add" onClick={() => setModal(true)}>Criar administrador</Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary" icon="mail" onClick={() => setConvidar(true)}>Convidar por e-mail</Button>
+              <Button size="sm" icon="add" onClick={() => setModal(true)}>Criar administrador</Button>
+            </div>
           </div>
           {admins === null ? <Loading />
             : admins.length === 0 ? <EmptyState icon="group_add" title="Nenhum administrador" hint="Crie o administrador desta empresa." />
@@ -207,6 +212,14 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
         onClose={() => setModal(false)}
         onCreated={loadAdmins}
       />
+
+      {convidar && (
+        <ConvidarModal
+          empresaId={emp.id}
+          roles={[{ value: 'empresa_admin', label: 'Administrador da empresa' }]}
+          onClose={() => setConvidar(false)}
+        />
+      )}
     </div>
   )
 }

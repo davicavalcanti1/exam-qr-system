@@ -65,6 +65,7 @@ export function AuthProvider({ children }) {
       ? { nome: empresa.nome_exibicao || empresa.nome, logo: empresa.logo_url || null, tenant: true }
       : { nome: 'ExameQR', logo: '/brotopay.png', tenant: false },
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
+    signInGoogle: () => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/painel' } }),
     signOut: () => supabase.auth.signOut(),
     reloadProfile: () => loadProfile(session?.user?.id),
   }
