@@ -100,6 +100,21 @@ router.post('/testar', async (req, res) => {
     }
   }
 
+  if (data.provider === 'feegow') {
+    const base = (data.config?.baseUrl || 'https://api.feegow.com/v1').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
+    const token = data.config?.token
+    if (!token) return res.json({ ok: false, mensagem: 'Token (x-access-token) não configurado.' })
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), 8000)
+      const r = await fetch(`${base}/api/appoints/status`, { method: 'GET', headers: { 'x-access-token': token }, signal: ctrl.signal })
+      clearTimeout(t)
+      return res.json({ ok: r.status < 500, mensagem: `Feegow respondeu (HTTP ${r.status}).` })
+    } catch (e) {
+      return res.json({ ok: false, mensagem: `Falha ao alcançar o Feegow: ${e.message}` })
+    }
+  }
+
   res.json({ ok: false, mensagem: 'Provedor sem teste implementado.' })
 })
 

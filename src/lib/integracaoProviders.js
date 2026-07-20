@@ -19,6 +19,14 @@ export const PROVIDERS = {
       { key: 'idUnidade', label: 'ID da unidade', type: 'text' },
     ],
   },
+  feegow: {
+    label: 'Feegow Clinic',
+    descricao: 'Integra com o Feegow Clinic da clínica (API pública, token x-access-token).',
+    fields: [
+      { key: 'baseUrl', label: 'URL base da API', type: 'text', placeholder: 'https://api.feegow.com/v1' },
+      { key: 'token', label: 'x-access-token', type: 'password', secret: true },
+    ],
+  },
 }
 
 export const MASK = '••••••••'

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import QRCode from 'qrcode'
 import crypto from 'crypto'
 import { supabaseAdmin, supabaseConfigured, getCaller } from '../lib/supabaseAdmin.js'
-import { netrisParaEmpresa } from '../integrations/netris/empresa.js'
+import { agendaParaEmpresa } from '../integrations/agenda.js'
 import { SITUACAO } from '../integrations/netris/client.js'
 import { logAudit } from '../lib/audit.js'
 
@@ -71,7 +71,7 @@ router.post('/validar', async (req, res) => {
   let netris = null
   if (exame.netris_atendimento_id) {
     try {
-      const client = await netrisParaEmpresa(exame.empresa_id)
+      const client = await agendaParaEmpresa(exame.empresa_id)
       if (client) {
         const r = await client.alterarSituacao(exame.netris_atendimento_id, SITUACAO.EXAME_REALIZADO)
         netris = r.ok ? 'confirmado' : 'falhou'
