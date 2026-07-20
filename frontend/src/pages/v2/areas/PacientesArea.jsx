@@ -4,6 +4,7 @@ import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
 import { useToast, EmptyState, Loading } from '../../../components/ui'
 import { logAudit } from '../../../lib/audit'
+import { CONSENT_TEXTO, CONSENT_VERSAO } from '../../../legal/consentimento'
 import QrModal from '../QrModal'
 import AgendarModal from '../AgendarModal'
 import ExameEditModal from '../ExameEditModal'
@@ -215,7 +216,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
           empresa_id: empresaId, parceiro_id: pid, nome: nome.trim(), cpf: cpfLimpo,
           netris_id_paciente: idNetris || null, sexo: sexo || null,
           data_nascimento: nascimento || null, telefone: telefone || null,
-          consentimento_lgpd: true, consentimento_at: new Date().toISOString(),
+          consentimento_lgpd: true, consentimento_at: new Date().toISOString(), consentimento_versao: CONSENT_VERSAO,
         })
         .select('id').single()
       if (pErr) throw pErr
@@ -356,7 +357,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
             </div>
             <label className="flex items-start gap-2 text-sm cursor-pointer bg-surface rounded-lg p-3">
               <input type="checkbox" checked={consentimento} onChange={e => setConsentimento(e.target.checked)} className="w-4 h-4 accent-primary mt-0.5" />
-              <span className="text-on-surface-variant">O paciente <b className="text-on-surface">autoriza</b> o uso dos seus dados pessoais e de saúde para o agendamento e a realização do exame, conforme a LGPD.</span>
+              <span className="text-on-surface-variant"><b className="text-on-surface">Autoriza</b> — {CONSENT_TEXTO} <span className="text-on-surface-variant/70">(v{CONSENT_VERSAO})</span></span>
             </label>
             {err && <div className="text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
             <div className="flex items-center justify-between">

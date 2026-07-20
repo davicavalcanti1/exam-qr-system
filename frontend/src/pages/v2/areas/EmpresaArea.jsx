@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabase'
 import { adminApi } from '../../../lib/adminApi'
 import { useAuth } from '../../../auth/AuthContext'
 import CreateUserModal from '../CreateUserModal'
+import ConvidarModal from '../ConvidarModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -17,6 +18,7 @@ export default function EmpresaArea() {
   const [expanded, setExpanded] = useState(null)
   const [users, setUsers] = useState({})   // parceiroId -> [profiles]
   const [modal, setModal] = useState(null)  // parceiroId p/ criar coordenador
+  const [convidarPid, setConvidarPid] = useState(null)  // parceiroId p/ convidar por e-mail
   const [edit, setEdit] = useState({})      // parceiroId -> {teto, status}
   const [savingP, setSavingP] = useState(null)
 
@@ -103,7 +105,10 @@ export default function EmpresaArea() {
                       </div>
                       <div className="flex items-center justify-between py-3">
                         <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Usuários do parceiro</span>
-                        <button onClick={() => setModal(p.id)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span>Criar coordenador</button>
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => setConvidarPid(p.id)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">mail</span>Convidar</button>
+                          <button onClick={() => setModal(p.id)} className="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span>Criar coordenador</button>
+                        </div>
                       </div>
                       {(users[p.id] || []).length === 0
                         ? <p className="text-sm text-on-surface-variant py-2">Nenhum usuário. Crie o coordenador do parceiro.</p>
@@ -135,6 +140,15 @@ export default function EmpresaArea() {
         onClose={() => setModal(null)}
         onCreated={() => modal && loadUsers(modal)}
       />
+
+      {convidarPid && (
+        <ConvidarModal
+          empresaId={empresaId}
+          parceiroId={convidarPid}
+          roles={[{ value: 'parceiro_coordenador', label: 'Coordenador' }, { value: 'parceiro_funcionario', label: 'Funcionário' }]}
+          onClose={() => setConvidarPid(null)}
+        />
+      )}
     </div>
   )
 }
