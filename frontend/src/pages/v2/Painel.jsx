@@ -22,6 +22,7 @@ import AuditoriaArea from './areas/AuditoriaArea'
 import UsoArea from './areas/UsoArea'
 import ConfiguracoesArea from './areas/ConfiguracoesArea'
 import ParceiroMarcaArea from './areas/ParceiroMarcaArea'
+import PerfilArea from './areas/PerfilArea'
 
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
@@ -126,6 +127,7 @@ export default function Painel() {
   const { ready, loading, session, profile, role, branding, signOut, reloadProfile } = useAuth()
   const [secao, setSecao] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
+  const [view, setView] = useState(null) // 'perfil' | null
   const [dpaOk, setDpaOk] = useState(null) // null=carregando; true=aceito/não aplicável; false=pendente
 
   useEffect(() => {
@@ -147,7 +149,7 @@ export default function Painel() {
   const sec = nav.some(n => n.k === secao) ? secao : nav[0]?.k
   const atual = nav.find(n => n.k === sec)
 
-  const irPara = (k) => { setSecao(k); setMenuAberto(false) }
+  const irPara = (k) => { setSecao(k); setView(null); setMenuAberto(false) }
 
   return (
     <div className="min-h-screen bg-surface flex">
@@ -184,15 +186,15 @@ export default function Painel() {
           })}
         </nav>
 
-        <PerfilMenu profile={profile} role={role} signOut={signOut} reloadProfile={reloadProfile} />
+        <PerfilMenu profile={profile} role={role} signOut={signOut} onPerfil={() => { setView('perfil'); setMenuAberto(false) }} />
       </aside>
 
       {/* Conteúdo */}
       <div className="flex-1 lg:ml-64 min-w-0 flex flex-col">
         <header className="sticky top-0 z-20 bg-surface/80 backdrop-blur border-b border-outline-variant/10 px-5 lg:px-8 h-16 flex items-center gap-3">
           <button onClick={() => setMenuAberto(true)} className="lg:hidden p-2 -ml-2 text-on-surface-variant"><span className="material-symbols-outlined">menu</span></button>
-          <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>{atual?.icon || 'dashboard'}</span>
-          <h1 className="font-display text-lg font-extrabold tracking-tight">{atual?.label || 'Painel'}</h1>
+          <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>{view === 'perfil' ? 'manage_accounts' : (atual?.icon || 'dashboard')}</span>
+          <h1 className="font-display text-lg font-extrabold tracking-tight">{view === 'perfil' ? 'Perfil' : (atual?.label || 'Painel')}</h1>
           {role !== 'owner' && nav.length > 0 && (
             <div className="ml-auto">
               <BuscaGlobal onSelect={() => irPara(role === 'empresa_admin' ? 'agendamentos' : 'pacientes')} />
@@ -202,9 +204,11 @@ export default function Painel() {
 
         <main className="flex-1 p-5 lg:p-8">
           <div className="max-w-6xl mx-auto">
-            {nav.length === 0
-              ? <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-card text-center text-on-surface-variant">Seu perfil ainda não tem um papel definido. Fale com o administrador.</div>
-              : renderArea(role, sec, irPara)}
+            {view === 'perfil'
+              ? <PerfilArea onBack={() => setView(null)} />
+              : nav.length === 0
+                ? <div className="bg-surface-container-lowest p-8 rounded-2xl shadow-card text-center text-on-surface-variant">Seu perfil ainda não tem um papel definido. Fale com o administrador.</div>
+                : renderArea(role, sec, irPara)}
           </div>
         </main>
       </div>

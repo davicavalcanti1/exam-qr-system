@@ -26,8 +26,8 @@ export default function ConfiguracoesEmpresa({ empresa, onSaved, viaRpc = false 
   }
 
   return (
-    <Card className="p-6 max-w-xl">
-      <h3 className="text-lg font-semibold">Configurações</h3>
+    <Card className="p-6">
+      <h3 className="text-lg font-semibold">Operação</h3>
       <p className="text-sm text-on-surface-variant mt-1 mb-5">Parâmetros operacionais desta empresa.</p>
       <form onSubmit={salvar} className="space-y-5">
         <Field label="Teto padrão de novos parceiros (R$)" hint="Valor pré-preenchido ao cadastrar um parceiro.">

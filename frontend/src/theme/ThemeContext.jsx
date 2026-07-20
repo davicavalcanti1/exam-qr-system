@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { aplicarPaleta } from './palettes'
 
 const ThemeCtx = createContext(null)
 const KEY = 'exameqr-theme' // 'light' | 'dark' | 'system'
+const KEY_ACCENT = 'exameqr-accent'
 
 function systemPrefereDark() {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
@@ -17,11 +19,22 @@ function aplicar(pref) {
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => localStorage.getItem(KEY) || 'light')
   const [escuro, setEscuro] = useState(() => aplicar(localStorage.getItem(KEY) || 'light'))
+  const [accent, setAccentState] = useState(() => {
+    const a = localStorage.getItem(KEY_ACCENT) || 'verde'
+    aplicarPaleta(a)
+    return a
+  })
 
   const setTheme = useCallback((pref) => {
     localStorage.setItem(KEY, pref)
     setThemeState(pref)
     setEscuro(aplicar(pref))
+  }, [])
+
+  const setAccent = useCallback((k) => {
+    localStorage.setItem(KEY_ACCENT, k)
+    setAccentState(k)
+    aplicarPaleta(k)
   }, [])
 
   // Se estiver em "sistema", acompanha a mudança do SO em tempo real.
@@ -33,7 +46,7 @@ export function ThemeProvider({ children }) {
     return () => mq.removeEventListener('change', onChange)
   }, [theme])
 
-  return <ThemeCtx.Provider value={{ theme, escuro, setTheme }}>{children}</ThemeCtx.Provider>
+  return <ThemeCtx.Provider value={{ theme, escuro, setTheme, accent, setAccent }}>{children}</ThemeCtx.Provider>
 }
 
 export function useTheme() {
