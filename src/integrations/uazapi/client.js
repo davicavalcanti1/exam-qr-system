@@ -25,9 +25,12 @@ export async function enviarTextoWhatsapp(numero, texto) {
   const num = normalizarNumero(numero)
   if (!num) return { ok: false, motivo: 'número de WhatsApp ausente/inválido' }
 
-  const base = String(process.env.UAZAPI_URL).trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
+  // UAZAPI_URL pode vir como host (…uazapi.com) OU já com o caminho (…/send/text).
+  // Mesmo valor usado no controleoperacional funciona aqui.
+  const raw = String(process.env.UAZAPI_URL).trim().replace(/^http:\/\//i, 'https://').replace(/\/$/, '')
+  const endpoint = /\/send\/text$/i.test(raw) ? raw : `${raw}/send/text`
   try {
-    const res = await fetch(`${base}/send/text`, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_TOKEN },
       body: JSON.stringify({ number: num, text: texto }),
