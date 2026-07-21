@@ -63,7 +63,7 @@ h1, h2, h3, .font-headline, .font-display {
 }
 
 .signature-gradient {
-  background: linear-gradient(120deg, rgb(var(--primary-container)) 0%, rgb(var(--primary)) 58%, rgb(var(--primary-fixed-dim)) 120%);
+  background: linear-gradient(120deg, #0C7E3E 0%, #1CA94F 48%, #FFCE1F 108%);
 }
 
 .glass-gradient {
