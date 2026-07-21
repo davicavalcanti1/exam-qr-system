@@ -8,6 +8,7 @@ import feegowRouter from './integrations/feegow/routes.js'
 import adminRouter from './routes/admin.js'
 import qrRouter from './routes/qr.js'
 import integracaoRouter from './routes/integracao.js'
+import autorizacaoRouter from './routes/autorizacao.js'
 
 // ── Rotas legadas do MVP (SQLite) desativadas ────────────────────────────────
 // O sistema v2 usa Supabase Auth + RLS direto no frontend e apenas os endpoints
@@ -34,6 +35,7 @@ app.use('/api/qr', qrRouter)         // gerar/validar QR do exame
 app.use('/api/integracao', integracaoRouter) // método de agendamento por empresa
 app.use('/api/netris', netrisRouter) // integração NetRis (agendamento futuro)
 app.use('/api/feegow', feegowRouter) // integração Feegow (mesma interface do NetRis)
+app.use('/api/autorizacao', autorizacaoRouter) // lote de autorização por link público
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))

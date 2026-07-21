@@ -23,6 +23,7 @@ import UsoArea from './areas/UsoArea'
 import ConfiguracoesArea from './areas/ConfiguracoesArea'
 import ParceiroMarcaArea from './areas/ParceiroMarcaArea'
 import PerfilArea from './areas/PerfilArea'
+import ConfirmacoesArea from './areas/ConfirmacoesArea'
 
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
@@ -79,6 +80,7 @@ const NAV = {
     { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
     { k: 'parceiros', label: 'Parceiros', icon: 'handshake' },
     { k: 'agendamentos', label: 'Agendamentos', icon: 'event' },
+    { k: 'confirmacoes', label: 'Confirmações', icon: 'checklist' },
     { k: 'agenda', label: 'Agenda', icon: 'calendar_month' },
     { k: 'catalogo', label: 'Exames & preços', icon: 'medical_services' },
     { k: 'cobrancas', label: 'Cobranças', icon: 'receipt_long' },
@@ -109,6 +111,7 @@ function renderArea(role, k, irPara) {
     visao: <VisaoGeralArea irPara={irPara} />,
     parceiros: <EmpresaArea />,
     agendamentos: <PacientesArea escolherParceiro />,
+    confirmacoes: <ConfirmacoesArea />,
     agenda: <AgendaArea />,
     catalogo: <CatalogoArea />,
     contratos: <ContratosArea />,

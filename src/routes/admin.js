@@ -94,12 +94,13 @@ router.put('/parceiros/:id', async (req, res) => {
   if (!parc) return res.status(404).json({ error: 'Parceiro não encontrado' })
   if (p.role !== 'owner' && parc.empresa_id !== p.empresa_id) return res.status(403).json({ error: 'Parceiro de outra empresa' })
 
-  const { nome, cnpj, teto, status } = req.body || {}
+  const { nome, cnpj, teto, status, whatsapp } = req.body || {}
   const patch = {}
   if (typeof nome === 'string' && nome.trim()) patch.nome = nome.trim()
   if (cnpj !== undefined) patch.cnpj = cnpj || null
   if (teto !== undefined && teto !== '' && teto !== null) patch.teto = Number(teto)
   if (status && ['ativo', 'bloqueado', 'suspenso'].includes(status)) patch.status = status
+  if (whatsapp !== undefined) patch.whatsapp = String(whatsapp).replace(/\D/g, '') || null
   if (!Object.keys(patch).length) return res.json({ ok: true })
 
   const { error } = await supabaseAdmin.from('parceiros').update(patch).eq('id', parc.id)

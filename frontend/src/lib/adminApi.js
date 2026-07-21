@@ -25,6 +25,7 @@ export const adminApi = {
   updateUser: (id, payload) => req('PATCH', `/api/admin/users/${id}`, payload),
   resetarSenha: (id) => post(`/api/admin/users/${id}/reset-senha`, {}),
   gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
+  criarLoteAutorizacao: ({ exameIds, parceiroId, empresaId }) => post('/api/autorizacao/lotes', { exameIds, parceiroId, empresaId }),
   // integrações de agendamento (empresaId opcional: owner configura por empresa)
   listarProviders: () => req('GET', '/api/integracao/providers'),
   getIntegracao: (empresaId) => req('GET', `/api/integracao${empresaId ? `?empresaId=${empresaId}` : ''}`),

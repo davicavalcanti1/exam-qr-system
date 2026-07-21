@@ -18,6 +18,7 @@ import DocNetris from './pages/public/docs/Netris'
 import Arquitetura from './pages/public/docs/Arquitetura'
 import DadosDoc from './pages/public/docs/Dados'
 import Contas from './pages/public/docs/Contas'
+import AutorizarLote from './pages/public/AutorizarLote'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/painel" element={<Painel />} />
         <Route path="/scan" element={<ScanPage />} />
+        <Route path="/autorizar/:token" element={<AutorizarLote />} />
         <Route path="/integracao-netris" element={<IntegracaoNetris />} />
         {/* documentação pública (sem login) */}
         <Route path="/documentacao" element={<Documentacao />} />
