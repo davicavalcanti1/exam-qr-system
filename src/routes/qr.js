@@ -53,7 +53,7 @@ router.post('/validar', async (req, res) => {
   if (qr.status !== 'ativo') return res.json({ valid: false, error: 'QR já utilizado ou revogado' })
 
   const { data: exame } = await supabaseAdmin
-    .from('exames').select('id, nome, valor, status, empresa_id, netris_atendimento_id, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
+    .from('exames').select('id, nome, status, empresa_id, netris_atendimento_id, pacientes(nome)').eq('id', qr.exame_id).maybeSingle()
   if (!exame) return res.json({ valid: false, error: 'Exame vinculado ao QR não encontrado' })
 
   const { data: upd, error: exErr } = await supabaseAdmin
@@ -86,7 +86,8 @@ router.post('/validar', async (req, res) => {
 
   logAudit({ empresaId: exame.empresa_id, atorNome: 'Leitor (scan público)', acao: 'qr.validado', entidade: 'exame', entidadeId: exame.id, detalhe: { paciente: exame?.pacientes?.nome, exame: exame?.nome, netris } })
 
-  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', valor: exame?.valor ?? null, empresa, netris })
+  // valor NUNCA é exposto no scan (tela vista pelo paciente na recepção).
+  res.json({ valid: true, paciente: exame?.pacientes?.nome || '—', exame: exame?.nome || '—', empresa, netris })
 })
 
 export default router

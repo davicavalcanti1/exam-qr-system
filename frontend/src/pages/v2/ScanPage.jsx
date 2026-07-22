@@ -1,8 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 
-const fmt = (v) => v == null ? null : Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-
 export default function ScanPage() {
   const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState(null)
@@ -137,7 +135,6 @@ export default function ScanPage() {
                 <div className="mt-4 bg-black/20 rounded-2xl divide-y divide-white/10 text-left">
                   <div className="flex justify-between px-4 py-3"><span className="text-white/50 text-xs uppercase tracking-widest font-bold">Paciente</span><span className="font-semibold text-sm text-right">{result.paciente}</span></div>
                   <div className="flex justify-between px-4 py-3"><span className="text-white/50 text-xs uppercase tracking-widest font-bold">Exame</span><span className="font-semibold text-sm text-right">{result.exame}</span></div>
-                  {fmt(result.valor) && <div className="flex justify-between px-4 py-3"><span className="text-white/50 text-xs uppercase tracking-widest font-bold">Valor</span><span className="font-semibold text-sm text-right tabular-nums">{fmt(result.valor)}</span></div>}
                 </div>
               </>
             ) : (
