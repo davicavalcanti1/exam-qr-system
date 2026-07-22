@@ -99,9 +99,13 @@ const NAV = {
     { k: 'marca', label: 'Minha marca', icon: 'palette' },
   ],
   parceiro_funcionario: [{ k: 'pacientes', label: 'Pacientes', icon: 'groups' }],
+  empresa_operador: [
+    { k: 'agendamentos', label: 'Agendamentos', icon: 'event' },
+    { k: 'confirmacoes', label: 'Confirmações', icon: 'checklist' },
+  ],
 }
 
-const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Empresa', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário' }
+const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Empresa', empresa_operador: 'Operador', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário' }
 
 function renderArea(role, k, irPara) {
   const map = {

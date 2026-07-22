@@ -32,7 +32,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const [emp, setEmp] = useState(empresa)
   const [carregando, setCarregando] = useState(true)
   const [admins, setAdmins] = useState(null)
-  const [modal, setModal] = useState(false)
+  const [criarRole, setCriarRole] = useState(null) // 'empresa_admin' | 'empresa_operador'
   const [convidar, setConvidar] = useState(false)
   const [logoInput, setLogoInput] = useState('')
   const [nomeExib, setNomeExib] = useState('')
@@ -100,7 +100,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
     catch (e) { toast.error(e.message) }
   }
 
-  const roleLabel = (r) => ({ empresa_admin: 'Administrador', owner: 'Dono' }[r] || r)
+  const roleLabel = (r) => ({ empresa_admin: 'Administrador', empresa_operador: 'Operador', owner: 'Dono' }[r] || r)
 
   return (
     <div className="space-y-5">
@@ -197,10 +197,11 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       {aba === 'usuarios' && (
         <Card className="overflow-hidden">
           <div className="p-6 border-b border-outline-variant/10 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Administradores</h3>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary" icon="mail" onClick={() => setConvidar(true)}>Convidar por e-mail</Button>
-              <Button size="sm" icon="add" onClick={() => setModal(true)}>Criar administrador</Button>
+            <h3 className="text-lg font-semibold">Usuários da empresa</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="secondary" icon="mail" onClick={() => setConvidar(true)}>Convidar</Button>
+              <Button size="sm" variant="secondary" icon="badge" onClick={() => setCriarRole('empresa_operador')}>Criar operador</Button>
+              <Button size="sm" icon="add" onClick={() => setCriarRole('empresa_admin')}>Criar administrador</Button>
             </div>
           </div>
           {admins === null ? <Loading />
@@ -224,18 +225,18 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       {aba === 'integracao' && <DesenvolvedorArea empresaId={emp.id} empresaNome={emp.nome} />}
 
       <CreateUserModal
-        open={modal}
-        title="Novo administrador da empresa"
-        role="empresa_admin"
+        open={!!criarRole}
+        title={criarRole === 'empresa_operador' ? 'Novo operador da clínica' : 'Novo administrador da empresa'}
+        role={criarRole || 'empresa_admin'}
         empresaId={emp.id}
-        onClose={() => setModal(false)}
+        onClose={() => setCriarRole(null)}
         onCreated={loadAdmins}
       />
 
       {convidar && (
         <ConvidarModal
           empresaId={emp.id}
-          roles={[{ value: 'empresa_admin', label: 'Administrador da empresa' }]}
+          roles={[{ value: 'empresa_admin', label: 'Administrador da empresa' }, { value: 'empresa_operador', label: 'Operador (só agenda/confirmações)' }]}
           onClose={() => setConvidar(false)}
         />
       )}

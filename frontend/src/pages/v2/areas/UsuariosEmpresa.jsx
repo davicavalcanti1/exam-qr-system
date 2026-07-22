@@ -5,7 +5,7 @@ import { useAuth } from '../../../auth/AuthContext'
 import { Card, Button, Badge, Loading, EmptyState, useToast } from '../../../components/ui'
 import ConvidarModal from '../ConvidarModal'
 
-const ROLE = { empresa_admin: 'Administrador', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário', owner: 'Dono' }
+const ROLE = { empresa_admin: 'Administrador', empresa_operador: 'Operador', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário', owner: 'Dono' }
 
 // Controle de usuários da empresa (dentro das Configurações do admin).
 export default function UsuariosEmpresa() {
@@ -33,7 +33,7 @@ export default function UsuariosEmpresa() {
     <Card className="overflow-hidden">
       <div className="p-6 border-b border-outline-variant/10 flex items-center justify-between">
         <h3 className="text-lg font-semibold">Usuários</h3>
-        <Button size="sm" variant="secondary" icon="mail" onClick={() => setConvidar(true)}>Convidar administrador</Button>
+        <Button size="sm" variant="secondary" icon="mail" onClick={() => setConvidar(true)}>Convidar</Button>
       </div>
       {users === null ? <Loading />
         : users.length === 0 ? <EmptyState icon="group" title="Nenhum usuário" hint="Convide o primeiro administrador." />
@@ -54,7 +54,7 @@ export default function UsuariosEmpresa() {
       {convidar && (
         <ConvidarModal
           empresaId={empresaId}
-          roles={[{ value: 'empresa_admin', label: 'Administrador da empresa' }]}
+          roles={[{ value: 'empresa_admin', label: 'Administrador da empresa' }, { value: 'empresa_operador', label: 'Operador (só agenda/confirmações)' }]}
           onClose={() => setConvidar(false)}
           onDone={load}
         />

@@ -4,7 +4,7 @@ import { supabaseAdmin, getCaller } from '../lib/supabaseAdmin.js'
 const router = Router()
 const EMAIL_DOMAIN = 'exameqr.app'
 const DEFAULT_PASSWORD = process.env.DEFAULT_USER_PASSWORD || 'ExameQR@123'
-const CREATABLE_ROLES = ['empresa_admin', 'parceiro_coordenador', 'parceiro_funcionario']
+const CREATABLE_ROLES = ['empresa_admin', 'empresa_operador', 'parceiro_coordenador', 'parceiro_funcionario']
 
 // Cria um usuário da hierarquia (auth + profile) via service role.
 // Regras de quem cria quem + escopo por empresa/parceiro.
@@ -22,6 +22,11 @@ router.post('/users', async (req, res) => {
 
   if (role === 'empresa_admin') {
     if (p.role !== 'owner') return res.status(403).json({ error: 'Apenas o owner cria administrador de empresa' })
+    if (!empresa_id) return res.status(400).json({ error: 'empresaId é obrigatório' })
+    parceiro_id = null
+  } else if (role === 'empresa_operador') {
+    if (!['owner', 'empresa_admin'].includes(p.role)) return res.status(403).json({ error: 'Sem permissão' })
+    if (p.role === 'empresa_admin') empresa_id = p.empresa_id
     if (!empresa_id) return res.status(400).json({ error: 'empresaId é obrigatório' })
     parceiro_id = null
   } else if (role === 'parceiro_coordenador') {

@@ -15,7 +15,7 @@ router.post('/lotes', async (req, res) => {
   const c = await getCaller(req)
   if (c.error) return res.status(c.status).json({ error: c.error })
   const p = c.profile
-  if (!['owner', 'empresa_admin'].includes(p.role)) return res.status(403).json({ error: 'Sem permissão' })
+  if (!['owner', 'empresa_admin', 'empresa_operador'].includes(p.role)) return res.status(403).json({ error: 'Sem permissão' })
 
   const { exameIds, parceiroId, empresaId: bodyEmpresa } = req.body || {}
   const empresa_id = p.role === 'owner' ? bodyEmpresa : p.empresa_id
