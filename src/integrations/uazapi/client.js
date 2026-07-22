@@ -13,11 +13,15 @@ export function uazapiConfigurado() {
   return Boolean(process.env.UAZAPI_URL && process.env.UAZAPI_TOKEN)
 }
 
-// Normaliza o número para dígitos com DDI 55 (Brasil) por padrão.
+// Normaliza o número para o formato que ESTE uazapi espera: 55 + DDD + 8 dígitos,
+// SEM o "nono dígito" de celular. Ex.: "83 98862-5776" (cadastrado normal) → "558388625776".
+// Regra interna do mecanismo — invisível no sistema (o número fica salvo como o usuário digitou).
 function normalizarNumero(n) {
-  const d = String(n || '').replace(/\D/g, '')
+  let d = String(n || '').replace(/\D/g, '')
   if (!d) return ''
-  return d.startsWith('55') ? d : `55${d}`
+  if (d.startsWith('55')) d = d.slice(2)              // trabalha com o número nacional
+  if (d.length === 11 && d[2] === '9') d = d.slice(0, 2) + d.slice(3) // remove o 9 extra do celular
+  return `55${d}`
 }
 
 export async function enviarTextoWhatsapp(numero, texto) {
