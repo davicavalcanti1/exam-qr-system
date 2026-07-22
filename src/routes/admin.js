@@ -73,7 +73,7 @@ router.post('/parceiros', async (req, res) => {
   const p = c.profile
   if (!['owner', 'empresa_admin'].includes(p.role)) return res.status(403).json({ error: 'Sem permissão' })
 
-  const { nome, cnpj, teto, empresaId, nomeFantasia, endereco, telefone, email } = req.body || {}
+  const { nome, cnpj, teto, empresaId, nomeFantasia, endereco, telefone, email, whatsapp } = req.body || {}
   if (!nome) return res.status(400).json({ error: 'nome é obrigatório' })
   const empresa_id = p.role === 'owner' ? empresaId : p.empresa_id
   if (!empresa_id) return res.status(400).json({ error: 'empresaId é obrigatório' })
@@ -82,6 +82,7 @@ router.post('/parceiros', async (req, res) => {
     .insert({
       empresa_id, nome: String(nome).trim(), cnpj: cnpj || null, teto: teto || 2000,
       nome_fantasia: nomeFantasia || null, endereco: endereco || null, telefone: telefone || null, email: email || null,
+      whatsapp: whatsapp ? String(whatsapp).replace(/\D/g, '') : null,
     })
     .select('id').single()
   if (error) return res.status(400).json({ error: error.message })
