@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { adminApi } from '../../../lib/adminApi'
 import { useAuth } from '../../../auth/AuthContext'
-import { Card, Button, Badge, Loading, EmptyState, useToast } from '../../../components/ui'
+import { Card, Button, Badge, Loading, EmptyState, useToast, useConfirm } from '../../../components/ui'
 import ConvidarModal from '../ConvidarModal'
 
 const ROLE = { empresa_admin: 'Administrador', empresa_operador: 'Operador', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário', owner: 'Dono' }
@@ -11,6 +11,7 @@ const ROLE = { empresa_admin: 'Administrador', empresa_operador: 'Operador', par
 export default function UsuariosEmpresa() {
   const { empresaId } = useAuth()
   const toast = useToast()
+  const confirm = useConfirm()
   const [users, setUsers] = useState(null)
   const [convidar, setConvidar] = useState(false)
 
@@ -24,12 +25,12 @@ export default function UsuariosEmpresa() {
 
   async function toggle(u) { await adminApi.updateUser(u.id, { ativo: !u.ativo }).catch(e => toast.error(e.message)); await load() }
   async function reset(u) {
-    if (!window.confirm(`Redefinir a senha de ${u.nome}?`)) return
+    if (!(await confirm({ title: 'Redefinir senha', message: `Gerar uma nova senha para ${u.nome}?`, confirmLabel: 'Redefinir' }))) return
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse — troca no próximo acesso.`) }
     catch (e) { toast.error(e.message) }
   }
   async function excluir(u) {
-    if (!window.confirm(`Excluir ${u.nome || u.email}? Esta ação não pode ser desfeita.`)) return
+    if (!(await confirm({ title: 'Excluir usuário', message: `Excluir ${u.nome || u.email}? Esta ação não pode ser desfeita.`, confirmLabel: 'Excluir', danger: true }))) return
     try { await adminApi.excluirUser(u.id); await load() } catch (e) { toast.error(e.message) }
   }
 

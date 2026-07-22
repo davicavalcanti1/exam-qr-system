@@ -4,11 +4,13 @@ import { adminApi } from '../../../lib/adminApi'
 import { useAuth } from '../../../auth/AuthContext'
 import CreateUserModal from '../CreateUserModal'
 import ConvidarModal from '../ConvidarModal'
+import { useConfirm } from '../../../components/ui'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function EmpresaArea() {
   const { empresaId, empresa } = useAuth()
+  const confirm = useConfirm()
   const tetoPadrao = empresa?.teto_padrao ?? 2000
   const [parceiros, setParceiros] = useState([])
   const [loading, setLoading] = useState(true)
@@ -52,12 +54,12 @@ export default function EmpresaArea() {
     await loadUsers(pid)
   }
   async function resetarSenha(u) {
-    if (!window.confirm(`Redefinir a senha de ${u.nome}? Será gerada uma senha temporária.`)) return
+    if (!(await confirm({ title: 'Redefinir senha', message: `Gerar uma senha temporária para ${u.nome}?`, confirmLabel: 'Redefinir' }))) return
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse ao usuário — ele troca no próximo acesso.`) }
     catch (e) { window.alert('Falha: ' + e.message) }
   }
   async function excluirUsuario(pid, u) {
-    if (!window.confirm(`Excluir ${u.nome}? Esta ação não pode ser desfeita.`)) return
+    if (!(await confirm({ title: 'Excluir', message: `Excluir ${u.nome}? Esta ação não pode ser desfeita.`, confirmLabel: 'Excluir', danger: true }))) return
     try { await adminApi.excluirUser(u.id); await loadUsers(pid) } catch (e) { window.alert('Falha: ' + e.message) }
   }
 

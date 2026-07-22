@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { adminApi } from '../../lib/adminApi'
-import { Modal, Field, Input, Button, useToast } from '../../components/ui'
+import { Modal, Field, Input, Button, useToast, useConfirm } from '../../components/ui'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 // Editar valor/indicação de um exame e cancelá-lo (libera o agendamento no NetRis).
 export default function ExameEditModal({ exame, onClose, onSaved }) {
   const toast = useToast()
+  const confirm = useConfirm()
   const [valor, setValor] = useState(exame.valor ?? 0)
   const [indicacao, setIndicacao] = useState(exame.indicacao || '')
   const [saving, setSaving] = useState(false)
@@ -22,7 +23,7 @@ export default function ExameEditModal({ exame, onClose, onSaved }) {
   }
 
   async function cancelarExame() {
-    if (!window.confirm(`Cancelar o exame "${exame.nome}"? Se estiver agendado no NetRis, o horário será liberado.`)) return
+    if (!(await confirm({ title: 'Cancelar exame', message: `Cancelar o exame "${exame.nome}"? Se estiver agendado no NetRis, o horário será liberado.`, confirmLabel: 'Cancelar exame', danger: true }))) return
     setCancelando(true)
     try {
       if (exame.netris_atendimento_id) { try { await adminApi.netrisCancelarExame(exame.id) } catch { /* segue */ } }

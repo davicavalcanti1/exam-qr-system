@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
-import { useToast, EmptyState, Loading } from '../../../components/ui'
+import { useToast, useConfirm, EmptyState, Loading } from '../../../components/ui'
 import { logAudit } from '../../../lib/audit'
 import { CONSENT_TEXTO, CONSENT_VERSAO } from '../../../legal/consentimento'
 import QrModal from '../QrModal'
@@ -36,6 +36,7 @@ const STATUS = {
 export default function PacientesArea({ escolherParceiro = false }) {
   const { user, profile, empresaId, parceiroId } = useAuth()
   const toast = useToast()
+  const confirm = useConfirm()
   const [nome, setNome] = useState('')
   const [cpf, setCpf] = useState('')
   const [sexo, setSexo] = useState('')
@@ -183,7 +184,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
 
   // LGPD — direito de eliminação: anonimiza o PII, preservando o histórico financeiro.
   async function anonimizarPaciente(p) {
-    if (!window.confirm(`Anonimizar ${p.nome}? Os dados pessoais (nome, CPF, contato) serão apagados de forma irreversível. O histórico de exames/cobrança é mantido por obrigação legal.`)) return
+    if (!(await confirm({ title: 'Anonimizar paciente', message: `Anonimizar ${p.nome}? Os dados pessoais (nome, CPF, contato) serão apagados de forma irreversível. O histórico de exames/cobrança é mantido por obrigação legal.`, confirmLabel: 'Anonimizar', danger: true }))) return
     const { error } = await supabase.from('pacientes').update({
       nome: 'Paciente anonimizado', cpf: '', sexo: null, data_nascimento: null,
       telefone: null, netris_id_paciente: null, anonimizado: true,
@@ -194,7 +195,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   }
 
   async function cancelarAgendamento(ex) {
-    if (!window.confirm(`Cancelar o agendamento de ${ex.nome} no NetRis?`)) return
+    if (!(await confirm({ title: 'Cancelar agendamento', message: `Cancelar o agendamento de ${ex.nome} no NetRis?`, confirmLabel: 'Cancelar agendamento', danger: true }))) return
     setCancelandoId(ex.id)
     try { await adminApi.netrisCancelarExame(ex.id); toast.success('Agendamento cancelado.'); await load() }
     catch (e) { toast.error('Falha ao cancelar: ' + e.message) }

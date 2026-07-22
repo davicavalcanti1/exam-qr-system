@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { adminApi } from '../../../lib/adminApi'
-import { Card, Button, Badge, Loading, EmptyState, useToast } from '../../../components/ui'
+import { Card, Button, Badge, Loading, EmptyState, useToast, useConfirm } from '../../../components/ui'
 import CreateUserModal from '../CreateUserModal'
 import ConvidarModal from '../ConvidarModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
@@ -28,6 +28,7 @@ function Linha({ label, valor }) {
 
 export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const toast = useToast()
+  const confirm = useConfirm()
   const [aba, setAba] = useState('info')
   const [emp, setEmp] = useState(empresa)
   const [carregando, setCarregando] = useState(true)
@@ -95,11 +96,11 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   }
   async function toggleUser(u) { await adminApi.updateUser(u.id, { ativo: !u.ativo }).catch(() => {}); await loadAdmins() }
   async function excluirUser(u) {
-    if (!window.confirm(`Excluir ${u.nome || u.username}? Esta ação não pode ser desfeita.`)) return
+    if (!(await confirm({ title: 'Excluir usuário', message: `Excluir ${u.nome || u.username}? Esta ação não pode ser desfeita.`, confirmLabel: 'Excluir', danger: true }))) return
     try { await adminApi.excluirUser(u.id); await loadAdmins() } catch (e) { toast.error(e.message) }
   }
   async function resetSenha(u) {
-    if (!window.confirm(`Redefinir a senha de ${u.nome}?`)) return
+    if (!(await confirm({ title: 'Redefinir senha', message: `Gerar uma nova senha para ${u.nome}?`, confirmLabel: 'Redefinir' }))) return
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse — troca no próximo acesso.`) }
     catch (e) { toast.error(e.message) }
   }

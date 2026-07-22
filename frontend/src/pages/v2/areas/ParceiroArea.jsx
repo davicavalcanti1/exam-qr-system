@@ -4,9 +4,11 @@ import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
 import CreateUserModal from '../CreateUserModal'
 import ConvidarModal from '../ConvidarModal'
+import { useConfirm } from '../../../components/ui'
 
 export default function ParceiroArea() {
   const { empresaId, parceiroId } = useAuth()
+  const confirm = useConfirm()
   const [funcs, setFuncs] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
@@ -27,12 +29,12 @@ export default function ParceiroArea() {
     await load()
   }
   async function resetarSenha(u) {
-    if (!window.confirm(`Redefinir a senha de ${u.nome}?`)) return
+    if (!(await confirm({ title: 'Redefinir senha', message: `Gerar uma nova senha para ${u.nome}?`, confirmLabel: 'Redefinir' }))) return
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse ao funcionário — ele troca no próximo acesso.`) }
     catch (e) { window.alert('Falha: ' + e.message) }
   }
   async function excluir(u) {
-    if (!window.confirm(`Excluir ${u.nome}? Esta ação não pode ser desfeita.`)) return
+    if (!(await confirm({ title: 'Excluir', message: `Excluir ${u.nome}? Esta ação não pode ser desfeita.`, confirmLabel: 'Excluir', danger: true }))) return
     try { await adminApi.excluirUser(u.id); await load() } catch (e) { window.alert('Falha: ' + e.message) }
   }
 
