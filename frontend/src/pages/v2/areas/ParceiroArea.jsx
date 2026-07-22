@@ -31,6 +31,10 @@ export default function ParceiroArea() {
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse ao funcionário — ele troca no próximo acesso.`) }
     catch (e) { window.alert('Falha: ' + e.message) }
   }
+  async function excluir(u) {
+    if (!window.confirm(`Excluir ${u.nome}? Esta ação não pode ser desfeita.`)) return
+    try { await adminApi.excluirUser(u.id); await load() } catch (e) { window.alert('Falha: ' + e.message) }
+  }
 
   return (
     <div className="space-y-6">
@@ -58,6 +62,7 @@ export default function ParceiroArea() {
                   <div className="flex items-center gap-2">
                     <button onClick={() => resetarSenha(u)} title="Redefinir senha" className="p-1 text-on-surface-variant hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>key</span></button>
                     <button onClick={() => toggleAtivo(u)} title={u.ativo ? 'Desativar acesso' : 'Ativar acesso'} className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full transition ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
+                    <button onClick={() => excluir(u)} title="Excluir" className="p-1 text-on-surface-variant hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span></button>
                   </div>
                 </div>
               ))}

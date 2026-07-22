@@ -94,6 +94,10 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
     setEmp(e => ({ ...e, status: novo })); onChange?.(); toast.success(`Empresa ${novo}.`)
   }
   async function toggleUser(u) { await adminApi.updateUser(u.id, { ativo: !u.ativo }).catch(() => {}); await loadAdmins() }
+  async function excluirUser(u) {
+    if (!window.confirm(`Excluir ${u.nome || u.username}? Esta ação não pode ser desfeita.`)) return
+    try { await adminApi.excluirUser(u.id); await loadAdmins() } catch (e) { toast.error(e.message) }
+  }
   async function resetSenha(u) {
     if (!window.confirm(`Redefinir a senha de ${u.nome}?`)) return
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse — troca no próximo acesso.`) }
@@ -216,6 +220,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
                     </div>
                     <button onClick={() => resetSenha(u)} title="Redefinir senha" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>key</span></button>
                     <button onClick={() => toggleUser(u)} title={u.ativo ? 'Desativar' : 'Ativar'}><Badge tone={u.ativo ? 'success' : 'neutral'}>{u.ativo ? 'ativo' : 'inativo'}</Badge></button>
+                    <button onClick={() => excluirUser(u)} title="Excluir usuário" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-error/10 hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span></button>
                   </div>
                 ))}
               </div>}

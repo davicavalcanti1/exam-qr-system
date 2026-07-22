@@ -28,6 +28,10 @@ export default function UsuariosEmpresa() {
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse — troca no próximo acesso.`) }
     catch (e) { toast.error(e.message) }
   }
+  async function excluir(u) {
+    if (!window.confirm(`Excluir ${u.nome || u.email}? Esta ação não pode ser desfeita.`)) return
+    try { await adminApi.excluirUser(u.id); await load() } catch (e) { toast.error(e.message) }
+  }
 
   return (
     <Card className="overflow-hidden">
@@ -47,6 +51,7 @@ export default function UsuariosEmpresa() {
                 </div>
                 <button onClick={() => reset(u)} title="Redefinir senha" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>key</span></button>
                 <button onClick={() => toggle(u)} title={u.ativo ? 'Desativar' : 'Ativar'}><Badge tone={u.ativo ? 'success' : 'neutral'}>{u.ativo ? 'ativo' : 'inativo'}</Badge></button>
+                <button onClick={() => excluir(u)} title="Excluir usuário" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-error/10 hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span></button>
               </div>
             ))}
           </div>}

@@ -165,6 +165,27 @@ router.post('/users/:id/reset-senha', async (req, res) => {
   res.json({ ok: true, senha: novaSenha })
 })
 
+// Exclui um usuário (Auth + profile em cascata). Mesmas regras de quem-pode.
+router.delete('/users/:id', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  const me = c.profile
+  const { data: alvo } = await supabaseAdmin.from('profiles').select('id, role, empresa_id, parceiro_id').eq('id', req.params.id).maybeSingle()
+  if (!alvo) return res.status(404).json({ error: 'Usuário não encontrado' })
+  if (alvo.id === me.id) return res.status(400).json({ error: 'Você não pode excluir a própria conta' })
+  if (alvo.role === 'owner') return res.status(403).json({ error: 'Não é possível excluir o dono do sistema' })
+
+  const pode = me.role === 'owner'
+    || (me.role === 'empresa_admin' && alvo.empresa_id === me.empresa_id && !['owner', 'empresa_admin'].includes(alvo.role))
+    || (me.role === 'parceiro_coordenador' && alvo.parceiro_id === me.parceiro_id && alvo.role === 'parceiro_funcionario')
+  if (!pode) return res.status(403).json({ error: 'Sem permissão para excluir este usuário' })
+
+  // apaga o usuário do Auth; o profile some por cascata (e os "quem fez" viram null)
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(alvo.id)
+  if (error) return res.status(400).json({ error: error.message })
+  res.json({ ok: true })
+})
+
 // Atualiza o mapeamento NetRis de um parceiro (plano-convênio/convênio/unidade).
 router.put('/parceiros/:id/netris', async (req, res) => {
   const c = await getCaller(req)

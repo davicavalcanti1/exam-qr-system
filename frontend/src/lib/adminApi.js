@@ -23,6 +23,7 @@ export const adminApi = {
   createParceiro: (payload) => post('/api/admin/parceiros', payload),
   updateParceiro: (id, payload) => req('PUT', `/api/admin/parceiros/${id}`, payload),
   updateUser: (id, payload) => req('PATCH', `/api/admin/users/${id}`, payload),
+  excluirUser: (id) => req('DELETE', `/api/admin/users/${id}`),
   resetarSenha: (id) => post(`/api/admin/users/${id}/reset-senha`, {}),
   gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
   criarLoteAutorizacao: ({ exameIds, parceiroId, empresaId }) => post('/api/autorizacao/lotes', { exameIds, parceiroId, empresaId }),

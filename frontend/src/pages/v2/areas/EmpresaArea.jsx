@@ -56,6 +56,10 @@ export default function EmpresaArea() {
     try { const r = await adminApi.resetarSenha(u.id); window.alert(`Nova senha de ${u.nome}:\n\n${r.senha}\n\nRepasse ao usuário — ele troca no próximo acesso.`) }
     catch (e) { window.alert('Falha: ' + e.message) }
   }
+  async function excluirUsuario(pid, u) {
+    if (!window.confirm(`Excluir ${u.nome}? Esta ação não pode ser desfeita.`)) return
+    try { await adminApi.excluirUser(u.id); await loadUsers(pid) } catch (e) { window.alert('Falha: ' + e.message) }
+  }
 
   async function createParceiro(e) {
     e.preventDefault(); setErr(''); setSaving(true)
@@ -122,6 +126,7 @@ export default function EmpresaArea() {
                                   <span className="text-[10px] font-bold uppercase text-on-surface-variant">{roleLabel(u.role)}</span>
                                   <button onClick={() => resetarSenha(u)} title="Redefinir senha" className="p-1 text-on-surface-variant hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>key</span></button>
                                   <button onClick={() => toggleUser(p.id, u)} title={u.ativo ? 'Desativar' : 'Ativar'} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
+                                  <button onClick={() => excluirUsuario(p.id, u)} title="Excluir" className="p-1 text-on-surface-variant hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete</span></button>
                                 </div>
                               </div>
                             ))}
