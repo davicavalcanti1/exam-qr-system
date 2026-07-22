@@ -11,7 +11,8 @@ const MAX_PAGES = 25
 
 // IDs de situação do atendimento no NetRis (confirmados no controleoperacional).
 export const SITUACAO = {
-  EXAME_REALIZADO: 18,
+  ATENDIMENTO_RECEPCAO: 11, // "ATENDIMENTO" — em atendimento na recepção (usado no scan do QR)
+  EXAME_REALIZADO: 18,      // "EXECUTADO" — só depois, não no scan
   EM_SALA: 45,
   CANCELADO: 5,
   CHEGOU: 10,

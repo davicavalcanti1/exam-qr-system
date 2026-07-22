@@ -67,13 +67,14 @@ router.post('/validar', async (req, res) => {
     .from('qr_codes').update({ status: 'usado', used_at: new Date().toISOString() }).eq('id', qr.id)
   if (qrErr) return res.status(400).json({ valid: false, error: `Falha ao baixar o QR: ${qrErr.message}` })
 
-  // Best-effort: reflete a realização no NetRis, se a empresa usa e há atendimento vinculado.
+  // Best-effort: no scan o paciente vai para "ATENDIMENTO RECEPÇÃO" (id 11) no NetRis.
+  // "Exame realizado" (18) é uma etapa posterior, não acontece aqui.
   let netris = null
   if (exame.netris_atendimento_id) {
     try {
       const client = await agendaParaEmpresa(exame.empresa_id)
       if (client) {
-        const r = await client.alterarSituacao(exame.netris_atendimento_id, SITUACAO.EXAME_REALIZADO)
+        const r = await client.alterarSituacao(exame.netris_atendimento_id, SITUACAO.ATENDIMENTO_RECEPCAO)
         netris = r.ok ? 'confirmado' : 'falhou'
       }
     } catch { netris = 'falhou' }
