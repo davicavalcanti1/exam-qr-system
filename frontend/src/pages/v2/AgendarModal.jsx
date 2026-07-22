@@ -104,6 +104,12 @@ export default function AgendarModal({ exame, onClose, onDone }) {
                   <div className="flex flex-wrap gap-2">
                     {g.slots.map((s, i) => {
                       const busy = agendando === s.data + s.horaInicial
+                      if (s.reservado) return (
+                        <span key={i} title={`Reservado · ${s.nomeMedico} · ${s.sala}`}
+                          className="px-3 py-1.5 rounded-lg text-sm font-bold bg-surface-container text-on-surface-variant/50 ring-1 ring-outline-variant/20 line-through cursor-not-allowed">
+                          {s.horaInicial}
+                        </span>
+                      )
                       return (
                         <button key={i} onClick={() => agendar(s)} disabled={!!agendando}
                           title={`${s.nomeMedico} · ${s.sala}`}

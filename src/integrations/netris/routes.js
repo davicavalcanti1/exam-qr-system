@@ -9,6 +9,21 @@ const router = Router()
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const isoToBR = (iso) => { const [y, m, d] = String(iso).split('-'); return `${d}/${m}/${y}` }
 
+// Marca os slots já ocupados por algum exame da empresa (inclui encaixe) para o
+// frontend desabilitar/acinzentar. Chave: data + hora + médico + sala.
+async function marcarReservados(slots, empresaId) {
+  if (!Array.isArray(slots) || !slots.length || !empresaId) return slots
+  const { data } = await supabaseAdmin
+    .from('exames').select('netris_slot').eq('empresa_id', empresaId).not('netris_slot', 'is', null).neq('status', 'cancelado')
+  const key = (d, h, m, s) => `${d}|${h}|${m}|${s}`
+  const ocupados = new Set((data || []).map(e => {
+    const s = e.netris_slot || {}
+    return key(s.dataString, s.horarioString, s.idMedico, s.idSala)
+  }))
+  for (const s of slots) s.reservado = ocupados.has(key(s.dataString, s.horaInicial, s.idMedico, s.idSala))
+  return slots
+}
+
 // Resolve o caller (Supabase) e o cliente NetRis da empresa dele.
 async function comNetris(req, res) {
   const c = await getCaller(req)
@@ -138,7 +153,7 @@ router.get('/horarios-exame', async (req, res) => {
     }
     const r = await ctx.client.horariosAgrupados(params)
     if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou os horários', upstream: r.body })
-    const slots = normalizeHorarios(JSON.parse(r.body || '[]'))
+    const slots = await marcarReservados(normalizeHorarios(JSON.parse(r.body || '[]')), ctx.exame.empresa_id)
     res.json({ exame: ctx.exame.nome, paciente: ctx.exame.pacientes?.nome, total: slots.length, slots })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao consultar horários no NetRis', detail: err.message })
@@ -176,7 +191,7 @@ router.get('/horarios-catalogo', async (req, res) => {
       const hint = `NetRis recusou os horários (HTTP ${r.status}). Provável causa: o procedimento ${proc.netris_procedimento_id} não pertence ao plano-convênio ${parc.netris_id_plano_convenio}/${parc.netris_id_convenio} do parceiro, ou não tem agenda online. Verifique o mapeamento.`
       return res.status(r.status >= 500 ? 502 : r.status).json({ error: hint, upstream: String(r.body).slice(0, 300) })
     }
-    res.json({ slots: normalizeHorarios(JSON.parse(r.body || '[]')) })
+    res.json({ slots: await marcarReservados(normalizeHorarios(JSON.parse(r.body || '[]')), empresaId) })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao consultar horários: ' + err.message })
   }

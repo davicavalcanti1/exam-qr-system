@@ -147,9 +147,13 @@ export default function PacientesArea({ escolherParceiro = false }) {
       const taken = new Set()
       for (const o of ocupados || []) { const s = o.netris_slot; if (s) taken.add(`${s.dataString}|${s.horarioString}|${s.idMedico}|${s.idSala}`) }
       exames.forEach((e, idx) => { if (idx !== i && e.slot) { const s = e.slot; taken.add(`${s.dataString}|${s.horarioString}|${s.idMedico}|${s.idSala}`) } })
-      const livres = (r.slots || []).filter(s => !taken.has(`${s.dataString}|${s.horaInicial}|${s.idMedico}|${s.idSala}`))
+      // não remove os ocupados — marca como reservado (cinza/desabilitado)
+      const marcados = (r.slots || []).map(s => ({
+        ...s,
+        reservado: s.reservado || taken.has(`${s.dataString}|${s.horaInicial}|${s.idMedico}|${s.idSala}`),
+      }))
       const map = {}
-      for (const s of livres) (map[s.data] ||= []).push(s)
+      for (const s of marcados) (map[s.data] ||= []).push(s)
       const grupos = Object.entries(map).map(([data, slots]) => ({ data, slots }))
       setSlotsPorItem(s => ({ ...s, [i]: { grupos } }))
     } catch (e) { setSlotsPorItem(s => ({ ...s, [i]: { erro: e.message } })) }
@@ -332,7 +336,12 @@ export default function PacientesArea({ escolherParceiro = false }) {
                               <div key={g.data}>
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1 capitalize">{diaLongo(g.data)}</p>
                                 <div className="flex flex-wrap gap-1.5">
-                                  {g.slots.map((s, k) => (
+                                  {g.slots.map((s, k) => s.reservado ? (
+                                    <span key={k} title={`Reservado · ${s.nomeMedico} · ${s.sala}`}
+                                      className="px-2.5 py-1 rounded-md text-xs font-bold bg-surface-container text-on-surface-variant/50 ring-1 ring-outline-variant/20 line-through cursor-not-allowed">
+                                      {s.horaInicial}
+                                    </span>
+                                  ) : (
                                     <button key={k} type="button" title={`${s.nomeMedico} · ${s.sala}`} onClick={() => escolherSlot(i, s)}
                                       className="px-2.5 py-1 rounded-md text-xs font-bold bg-surface-container-lowest ring-1 ring-outline-variant/30 hover:ring-2 hover:ring-primary hover:text-primary transition">
                                       {s.horaInicial}
