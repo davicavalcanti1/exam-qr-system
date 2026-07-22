@@ -4,6 +4,7 @@ import { adminApi } from '../../../lib/adminApi'
 import { Card, Button, Badge, Loading, EmptyState, useToast, useConfirm } from '../../../components/ui'
 import CreateUserModal from '../CreateUserModal'
 import ConvidarModal from '../ConvidarModal'
+import EditarUsuarioModal from '../EditarUsuarioModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
 import ConsumoEmpresa from './ConsumoEmpresa'
 import ConfiguracoesEmpresa from './ConfiguracoesEmpresa'
@@ -35,6 +36,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const [admins, setAdmins] = useState(null)
   const [criarRole, setCriarRole] = useState(null) // 'empresa_admin' | 'empresa_operador'
   const [convidar, setConvidar] = useState(false)
+  const [editando, setEditando] = useState(null)
   const [logoInput, setLogoInput] = useState('')
   const [nomeExib, setNomeExib] = useState('')
   const [subindo, setSubindo] = useState(false)
@@ -219,6 +221,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
                       <p className={`font-semibold text-sm truncate ${u.ativo ? '' : 'line-through'}`}>{u.nome}</p>
                       <p className="text-[11px] text-on-surface-variant">{u.username} · {roleLabel(u.role)}</p>
                     </div>
+                    <button onClick={() => setEditando(u)} title="Editar" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span></button>
                     <button onClick={() => resetSenha(u)} title="Redefinir senha" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>key</span></button>
                     <button onClick={() => toggleUser(u)} title={u.ativo ? 'Desativar' : 'Ativar'}><Badge tone={u.ativo ? 'success' : 'neutral'}>{u.ativo ? 'ativo' : 'inativo'}</Badge></button>
                     <button onClick={() => excluirUser(u)} title="Excluir usuário" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-error/10 hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span></button>
@@ -246,6 +249,8 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
           onClose={() => setConvidar(false)}
         />
       )}
+
+      {editando && <EditarUsuarioModal user={editando} podeRole onClose={() => setEditando(null)} onSaved={loadAdmins} />}
     </div>
   )
 }

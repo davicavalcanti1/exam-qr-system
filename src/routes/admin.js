@@ -122,7 +122,7 @@ router.patch('/users/:id', async (req, res) => {
   const { data: alvo } = await supabaseAdmin.from('profiles').select('id, role, empresa_id, parceiro_id').eq('id', req.params.id).maybeSingle()
   if (!alvo) return res.status(404).json({ error: 'Usuário não encontrado' })
 
-  const { nome, ativo } = req.body || {}
+  const { nome, ativo, username, role } = req.body || {}
   if (alvo.id === me.id && ativo === false) return res.status(400).json({ error: 'Você não pode desativar a própria conta' })
 
   const pode = me.role === 'owner'
@@ -133,6 +133,30 @@ router.patch('/users/:id', async (req, res) => {
   const patch = {}
   if (typeof nome === 'string' && nome.trim()) patch.nome = nome.trim()
   if (typeof ativo === 'boolean') patch.ativo = ativo
+
+  // usuário (login) — muda também o e-mail sintético no Auth
+  let novoEmail = null
+  if (typeof username === 'string' && username.trim()) {
+    const uname = username.trim().toLowerCase().replace(/\s+/g, '.')
+    patch.username = uname
+    novoEmail = `${uname}@${EMAIL_DOMAIN}`
+    patch.email = novoEmail
+  }
+
+  // papel — só o dono altera; ajusta o vínculo de parceiro conforme o nível
+  if (role && role !== alvo.role) {
+    if (me.role !== 'owner') return res.status(403).json({ error: 'Apenas o dono altera o papel' })
+    if (!['empresa_admin', 'empresa_operador', 'parceiro_coordenador', 'parceiro_funcionario'].includes(role)) return res.status(400).json({ error: 'papel inválido' })
+    if (['parceiro_coordenador', 'parceiro_funcionario'].includes(role) && !alvo.parceiro_id) return res.status(400).json({ error: 'usuário sem parceiro não pode receber papel de parceiro' })
+    patch.role = role
+    if (['empresa_admin', 'empresa_operador'].includes(role)) patch.parceiro_id = null
+  }
+
+  // e-mail do Auth primeiro (pode falhar por duplicidade) — só depois o profile
+  if (novoEmail) {
+    const { error: eErr } = await supabaseAdmin.auth.admin.updateUserById(alvo.id, { email: novoEmail, email_confirm: true })
+    if (eErr) return res.status(400).json({ error: 'Não foi possível mudar o usuário: ' + eErr.message })
+  }
   if (Object.keys(patch).length) {
     const { error } = await supabaseAdmin.from('profiles').update(patch).eq('id', alvo.id)
     if (error) return res.status(400).json({ error: error.message })

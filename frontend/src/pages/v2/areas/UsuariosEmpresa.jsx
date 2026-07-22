@@ -4,6 +4,7 @@ import { adminApi } from '../../../lib/adminApi'
 import { useAuth } from '../../../auth/AuthContext'
 import { Card, Button, Badge, Loading, EmptyState, useToast, useConfirm } from '../../../components/ui'
 import ConvidarModal from '../ConvidarModal'
+import EditarUsuarioModal from '../EditarUsuarioModal'
 
 const ROLE = { empresa_admin: 'Administrador', empresa_operador: 'Operador', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário', owner: 'Dono' }
 
@@ -14,6 +15,7 @@ export default function UsuariosEmpresa() {
   const confirm = useConfirm()
   const [users, setUsers] = useState(null)
   const [convidar, setConvidar] = useState(false)
+  const [editando, setEditando] = useState(null)
 
   async function load() {
     const { data } = await supabase.from('profiles')
@@ -50,6 +52,7 @@ export default function UsuariosEmpresa() {
                   <p className={`font-semibold text-sm truncate ${u.ativo ? '' : 'line-through'}`}>{u.nome || '—'}</p>
                   <p className="text-[11px] text-on-surface-variant truncate">{u.email || u.username} · {ROLE[u.role] || u.role}</p>
                 </div>
+                <button onClick={() => setEditando(u)} title="Editar" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span></button>
                 <button onClick={() => reset(u)} title="Redefinir senha" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>key</span></button>
                 <button onClick={() => toggle(u)} title={u.ativo ? 'Desativar' : 'Ativar'}><Badge tone={u.ativo ? 'success' : 'neutral'}>{u.ativo ? 'ativo' : 'inativo'}</Badge></button>
                 <button onClick={() => excluir(u)} title="Excluir usuário" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-error/10 hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span></button>
@@ -65,6 +68,8 @@ export default function UsuariosEmpresa() {
           onDone={load}
         />
       )}
+
+      {editando && <EditarUsuarioModal user={editando} onClose={() => setEditando(null)} onSaved={load} />}
     </Card>
   )
 }
