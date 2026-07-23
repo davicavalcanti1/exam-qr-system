@@ -14,7 +14,7 @@ export default function EmpresaArea() {
   const tetoPadrao = empresa?.teto_padrao ?? 2000
   const [parceiros, setParceiros] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ nome: '', teto: tetoPadrao, whatsapp: '' })
+  const [form, setForm] = useState({ nome: '', teto: tetoPadrao, whatsapp: '', email: '', endereco: '' })
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [expanded, setExpanded] = useState(null)
@@ -66,8 +66,8 @@ export default function EmpresaArea() {
   async function createParceiro(e) {
     e.preventDefault(); setErr(''); setSaving(true)
     try {
-      await adminApi.createParceiro({ nome: form.nome, teto: Number(form.teto) || tetoPadrao, whatsapp: form.whatsapp })
-      setForm({ nome: '', teto: tetoPadrao, whatsapp: '' }); await load()
+      await adminApi.createParceiro({ nome: form.nome, teto: Number(form.teto) || tetoPadrao, whatsapp: form.whatsapp, email: form.email, endereco: form.endereco })
+      setForm({ nome: '', teto: tetoPadrao, whatsapp: '', email: '', endereco: '' }); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
 
@@ -78,11 +78,14 @@ export default function EmpresaArea() {
   return (
     <div className="space-y-8">
       <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
-        <h3 className="text-lg font-semibold mb-4">Novo parceiro</h3>
+        <h3 className="text-lg font-semibold mb-1">Novo parceiro</h3>
+        <p className="text-sm text-on-surface-variant mb-4">Quem encaminha os pacientes. O parceiro não usa CNPJ — é identificado pelo nome.</p>
         <form onSubmit={createParceiro} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <div><label className={label}>Nome do parceiro</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="ex.: Dr. Fulano / Prefeitura de…" required /></div>
-          <div><label className={label}>Teto (R$)</label><input className={input} type="number" min="0" step="100" value={form.teto} onChange={e => setForm({ ...form, teto: e.target.value })} /></div>
-          <div className="md:col-span-2"><label className={label}>WhatsApp <span className="font-normal normal-case">(recebe o link de confirmação)</span></label><input className={input} type="tel" value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="83 99999-9999" /></div>
+          <div className="md:col-span-2"><label className={label}>Nome do parceiro *</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="ex.: Dr. Fulano / Prefeitura de…" required /></div>
+          <div><label className={label}>Teto de crédito (R$)</label><input className={input} type="number" min="0" step="100" value={form.teto} onChange={e => setForm({ ...form, teto: e.target.value })} /></div>
+          <div><label className={label}>WhatsApp <span className="font-normal normal-case">(link de confirmação)</span></label><input className={input} type="tel" value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="83 99999-9999" /></div>
+          <div><label className={label}>E-mail <span className="font-normal normal-case">(opcional)</span></label><input className={input} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="contato@exemplo.com" /></div>
+          <div><label className={label}>Endereço <span className="font-normal normal-case">(opcional)</span></label><input className={input} value={form.endereco} onChange={e => setForm({ ...form, endereco: e.target.value })} placeholder="cidade / referência" /></div>
           {err && <div className="md:col-span-2 text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
           <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Criando…' : 'Criar parceiro'}</button></div>
         </form>

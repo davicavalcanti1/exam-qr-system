@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { adminApi } from '../../../lib/adminApi'
-import { Card, Button, Badge, Loading, EmptyState, useToast, useConfirm } from '../../../components/ui'
+import { Card, Button, Badge, Loading, EmptyState, Field, Input, useToast, useConfirm } from '../../../components/ui'
 import CreateUserModal from '../CreateUserModal'
 import ConvidarModal from '../ConvidarModal'
 import EditarUsuarioModal from '../EditarUsuarioModal'
@@ -37,6 +37,8 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
   const [criarRole, setCriarRole] = useState(null) // 'empresa_admin' | 'empresa_operador'
   const [convidar, setConvidar] = useState(false)
   const [editando, setEditando] = useState(null)
+  const [editInfo, setEditInfo] = useState(false)
+  const [infoForm, setInfoForm] = useState({})
   const [logoInput, setLogoInput] = useState('')
   const [nomeExib, setNomeExib] = useState('')
   const [subindo, setSubindo] = useState(false)
@@ -83,6 +85,24 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
     const { error } = await supabase.from('empresas').update({ nome_exibicao: v }).eq('id', emp.id)
     if (error) return toast.error(error.message)
     setEmp(e => ({ ...e, nome_exibicao: v })); onChange?.(); toast.success('Nome de exibição atualizado.')
+  }
+  function abrirEdicaoInfo() {
+    setInfoForm({ nome: emp.nome || '', nome_fantasia: emp.nome_fantasia || '', cnpj: emp.cnpj || '', endereco: emp.endereco || '', telefone: emp.telefone || '', email: emp.email || '' })
+    setEditInfo(true)
+  }
+  async function salvarInfo() {
+    if (!infoForm.nome?.trim()) return toast.error('A razão social é obrigatória.')
+    const patch = {
+      nome: infoForm.nome.trim(),
+      nome_fantasia: infoForm.nome_fantasia?.trim() || null,
+      cnpj: infoForm.cnpj?.trim() || null,
+      endereco: infoForm.endereco?.trim() || null,
+      telefone: infoForm.telefone?.trim() || null,
+      email: infoForm.email?.trim() || null,
+    }
+    const { error } = await supabase.from('empresas').update(patch).eq('id', emp.id)
+    if (error) return toast.error(error.message)
+    setEmp(e => ({ ...e, ...patch })); setEditInfo(false); onChange?.(); toast.success('Informações atualizadas.')
   }
   async function salvarPlano(v) {
     const plano = v || null
@@ -140,15 +160,37 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold">Informações</h3>
-            <Button variant="secondary" size="sm" onClick={toggleStatus}>{emp.status === 'ativa' ? 'Inativar' : 'Ativar'} empresa</Button>
+            <div className="flex items-center gap-2">
+              {!editInfo && <Button variant="secondary" size="sm" icon="edit" onClick={abrirEdicaoInfo}>Editar</Button>}
+              <Button variant="secondary" size="sm" onClick={toggleStatus}>{emp.status === 'ativa' ? 'Inativar' : 'Ativar'} empresa</Button>
+            </div>
           </div>
-          <Linha label="Razão social" valor={emp.nome} />
-          <Linha label="Nome fantasia" valor={emp.nome_fantasia} />
-          <Linha label="CNPJ" valor={emp.cnpj} />
+          {editInfo ? (
+            <div className="py-2 space-y-3">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <Field label="Razão social"><Input value={infoForm.nome} onChange={e => setInfoForm(f => ({ ...f, nome: e.target.value }))} required /></Field>
+                <Field label="Nome fantasia"><Input value={infoForm.nome_fantasia} onChange={e => setInfoForm(f => ({ ...f, nome_fantasia: e.target.value }))} /></Field>
+                <Field label="CNPJ"><Input value={infoForm.cnpj} onChange={e => setInfoForm(f => ({ ...f, cnpj: e.target.value }))} /></Field>
+                <Field label="Telefone"><Input value={infoForm.telefone} onChange={e => setInfoForm(f => ({ ...f, telefone: e.target.value }))} /></Field>
+                <Field label="E-mail"><Input type="email" value={infoForm.email} onChange={e => setInfoForm(f => ({ ...f, email: e.target.value }))} /></Field>
+                <Field label="Endereço" className="sm:col-span-2"><Input value={infoForm.endereco} onChange={e => setInfoForm(f => ({ ...f, endereco: e.target.value }))} /></Field>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setEditInfo(false)}>Cancelar</Button>
+                <Button size="sm" icon="save" onClick={salvarInfo}>Salvar</Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <Linha label="Razão social" valor={emp.nome} />
+              <Linha label="Nome fantasia" valor={emp.nome_fantasia} />
+              <Linha label="CNPJ" valor={emp.cnpj} />
+              <Linha label="Endereço" valor={emp.endereco} />
+              <Linha label="Telefone" valor={emp.telefone} />
+              <Linha label="E-mail" valor={emp.email} />
+            </>
+          )}
           <Linha label="Identificador (slug)" valor={emp.slug} />
-          <Linha label="Endereço" valor={emp.endereco} />
-          <Linha label="Telefone" valor={emp.telefone} />
-          <Linha label="E-mail" valor={emp.email} />
           <Linha label="Criada em" valor={dataBR(emp.created_at)} />
           <Linha label="Termo de Dados (DPA)" valor={dpa === undefined ? '…' : dpa ? `Aceito ${dpa.versao} · ${dataBR(dpa.aceito_at)}` : 'Pendente'} />
           <div className="flex items-center justify-between gap-3 py-2.5 border-b border-outline-variant/10">
