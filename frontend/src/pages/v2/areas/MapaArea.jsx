@@ -21,7 +21,8 @@ export default function MapaArea() {
   const layerRef = useRef(null)
 
   async function load() {
-    const { data } = await supabase.from('empresas').select('id, nome, nome_exibicao, status, endereco, lat, lng').order('nome')
+    // select('*') p/ não quebrar se a migration lat/lng ainda não foi aplicada
+    const { data } = await supabase.from('empresas').select('*').order('nome')
     setEmpresas(data || [])
   }
   useEffect(() => { load() }, [])
