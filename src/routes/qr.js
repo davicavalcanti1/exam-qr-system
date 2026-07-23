@@ -17,7 +17,7 @@ router.post('/gerar', async (req, res) => {
   if (!exameId) return res.status(400).json({ error: 'exameId é obrigatório' })
 
   const { data: exame } = await supabaseAdmin
-    .from('exames').select('id, empresa_id, parceiro_id, status').eq('id', exameId).maybeSingle()
+    .from('exames').select('id, empresa_id, parceiro_id, status, nome, scheduled_at, pacientes(nome)').eq('id', exameId).maybeSingle()
   if (!exame) return res.status(404).json({ error: 'Exame não encontrado' })
 
   const podeEmpresa = p.role === 'owner' || (p.role === 'empresa_admin' && p.empresa_id === exame.empresa_id)
@@ -39,7 +39,16 @@ router.post('/gerar', async (req, res) => {
     qr = novo
   }
   const dataUrl = await QRCode.toDataURL(qr.token, { width: 320, margin: 2, errorCorrectionLevel: 'H' })
-  res.json({ token: qr.token, dataUrl })
+  // Dados do comprovante (para o PDF do paciente). Sem valor — paciente não vê preço.
+  const { data: emp } = await supabaseAdmin.from('empresas').select('nome, nome_exibicao, logo_url').eq('id', exame.empresa_id).maybeSingle()
+  const comprovante = {
+    paciente: exame?.pacientes?.nome || '—',
+    exame: exame?.nome || '—',
+    scheduledAt: exame?.scheduled_at || null,
+    protocolo: qr.token.slice(0, 8).toUpperCase(),
+    empresa: emp ? { nome: emp.nome_exibicao || emp.nome, logo: emp.logo_url || null } : null,
+  }
+  res.json({ token: qr.token, dataUrl, comprovante })
 })
 
 // Valida o QR no scan (público) e marca o exame como REALIZADO.
