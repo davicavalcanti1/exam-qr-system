@@ -226,7 +226,7 @@ router.post('/agendar-exame', async (req, res) => {
       scheduled_at: `${slot.dataString}T${slot.horarioString}:00-03:00`, // horário de Brasília (BRT) — sem isto o Postgres grava como UTC e some 3h
       netris_slot: { dataString: slot.dataString, horarioString: slot.horarioString, idMedico: Number(slot.idMedico), idSala: Number(slot.idSala) },
     }).eq('id', exameId)
-    logAudit({ empresaId: ctx.exame.empresa_id, atorId: c.profile.id, atorNome: c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: agId, slot } })
+    logAudit({ empresaId: ctx.exame.empresa_id, atorId: c.profile.id, atorNome: c.profile.nome || c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: agId, slot } })
     res.json({ ok: true, agendamentoId: agId, upstream: parsed })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao agendar no NetRis', detail: err.message })
@@ -248,7 +248,7 @@ router.post('/cancelar-exame', async (req, res) => {
     const r = await client.alterarSituacao(ex.netris_atendimento_id, SITUACAO.CANCELADO)
     if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o cancelamento', upstream: r.body })
     await supabaseAdmin.from('exames').update({ netris_atendimento_id: null, netris_agendamento_id: null, scheduled_at: null, netris_slot: null }).eq('id', exameId)
-    logAudit({ empresaId: ex.empresa_id, atorId: c.profile.id, atorNome: c.profile.role, acao: 'netris.cancelado', entidade: 'exame', entidadeId: exameId })
+    logAudit({ empresaId: ex.empresa_id, atorId: c.profile.id, atorNome: c.profile.nome || c.profile.role, acao: 'netris.cancelado', entidade: 'exame', entidadeId: exameId })
     res.json({ ok: true })
   } catch (err) {
     res.status(502).json({ error: 'Erro ao cancelar no NetRis', detail: err.message })

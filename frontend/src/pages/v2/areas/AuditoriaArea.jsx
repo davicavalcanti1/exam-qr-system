@@ -12,7 +12,11 @@ const ACOES = {
   'cobranca.paga': { label: 'Cobrança marcada paga', icon: 'paid', cls: 'text-primary' },
   'paciente.exportado': { label: 'Dados do paciente exportados (LGPD)', icon: 'download', cls: 'text-on-surface-variant' },
   'paciente.anonimizado': { label: 'Paciente anonimizado (LGPD)', icon: 'person_off', cls: 'text-error' },
+  'autorizacao.lote_gerado': { label: 'Link de confirmação gerado', icon: 'send', cls: 'text-primary' },
 }
+// traduz rows antigas em que o "ator" foi gravado como a role crua (empresa_operador, etc.)
+const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Administrador', empresa_operador: 'Operador', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário' }
+const atorLabel = (nome) => ROLE_LABEL[nome] || nome || '—'
 const dataBR = (s) => new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 
 function resumo(d) {
@@ -21,6 +25,8 @@ function resumo(d) {
   if (d.paciente) p.push(d.paciente)
   if (d.exame) p.push(d.exame)
   if (d.titulo) p.push(d.titulo)
+  if (d.qtd != null) p.push(`${d.qtd} exame(s)`)
+  if (d.whatsapp === true) p.push('WhatsApp enviado')
   if (d.total != null) p.push(Number(d.total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }))
   if (d.protocolo) p.push(`protocolo ${d.protocolo}`)
   return p.join(' · ')
@@ -54,7 +60,7 @@ export default function AuditoriaArea() {
                   <span className={`material-symbols-outlined ${ac.cls}`} style={{ fontVariationSettings: "'FILL' 1", fontSize: '20px' }}>{ac.icon}</span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate">{ac.label}{resumo(a.detalhe) && <span className="font-normal text-on-surface-variant"> — {resumo(a.detalhe)}</span>}</p>
-                    <p className="text-[11px] text-on-surface-variant">{a.ator_nome || '—'}</p>
+                    <p className="text-[11px] text-on-surface-variant">{atorLabel(a.ator_nome)}</p>
                   </div>
                   <span className="text-[11px] text-on-surface-variant tabular-nums flex-none">{dataBR(a.created_at)}</span>
                 </div>

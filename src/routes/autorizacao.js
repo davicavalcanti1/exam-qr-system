@@ -55,7 +55,7 @@ router.post('/lotes', async (req, res) => {
     whatsapp.motivo = 'parceiro sem WhatsApp cadastrado'
   }
 
-  logAudit({ empresaId: empresa_id, atorId: p.id, atorNome: p.role, acao: 'autorizacao.lote_gerado', entidade: 'lote', entidadeId: lote.id, detalhe: { qtd: validos.length, whatsapp: whatsapp.enviado } })
+  logAudit({ empresaId: empresa_id, atorId: p.id, atorNome: p.nome || p.role, acao: 'autorizacao.lote_gerado', entidade: 'lote', entidadeId: lote.id, detalhe: { qtd: validos.length, whatsapp: whatsapp.enviado } })
   res.status(201).json({ ok: true, token, link, qtd: validos.length, whatsapp })
 })
 
