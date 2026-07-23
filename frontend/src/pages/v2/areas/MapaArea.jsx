@@ -84,15 +84,16 @@ export default function MapaArea() {
     toast[ok ? 'success' : 'error'](`${ok} de ${faltando.length} localizada(s) pelo endereço.${ok < faltando.length ? ' As demais: posicione no mapa.' : ''}`)
   }
 
-  if (empresas === null) return <Loading />
-  const semCoord = empresas.filter(e => e.lat == null || e.lng == null)
+  const lista = empresas || []
+  const semCoord = lista.filter(e => e.lat == null || e.lng == null)
+  const carregando = empresas === null
 
   return (
     <div className="space-y-4">
       <Card className="p-4 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h3 className="text-lg font-semibold">Mapa das empresas</h3>
-          <p className="text-sm text-on-surface-variant">{empresas.length} empresa(s){semCoord.length ? ` · ${semCoord.length} sem localização` : ''}</p>
+          <p className="text-sm text-on-surface-variant">{carregando ? 'carregando…' : `${lista.length} empresa(s)${semCoord.length ? ` · ${semCoord.length} sem localização` : ''}`}</p>
         </div>
         {semCoord.length > 0 && <Button variant="secondary" icon="my_location" onClick={localizar} loading={geo}>Tentar pelo endereço</Button>}
       </Card>
