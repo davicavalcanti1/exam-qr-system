@@ -73,16 +73,18 @@ router.post('/parceiros', async (req, res) => {
   const p = c.profile
   if (!['owner', 'empresa_admin'].includes(p.role)) return res.status(403).json({ error: 'Sem permissão' })
 
-  const { nome, cnpj, teto, empresaId, nomeFantasia, endereco, telefone, email, whatsapp } = req.body || {}
+  const { nome, cnpj, teto, empresaId, nomeFantasia, endereco, telefone, email, whatsapp, tipoDocumento, documento } = req.body || {}
   if (!nome) return res.status(400).json({ error: 'nome é obrigatório' })
   const empresa_id = p.role === 'owner' ? empresaId : p.empresa_id
   if (!empresa_id) return res.status(400).json({ error: 'empresaId é obrigatório' })
+  const tipoDoc = ['cnpj', 'cpf'].includes(tipoDocumento) ? tipoDocumento : null
 
   const { data, error } = await supabaseAdmin.from('parceiros')
     .insert({
       empresa_id, nome: String(nome).trim(), cnpj: cnpj || null, teto: teto || 2000,
       nome_fantasia: nomeFantasia || null, endereco: endereco || null, telefone: telefone || null, email: email || null,
       whatsapp: whatsapp ? String(whatsapp).replace(/\D/g, '') : null,
+      tipo_documento: tipoDoc, documento: documento ? String(documento).replace(/\D/g, '') : null,
     })
     .select('id').single()
   if (error) return res.status(400).json({ error: error.message })
@@ -100,13 +102,15 @@ router.put('/parceiros/:id', async (req, res) => {
   if (!parc) return res.status(404).json({ error: 'Parceiro não encontrado' })
   if (p.role !== 'owner' && parc.empresa_id !== p.empresa_id) return res.status(403).json({ error: 'Parceiro de outra empresa' })
 
-  const { nome, cnpj, teto, status, whatsapp } = req.body || {}
+  const { nome, cnpj, teto, status, whatsapp, tipoDocumento, documento } = req.body || {}
   const patch = {}
   if (typeof nome === 'string' && nome.trim()) patch.nome = nome.trim()
   if (cnpj !== undefined) patch.cnpj = cnpj || null
   if (teto !== undefined && teto !== '' && teto !== null) patch.teto = Number(teto)
   if (status && ['ativo', 'bloqueado', 'suspenso'].includes(status)) patch.status = status
   if (whatsapp !== undefined) patch.whatsapp = String(whatsapp).replace(/\D/g, '') || null
+  if (tipoDocumento !== undefined) patch.tipo_documento = ['cnpj', 'cpf'].includes(tipoDocumento) ? tipoDocumento : null
+  if (documento !== undefined) patch.documento = documento ? String(documento).replace(/\D/g, '') : null
   if (!Object.keys(patch).length) return res.json({ ok: true })
 
   const { error } = await supabaseAdmin.from('parceiros').update(patch).eq('id', parc.id)

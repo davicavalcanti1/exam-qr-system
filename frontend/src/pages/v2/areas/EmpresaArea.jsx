@@ -14,7 +14,7 @@ export default function EmpresaArea() {
   const tetoPadrao = empresa?.teto_padrao ?? 2000
   const [parceiros, setParceiros] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ nome: '', teto: tetoPadrao, whatsapp: '', email: '', endereco: '' })
+  const [form, setForm] = useState({ nome: '', teto: tetoPadrao, whatsapp: '', email: '', endereco: '', tipoDoc: 'cnpj', documento: '' })
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [expanded, setExpanded] = useState(null)
@@ -25,7 +25,7 @@ export default function EmpresaArea() {
   const [savingP, setSavingP] = useState(null)
 
   async function load() {
-    const { data } = await supabase.from('parceiros').select('id, nome, cnpj, teto, status, contrato_status, whatsapp').order('created_at', { ascending: false })
+    const { data } = await supabase.from('parceiros').select('id, nome, cnpj, teto, status, contrato_status, whatsapp, tipo_documento, documento').order('created_at', { ascending: false })
     setParceiros(data || []); setLoading(false)
   }
   useEffect(() => { load() }, [])
@@ -40,7 +40,7 @@ export default function EmpresaArea() {
     if (next) {
       if (!users[next]) loadUsers(next)
       const p = parceiros.find(x => x.id === next)
-      setEdit(e => ({ ...e, [next]: { teto: p?.teto ?? 0, status: p?.status || 'ativo', whatsapp: p?.whatsapp || '' } }))
+      setEdit(e => ({ ...e, [next]: { teto: p?.teto ?? 0, status: p?.status || 'ativo', whatsapp: p?.whatsapp || '', tipoDocumento: p?.tipo_documento || 'cnpj', documento: p?.documento || '' } }))
     }
   }
 
@@ -66,8 +66,8 @@ export default function EmpresaArea() {
   async function createParceiro(e) {
     e.preventDefault(); setErr(''); setSaving(true)
     try {
-      await adminApi.createParceiro({ nome: form.nome, teto: Number(form.teto) || tetoPadrao, whatsapp: form.whatsapp, email: form.email, endereco: form.endereco })
-      setForm({ nome: '', teto: tetoPadrao, whatsapp: '', email: '', endereco: '' }); await load()
+      await adminApi.createParceiro({ nome: form.nome, teto: Number(form.teto) || tetoPadrao, whatsapp: form.whatsapp, email: form.email, endereco: form.endereco, tipoDocumento: form.tipoDoc, documento: form.documento })
+      setForm({ nome: '', teto: tetoPadrao, whatsapp: '', email: '', endereco: '', tipoDoc: 'cnpj', documento: '' }); await load()
     } catch (e) { setErr(e.message) } finally { setSaving(false) }
   }
 
@@ -82,6 +82,13 @@ export default function EmpresaArea() {
         <p className="text-sm text-on-surface-variant mb-4">Quem encaminha os pacientes. O parceiro não usa CNPJ — é identificado pelo nome.</p>
         <form onSubmit={createParceiro} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
           <div className="md:col-span-2"><label className={label}>Nome do parceiro *</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="ex.: Dr. Fulano / Prefeitura de…" required /></div>
+          <div><label className={label}>Tipo</label>
+            <select className={input} value={form.tipoDoc} onChange={e => setForm({ ...form, tipoDoc: e.target.value })}>
+              <option value="cnpj">CNPJ (empresa)</option>
+              <option value="cpf">CPF (pessoa física)</option>
+            </select>
+          </div>
+          <div><label className={label}>{form.tipoDoc === 'cpf' ? 'CPF' : 'CNPJ'} <span className="font-normal normal-case">(opcional)</span></label><input className={input} value={form.documento} onChange={e => setForm({ ...form, documento: e.target.value })} placeholder={form.tipoDoc === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'} /></div>
           <div><label className={label}>Teto de crédito (R$)</label><input className={input} type="number" min="0" step="100" value={form.teto} onChange={e => setForm({ ...form, teto: e.target.value })} /></div>
           <div><label className={label}>WhatsApp <span className="font-normal normal-case">(link de confirmação)</span></label><input className={input} type="tel" value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="83 99999-9999" /></div>
           <div><label className={label}>E-mail <span className="font-normal normal-case">(opcional)</span></label><input className={input} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="contato@exemplo.com" /></div>
@@ -99,7 +106,7 @@ export default function EmpresaArea() {
               {parceiros.map(p => (
                 <div key={p.id}>
                   <button onClick={() => toggle(p.id)} className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50/60 transition text-left">
-                    <div><p className="font-semibold">{p.nome}</p><p className="text-[11px] text-on-surface-variant">Teto {fmt(p.teto)} · contrato {p.contrato_status}</p></div>
+                    <div><p className="font-semibold">{p.nome}</p><p className="text-[11px] text-on-surface-variant">Teto {fmt(p.teto)} · contrato {p.contrato_status}{p.documento ? ` · ${(p.tipo_documento || 'doc').toUpperCase()} ${p.documento}` : ''}</p></div>
                     <span className="material-symbols-outlined text-on-surface-variant">{expanded === p.id ? 'expand_less' : 'expand_more'}</span>
                   </button>
                   {expanded === p.id && (
@@ -112,6 +119,12 @@ export default function EmpresaArea() {
                           </select>
                         </div>
                         <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">WhatsApp (confirmação)</label><input type="tel" placeholder="83 99999-9999" className="w-40 px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.whatsapp ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], whatsapp: e.target.value } }))} /></div>
+                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Tipo</label>
+                          <select className="px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.tipoDocumento || 'cnpj'} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], tipoDocumento: e.target.value } }))}>
+                            <option value="cnpj">CNPJ</option><option value="cpf">CPF</option>
+                          </select>
+                        </div>
+                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{(edit[p.id]?.tipoDocumento || 'cnpj') === 'cpf' ? 'CPF' : 'CNPJ'}</label><input className="w-44 px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.documento ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], documento: e.target.value } }))} /></div>
                         <button onClick={() => salvarParceiro(p)} disabled={savingP === p.id} className="px-4 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingP === p.id ? 'Salvando…' : 'Salvar'}</button>
                       </div>
                       <div className="flex items-center justify-between py-3">
