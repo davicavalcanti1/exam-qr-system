@@ -15,14 +15,14 @@ const TONES = {
 
 function Stat({ icon, label, valor, tone = 'primary', onClick }) {
   return (
-    <Card as={onClick ? 'button' : 'div'} onClick={onClick} className={`p-5 text-left w-full ${onClick ? 'hover:ring-2 hover:ring-primary/30 transition' : ''}`}>
+    <Card as={onClick ? 'button' : 'div'} onClick={onClick} className={`p-4 sm:p-5 text-left w-full ${onClick ? 'hover:ring-2 hover:ring-primary/30 transition' : ''}`}>
       <div className="flex items-center gap-3">
-        <span className={`w-11 h-11 rounded-xl flex items-center justify-center flex-none ${TONES[tone]}`}>
+        <span className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-none ${TONES[tone]}`}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
         </span>
         <div className="min-w-0">
-          <div className="text-2xl font-extrabold tracking-tight tabular-nums leading-none">{valor}</div>
-          <div className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mt-1">{label}</div>
+          <div className="text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums leading-none truncate">{valor}</div>
+          <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-on-surface-variant mt-1 truncate">{label}</div>
         </div>
       </div>
     </Card>
@@ -147,10 +147,20 @@ export default function VisaoGeralArea({ irPara }) {
         {/* Financeiro / teto */}
         <Card className="p-4 sm:p-6">
           <h3 className="font-semibold mb-4">Financeiro</h3>
-          <div className="grid grid-cols-3 gap-3 mb-5">
-            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Em aberto</p><p className="text-base sm:text-lg font-extrabold tabular-nums text-yellow-600">{fmt(d.emAberto)}</p></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">A receber</p><p className="text-base sm:text-lg font-extrabold tabular-nums text-on-surface">{fmt(d.aReceber)}</p></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Recebido</p><p className="text-base sm:text-lg font-extrabold tabular-nums text-primary">{fmt(d.recebido)}</p></div>
+          {/* celular: linhas label→valor (legível); sm+: 3 colunas */}
+          <div className="divide-y divide-outline-variant/10 sm:divide-y-0 sm:grid sm:grid-cols-3 sm:gap-3 mb-5">
+            <div className="flex items-baseline justify-between py-2 sm:block sm:py-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Em aberto</p>
+              <p className="text-lg font-extrabold tabular-nums text-yellow-600 sm:mt-0.5">{fmt(d.emAberto)}</p>
+            </div>
+            <div className="flex items-baseline justify-between py-2 sm:block sm:py-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">A receber</p>
+              <p className="text-lg font-extrabold tabular-nums text-on-surface sm:mt-0.5">{fmt(d.aReceber)}</p>
+            </div>
+            <div className="flex items-baseline justify-between py-2 sm:block sm:py-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Recebido</p>
+              <p className="text-lg font-extrabold tabular-nums text-primary sm:mt-0.5">{fmt(d.recebido)}</p>
+            </div>
           </div>
           {d.teto != null && (
             <div>

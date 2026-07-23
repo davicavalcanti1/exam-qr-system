@@ -42,7 +42,7 @@ export default function ParceiroMarcaArea() {
   }
 
   return (
-    <Card className="p-6 max-w-xl">
+    <Card className="p-5 sm:p-6 max-w-xl mx-auto">
       <h3 className="text-lg font-semibold">Minha marca</h3>
       <p className="text-sm text-on-surface-variant mt-1 mb-5">Personalize como o seu parceiro aparece no sistema.</p>
 
