@@ -9,7 +9,7 @@ export default function TratamentoDados() {
       updated={DPA_VERSAO}
     >
       <P>Este é o texto integral do Termo aceito pelas empresas contratantes:</P>
-      <div className="mt-4 text-[14px] leading-relaxed text-on-surface/90 whitespace-pre-wrap bg-surface-container rounded-2xl p-6">{DPA_TEXTO}</div>
+      <div className="mt-4 text-[14px] leading-relaxed text-on-surface/90 whitespace-pre-wrap bg-surface-container rounded-2xl p-4 sm:p-6">{DPA_TEXTO}</div>
     </DocsLayout>
   )
 }

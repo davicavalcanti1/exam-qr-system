@@ -63,7 +63,7 @@ export default function DocsLayout({ title, subtitle, updated, children }) {
   return (
     <div className="min-h-screen bg-surface text-on-surface flex flex-col">
       <header className="bg-surface-container-lowest border-b border-outline-variant/10 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src="/brotopay.png" alt="ExameQR" className="w-9 h-9 object-contain" />
             <span className="font-display text-xl font-extrabold tracking-tight text-primary">ExameQR</span>
@@ -73,7 +73,7 @@ export default function DocsLayout({ title, subtitle, updated, children }) {
         </div>
       </header>
 
-      <div className="flex-1 max-w-6xl mx-auto w-full px-6 py-8 flex gap-10">
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 flex gap-6 lg:gap-10">
         {/* Sidebar (desktop) */}
         <aside className="hidden lg:block w-56 flex-none">
           <div className="sticky top-24"><Sidebar pathname={pathname} /></div>
@@ -87,7 +87,7 @@ export default function DocsLayout({ title, subtitle, updated, children }) {
           </details>
 
           <header className="mb-8">
-            <h1 className="font-display text-4xl font-extrabold tracking-tight text-balance">{title}</h1>
+            <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-balance">{title}</h1>
             {subtitle && <p className="text-on-surface-variant mt-2 text-[15px]">{subtitle}</p>}
             {updated && <p className="text-[11px] text-on-surface-variant mt-3">Última atualização: {updated}</p>}
           </header>

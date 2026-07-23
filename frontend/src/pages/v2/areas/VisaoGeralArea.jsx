@@ -127,15 +127,15 @@ export default function VisaoGeralArea({ irPara }) {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Próximos agendamentos */}
         <Card className="overflow-hidden">
-          <div className="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
             <h3 className="font-semibold">Próximos agendamentos</h3>
             <button onClick={() => irPara?.('agenda')} className="text-xs font-bold text-primary hover:underline">ver agenda</button>
           </div>
           {d.prox.length === 0
-            ? <p className="text-sm text-on-surface-variant px-6 py-8 text-center">Nada agendado a partir de hoje.</p>
+            ? <p className="text-sm text-on-surface-variant px-4 sm:px-6 py-8 text-center">Nada agendado a partir de hoje.</p>
             : <div className="divide-y divide-outline-variant/10">
                 {d.prox.map(e => (
-                  <div key={e.id} className="flex items-center gap-3 px-6 py-3">
+                  <div key={e.id} className="flex items-center gap-3 px-4 sm:px-6 py-3">
                     <span className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-none"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>event</span></span>
                     <div className="min-w-0 flex-1"><p className="font-semibold text-sm truncate">{e.pacientes?.nome || '—'}</p><p className="text-[11px] text-on-surface-variant truncate">{e.nome}</p></div>
                     <span className="text-[11px] font-bold tabular-nums text-on-surface-variant flex-none">{horaBR(e.scheduled_at)}</span>
@@ -148,9 +148,9 @@ export default function VisaoGeralArea({ irPara }) {
         <Card className="p-4 sm:p-6">
           <h3 className="font-semibold mb-4">Financeiro</h3>
           <div className="grid grid-cols-3 gap-3 mb-5">
-            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Em aberto</p><p className="text-lg font-extrabold tabular-nums text-yellow-600">{fmt(d.emAberto)}</p></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">A receber</p><p className="text-lg font-extrabold tabular-nums text-on-surface">{fmt(d.aReceber)}</p></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Recebido</p><p className="text-lg font-extrabold tabular-nums text-primary">{fmt(d.recebido)}</p></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Em aberto</p><p className="text-base sm:text-lg font-extrabold tabular-nums text-yellow-600">{fmt(d.emAberto)}</p></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">A receber</p><p className="text-base sm:text-lg font-extrabold tabular-nums text-on-surface">{fmt(d.aReceber)}</p></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Recebido</p><p className="text-base sm:text-lg font-extrabold tabular-nums text-primary">{fmt(d.recebido)}</p></div>
           </div>
           {d.teto != null && (
             <div>
