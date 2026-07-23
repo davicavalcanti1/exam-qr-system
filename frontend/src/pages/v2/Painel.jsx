@@ -24,6 +24,7 @@ import ConfiguracoesArea from './areas/ConfiguracoesArea'
 import ParceiroMarcaArea from './areas/ParceiroMarcaArea'
 import PerfilArea from './areas/PerfilArea'
 import ConfirmacoesArea from './areas/ConfirmacoesArea'
+import MapaArea from './areas/MapaArea'
 
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
@@ -74,6 +75,7 @@ function SemAcesso({ nome, onSignOut }) {
 const NAV = {
   owner: [
     { k: 'empresas', label: 'Empresas', icon: 'business' },
+    { k: 'mapa', label: 'Mapa', icon: 'map' },
     { k: 'uso', label: 'Consumo', icon: 'monitoring' },
   ],
   empresa_admin: [
@@ -111,6 +113,7 @@ function renderArea(role, k, irPara) {
   const map = {
     empresas: <OwnerArea />,
     uso: <UsoArea />,
+    mapa: <MapaArea />,
     config: <ConfiguracoesArea />,
     visao: <VisaoGeralArea irPara={irPara} />,
     parceiros: <EmpresaArea />,

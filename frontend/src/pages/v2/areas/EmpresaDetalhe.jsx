@@ -8,6 +8,7 @@ import EditarUsuarioModal from '../EditarUsuarioModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
 import ConsumoEmpresa from './ConsumoEmpresa'
 import ConfiguracoesEmpresa from './ConfiguracoesEmpresa'
+import { geocodificar } from '../../../integrations/nominatim/geocode'
 
 const dataBR = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '—'
 const ABAS = [
@@ -99,6 +100,11 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       endereco: infoForm.endereco?.trim() || null,
       telefone: infoForm.telefone?.trim() || null,
       email: infoForm.email?.trim() || null,
+    }
+    // re-geocodifica se o endereço mudou (best-effort)
+    if (patch.endereco && patch.endereco !== emp.endereco) {
+      const geo = await geocodificar(patch.endereco).catch(() => null)
+      if (geo) { patch.lat = geo.lat; patch.lng = geo.lng }
     }
     const { error } = await supabase.from('empresas').update(patch).eq('id', emp.id)
     if (error) return toast.error(error.message)

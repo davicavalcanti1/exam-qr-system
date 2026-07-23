@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Card, Button, Field, Input, Badge, Loading, EmptyState, useToast } from '../../../components/ui'
 import { buscarCnpj as consultarCnpj } from '../../../integrations/brasilapi/cnpj'
+import { geocodificar } from '../../../integrations/nominatim/geocode'
 import EmpresaDetalhe from './EmpresaDetalhe'
 
 export default function OwnerArea() {
@@ -35,9 +36,11 @@ export default function OwnerArea() {
   async function createEmpresa(e) {
     e.preventDefault(); setErr(''); setSaving(true)
     const slug = (form.slug || form.nome).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const geo = form.endereco ? await geocodificar(form.endereco).catch(() => null) : null
     const { error } = await supabase.from('empresas').insert({
       nome: form.nome.trim(), cnpj: form.cnpj.trim() || null, slug,
       nome_fantasia: form.nomeFantasia || null, endereco: form.endereco || null, telefone: form.telefone || null, email: form.email || null,
+      lat: geo?.lat ?? null, lng: geo?.lng ?? null,
     })
     if (error) setErr(error.message)
     else { setForm({ nome: '', cnpj: '', slug: '', nomeFantasia: '', endereco: '', telefone: '', email: '' }); setNovo(false); toast.success('Empresa criada.'); await load() }
