@@ -6,6 +6,7 @@ import { agendaParaEmpresa } from '../integrations/agenda.js'
 import { SITUACAO } from '../integrations/netris/client.js'
 import { logAudit } from '../lib/audit.js'
 import { gerarKitPdf } from '../utils/qrKitPdf.js'
+import { enviarDocumentoWhatsapp, uazapiConfigurado } from '../integrations/uazapi/client.js'
 
 const router = Router()
 
@@ -28,28 +29,16 @@ const brData = (s) => s
   ? new Date(s).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   : null
 
-// Gera um PDF de comprovantes (1..N) — individual (1 id) ou kit em lote para o parceiro.
-router.post('/pdf', async (req, res) => {
-  const c = await getCaller(req)
-  if (c.error) return res.status(c.status).json({ error: c.error })
-  const p = c.profile
-  const { exameIds } = req.body || {}
-  if (!Array.isArray(exameIds) || exameIds.length === 0) return res.status(400).json({ error: 'exameIds é obrigatório' })
+// Quem pode gerar/enviar o comprovante do exame.
+function podeVerExame(p, ex) {
+  if (p.role === 'owner') return true
+  if (['empresa_admin', 'empresa_operador'].includes(p.role)) return p.empresa_id === ex.empresa_id
+  if (p.role === 'parceiro_coordenador') return p.parceiro_id === ex.parceiro_id
+  return false
+}
 
-  const { data: exames } = await supabaseAdmin
-    .from('exames').select('id, empresa_id, parceiro_id, status, nome, scheduled_at, created_at, pacientes(nome)')
-    .in('id', exameIds).order('created_at')
-
-  const podeVer = (ex) => {
-    if (p.role === 'owner') return true
-    if (['empresa_admin', 'empresa_operador'].includes(p.role)) return p.empresa_id === ex.empresa_id
-    if (p.role === 'parceiro_coordenador') return p.parceiro_id === ex.parceiro_id
-    return false
-  }
-  const elegiveis = (exames || []).filter(ex => podeVer(ex) && ['autorizado', 'realizado'].includes(ex.status))
-  if (elegiveis.length === 0) return res.status(400).json({ error: 'Nenhum exame elegível (precisa estar autorizado e você ter acesso).' })
-
-  // branding por empresa (com logo, best-effort) — cache no request
+// Monta os "tickets" (dados + QR) de uma lista de exames elegíveis, com branding cacheado.
+async function montarTickets(elegiveis) {
   const cache = {}
   async function branding(empresaId) {
     if (cache[empresaId]) return cache[empresaId]
@@ -58,7 +47,6 @@ router.post('/pdf', async (req, res) => {
     if (emp?.logo_url) { try { const r = await fetch(emp.logo_url); if (r.ok) logoBuf = Buffer.from(await r.arrayBuffer()) } catch { /* sem logo */ } }
     return (cache[empresaId] = { nome: emp?.nome_exibicao || emp?.nome || 'Clínica', logoBuf })
   }
-
   const tickets = []
   for (const ex of elegiveis) {
     const token = await garantirQrToken(ex)
@@ -69,13 +57,79 @@ router.post('/pdf', async (req, res) => {
       protocolo: token.slice(0, 8).toUpperCase(), empresaNome: b.nome, logoBuf: b.logoBuf, qrBuf,
     })
   }
+  return tickets
+}
 
+// Carrega os exames dos ids, filtrando por permissão do caller e status elegível.
+async function carregarElegiveis(p, exameIds, campos) {
+  const { data: exames } = await supabaseAdmin
+    .from('exames').select(campos).in('id', exameIds).order('created_at')
+  return (exames || []).filter(ex => podeVerExame(p, ex) && ['autorizado', 'realizado'].includes(ex.status))
+}
+
+// Gera um PDF de comprovantes (1..N) — individual (1 id) ou kit em lote para o parceiro.
+router.post('/pdf', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  const p = c.profile
+  const { exameIds } = req.body || {}
+  if (!Array.isArray(exameIds) || exameIds.length === 0) return res.status(400).json({ error: 'exameIds é obrigatório' })
+
+  const elegiveis = await carregarElegiveis(p, exameIds, 'id, empresa_id, parceiro_id, status, nome, scheduled_at, created_at, pacientes(nome)')
+  if (elegiveis.length === 0) return res.status(400).json({ error: 'Nenhum exame elegível (precisa estar autorizado e você ter acesso).' })
+
+  const tickets = await montarTickets(elegiveis)
   const pdf = await gerarKitPdf(tickets)
-  const empresaId = elegiveis[0].empresa_id
-  logAudit({ empresaId, atorId: p.id, atorNome: p.nome || p.role, acao: 'qr.pdf_gerado', entidade: 'exame', entidadeId: elegiveis[0].id, detalhe: { qtd: tickets.length } })
+  logAudit({ empresaId: elegiveis[0].empresa_id, atorId: p.id, atorNome: p.nome || p.role, acao: 'qr.pdf_gerado', entidade: 'exame', entidadeId: elegiveis[0].id, detalhe: { qtd: tickets.length } })
   res.setHeader('Content-Type', 'application/pdf')
   res.setHeader('Content-Disposition', `attachment; filename="comprovantes-${tickets.length}.pdf"`)
   res.send(pdf)
+})
+
+// Envia o(s) comprovante(s) por WhatsApp — ao paciente (cada um o seu) ou ao parceiro (1 PDF com todos).
+router.post('/enviar-whatsapp', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  const p = c.profile
+  const { exameIds, destino } = req.body || {}
+  if (!Array.isArray(exameIds) || exameIds.length === 0) return res.status(400).json({ error: 'exameIds é obrigatório' })
+  if (!['paciente', 'parceiro'].includes(destino)) return res.status(400).json({ error: "destino deve ser 'paciente' ou 'parceiro'" })
+  if (!uazapiConfigurado()) return res.status(400).json({ error: 'WhatsApp (uazapi) não está configurado no servidor.' })
+
+  const elegiveis = await carregarElegiveis(p, exameIds, 'id, empresa_id, parceiro_id, status, nome, scheduled_at, created_at, pacientes(nome, telefone)')
+  if (elegiveis.length === 0) return res.status(400).json({ error: 'Nenhum exame elegível (precisa estar autorizado e você ter acesso).' })
+
+  if (destino === 'parceiro') {
+    const parceiroId = elegiveis[0].parceiro_id
+    const { data: parc } = await supabaseAdmin.from('parceiros').select('nome, whatsapp').eq('id', parceiroId).maybeSingle()
+    if (!parc?.whatsapp) return res.status(400).json({ error: 'Parceiro sem WhatsApp cadastrado.' })
+    const pdf = await gerarKitPdf(await montarTickets(elegiveis))
+    const r = await enviarDocumentoWhatsapp(parc.whatsapp, {
+      base64: pdf.toString('base64'),
+      filename: `comprovantes-${elegiveis.length}.pdf`,
+      caption: `Segue ${elegiveis.length} comprovante(s) de exame.`,
+    })
+    logAudit({ empresaId: elegiveis[0].empresa_id, atorId: p.id, atorNome: p.nome || p.role, acao: 'qr.whatsapp_enviado', entidade: 'exame', entidadeId: elegiveis[0].id, detalhe: { destino: 'parceiro', qtd: elegiveis.length, ok: !!r.ok } })
+    if (!r.ok) return res.status(502).json({ ok: false, error: `WhatsApp recusou (${r.motivo || 'HTTP ' + r.status})`, upstream: r.body })
+    return res.json({ ok: true, destino: 'parceiro', enviados: elegiveis.length, parceiro: parc.nome })
+  }
+
+  // destino = paciente: cada paciente recebe o SEU comprovante
+  const resultados = []
+  for (const ex of elegiveis) {
+    const tel = ex.pacientes?.telefone
+    if (!tel) { resultados.push({ paciente: ex.pacientes?.nome || '—', ok: false, motivo: 'sem telefone cadastrado' }); continue }
+    const pdf = await gerarKitPdf(await montarTickets([ex]))
+    const r = await enviarDocumentoWhatsapp(tel, {
+      base64: pdf.toString('base64'),
+      filename: 'comprovante.pdf',
+      caption: `Olá! Segue o comprovante do seu exame: ${ex.nome}.`,
+    })
+    resultados.push({ paciente: ex.pacientes?.nome || '—', ok: !!r.ok, motivo: r.ok ? 'enviado' : (r.motivo || `HTTP ${r.status}`) })
+  }
+  const enviados = resultados.filter(x => x.ok).length
+  logAudit({ empresaId: elegiveis[0].empresa_id, atorId: p.id, atorNome: p.nome || p.role, acao: 'qr.whatsapp_enviado', entidade: 'exame', entidadeId: elegiveis[0].id, detalhe: { destino: 'paciente', enviados, total: elegiveis.length } })
+  res.json({ ok: enviados > 0, destino: 'paciente', enviados, total: elegiveis.length, resultados })
 })
 
 // Gera (ou reaproveita) o QR de um exame AUTORIZADO. Auth: coordenador/empresa/owner.

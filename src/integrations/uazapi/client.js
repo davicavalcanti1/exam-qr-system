@@ -24,20 +24,52 @@ function normalizarNumero(n) {
   return `55${d}`
 }
 
+// Host base da uazapi, aceitando UAZAPI_URL como host puro ou já com /send/text.
+function baseUrl() {
+  return String(process.env.UAZAPI_URL).trim()
+    .replace(/^http:\/\//i, 'https://')
+    .replace(/\/$/, '')
+    .replace(/\/send\/(text|media)$/i, '')
+}
+
 export async function enviarTextoWhatsapp(numero, texto) {
   if (!uazapiConfigurado()) return { ok: false, skipped: true, motivo: 'uazapi não configurado (UAZAPI_URL/UAZAPI_TOKEN)' }
   const num = normalizarNumero(numero)
   if (!num) return { ok: false, motivo: 'número de WhatsApp ausente/inválido' }
 
-  // UAZAPI_URL pode vir como host (…uazapi.com) OU já com o caminho (…/send/text).
-  // Mesmo valor usado no controleoperacional funciona aqui.
-  const raw = String(process.env.UAZAPI_URL).trim().replace(/^http:\/\//i, 'https://').replace(/\/$/, '')
-  const endpoint = /\/send\/text$/i.test(raw) ? raw : `${raw}/send/text`
+  const endpoint = `${baseUrl()}/send/text`
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_TOKEN },
       body: JSON.stringify({ number: num, text: texto }),
+    })
+    const body = await res.text().catch(() => '')
+    return { ok: res.ok, status: res.status, body }
+  } catch (e) {
+    return { ok: false, motivo: e.message }
+  }
+}
+
+// Envia um documento (PDF) pelo WhatsApp. `base64` = conteúdo do arquivo em base64 puro.
+// Padrão uazapi: POST /send/media { number, type:'document', file, docName, text }.
+export async function enviarDocumentoWhatsapp(numero, { base64, filename, caption }) {
+  if (!uazapiConfigurado()) return { ok: false, skipped: true, motivo: 'uazapi não configurado (UAZAPI_URL/UAZAPI_TOKEN)' }
+  const num = normalizarNumero(numero)
+  if (!num) return { ok: false, motivo: 'número de WhatsApp ausente/inválido' }
+
+  const endpoint = `${baseUrl()}/send/media`
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', token: process.env.UAZAPI_TOKEN },
+      body: JSON.stringify({
+        number: num,
+        type: 'document',
+        file: `data:application/pdf;base64,${base64}`,
+        docName: filename || 'comprovante.pdf',
+        text: caption || '',
+      }),
     })
     const body = await res.text().catch(() => '')
     return { ok: res.ok, status: res.status, body }

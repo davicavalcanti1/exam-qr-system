@@ -14,6 +14,7 @@ const ACOES = {
   'paciente.anonimizado': { label: 'Paciente anonimizado (LGPD)', icon: 'person_off', cls: 'text-error' },
   'autorizacao.lote_gerado': { label: 'Link de confirmação gerado', icon: 'send', cls: 'text-primary' },
   'qr.pdf_gerado': { label: 'Comprovantes (PDF) gerados', icon: 'picture_as_pdf', cls: 'text-on-surface' },
+  'qr.whatsapp_enviado': { label: 'Comprovante enviado por WhatsApp', icon: 'send', cls: 'text-primary' },
 }
 // traduz rows antigas em que o "ator" foi gravado como a role crua (empresa_operador, etc.)
 const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Administrador', empresa_operador: 'Operador', parceiro_coordenador: 'Coordenador', parceiro_funcionario: 'Funcionário' }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '../../lib/adminApi'
+import { useToast } from '../../components/ui'
 
 const dataHora = (s) => {
   if (!s) return null
@@ -10,11 +11,13 @@ const dataHora = (s) => {
 
 // Comprovante de exame (imprimível) com o QR. Só coordenador/empresa/owner geram.
 export default function QrModal({ exame, onClose }) {
+  const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [dataUrl, setDataUrl] = useState(null)
   const [comp, setComp] = useState(null)
   const [err, setErr] = useState('')
   const [baixando, setBaixando] = useState(false)
+  const [enviando, setEnviando] = useState(null) // 'paciente' | 'parceiro'
 
   async function baixarPdf() {
     setBaixando(true)
@@ -22,6 +25,21 @@ export default function QrModal({ exame, onClose }) {
       const nome = (comp?.paciente || 'comprovante').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()
       await adminApi.gerarQrPdf([exame.id], `comprovante-${nome}.pdf`)
     } catch (e) { setErr(e.message) } finally { setBaixando(false) }
+  }
+
+  async function enviar(destino) {
+    setEnviando(destino)
+    try {
+      const r = await adminApi.enviarComprovanteWhatsapp([exame.id], destino)
+      if (destino === 'paciente') {
+        const item = r.resultados?.[0]
+        if (r.enviados > 0) toast.success('Comprovante enviado ao WhatsApp do paciente.')
+        else toast.error(`Não enviado: ${item?.motivo || 'verifique o telefone do paciente'}`)
+      } else {
+        if (r.ok) toast.success(`Comprovante enviado ao WhatsApp do parceiro${r.parceiro ? ` (${r.parceiro})` : ''}.`)
+        else toast.error('Não foi possível enviar ao parceiro.')
+      }
+    } catch (e) { toast.error(e.message) } finally { setEnviando(null) }
   }
 
   const liberado = exame && ['autorizado', 'realizado'].includes(exame.status)
@@ -95,10 +113,16 @@ export default function QrModal({ exame, onClose }) {
               <p className="text-[10px] text-on-surface-variant text-center mt-4">Comprovante gerado pelo ExameQR · não é um documento fiscal.</p>
             </div>
 
-            <div className="no-print flex justify-end gap-2 px-6 pb-5">
-              <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-on-surface-variant hover:text-on-surface rounded-lg">Fechar</button>
-              <button onClick={() => window.print()} className="px-4 py-2 text-primary font-bold text-sm rounded-lg ring-1 ring-primary/30 hover:bg-primary/5 transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir</button>
-              <button onClick={baixarPdf} disabled={baixando} className="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5 disabled:opacity-60"><span className="material-symbols-outlined text-base">picture_as_pdf</span>{baixando ? 'Gerando…' : 'Baixar PDF'}</button>
+            <div className="no-print px-6 pb-5 space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => enviar('paciente')} disabled={!!enviando} className="flex-1 min-w-[9rem] px-3 py-2 bg-[#25D366]/10 text-[#128C4A] font-bold text-sm rounded-lg ring-1 ring-[#25D366]/40 hover:bg-[#25D366]/20 transition flex items-center justify-center gap-1.5 disabled:opacity-60"><span className="material-symbols-outlined text-base">send</span>{enviando === 'paciente' ? 'Enviando…' : 'WhatsApp do paciente'}</button>
+                <button onClick={() => enviar('parceiro')} disabled={!!enviando} className="flex-1 min-w-[9rem] px-3 py-2 bg-[#25D366]/10 text-[#128C4A] font-bold text-sm rounded-lg ring-1 ring-[#25D366]/40 hover:bg-[#25D366]/20 transition flex items-center justify-center gap-1.5 disabled:opacity-60"><span className="material-symbols-outlined text-base">send</span>{enviando === 'parceiro' ? 'Enviando…' : 'WhatsApp do parceiro'}</button>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-on-surface-variant hover:text-on-surface rounded-lg">Fechar</button>
+                <button onClick={() => window.print()} className="px-4 py-2 text-primary font-bold text-sm rounded-lg ring-1 ring-primary/30 hover:bg-primary/5 transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir</button>
+                <button onClick={baixarPdf} disabled={baixando} className="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5 disabled:opacity-60"><span className="material-symbols-outlined text-base">picture_as_pdf</span>{baixando ? 'Gerando…' : 'Baixar PDF'}</button>
+              </div>
             </div>
           </>
         )}

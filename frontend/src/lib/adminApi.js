@@ -45,6 +45,8 @@ export const adminApi = {
   gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
   // PDF de comprovantes (1 = individual do paciente; N = kit em lote pro parceiro)
   gerarQrPdf: (exameIds, filename) => baixarArquivo('/api/qr/pdf', { exameIds }, filename),
+  // envia o comprovante (PDF) por WhatsApp — destino: 'paciente' | 'parceiro'
+  enviarComprovanteWhatsapp: (exameIds, destino) => post('/api/qr/enviar-whatsapp', { exameIds, destino }),
   criarLoteAutorizacao: ({ exameIds, parceiroId, empresaId }) => post('/api/autorizacao/lotes', { exameIds, parceiroId, empresaId }),
   // integrações de agendamento (empresaId opcional: owner configura por empresa)
   listarProviders: () => req('GET', '/api/integracao/providers'),

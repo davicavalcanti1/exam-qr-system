@@ -21,6 +21,7 @@ export default function ComprovantesArea() {
   const [exames, setExames] = useState(null)
   const [sel, setSel] = useState({})
   const [baixando, setBaixando] = useState(false)
+  const [enviando, setEnviando] = useState(null) // 'paciente' | 'parceiro'
 
   useEffect(() => {
     if (ehParceiro) { carregar(parceiroId); return }
@@ -52,6 +53,23 @@ export default function ComprovantesArea() {
     } catch (e) { toast.error(e.message) } finally { setBaixando(false) }
   }
 
+  async function enviar(destino) {
+    if (!ids.length) return toast.error('Selecione ao menos um paciente.')
+    setEnviando(destino)
+    try {
+      const r = await adminApi.enviarComprovanteWhatsapp(ids, destino)
+      if (destino === 'parceiro') {
+        r.ok ? toast.success(`PDF com ${r.enviados} comprovante(s) enviado ao parceiro${r.parceiro ? ` (${r.parceiro})` : ''}.`)
+             : toast.error('Não foi possível enviar ao parceiro.')
+      } else {
+        const falhas = (r.resultados || []).filter(x => !x.ok)
+        if (r.enviados > 0 && !falhas.length) toast.success(`Comprovante enviado a ${r.enviados} paciente(s).`)
+        else if (r.enviados > 0) toast.success(`${r.enviados} enviado(s); ${falhas.length} sem telefone/erro.`)
+        else toast.error('Nenhum paciente tinha telefone válido cadastrado.')
+      }
+    } catch (e) { toast.error(e.message) } finally { setEnviando(null) }
+  }
+
   return (
     <div className="space-y-6 max-w-3xl">
       <Card className="p-6">
@@ -72,12 +90,16 @@ export default function ComprovantesArea() {
       {parceiroSel && (exames === null ? <Loading />
         : exames.length === 0 ? <Card><EmptyState icon="qr_code_2" title="Nada autorizado" hint="Nenhum exame autorizado (com QR disponível) para este parceiro." /></Card>
         : <Card className="overflow-hidden">
-            <div className="p-4 border-b border-outline-variant/10 flex items-center justify-between gap-3">
+            <div className="p-4 border-b border-outline-variant/10 flex items-center justify-between gap-3 flex-wrap">
               <label className="flex items-center gap-2 text-sm font-bold cursor-pointer">
                 <input type="checkbox" checked={todos} onChange={e => setSel(e.target.checked ? Object.fromEntries(exames.map(x => [x.id, true])) : {})} className="w-4 h-4 accent-primary" />
                 Selecionar todos ({exames.length})
               </label>
-              <Button icon="picture_as_pdf" onClick={baixar} loading={baixando} disabled={!ids.length}>Baixar PDF ({ids.length})</Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="secondary" icon="picture_as_pdf" onClick={baixar} loading={baixando} disabled={!ids.length}>PDF ({ids.length})</Button>
+                <Button variant="secondary" icon="send" onClick={() => enviar('paciente')} loading={enviando === 'paciente'} disabled={!ids.length || !!enviando}>Enviar a pacientes</Button>
+                <Button icon="send" onClick={() => enviar('parceiro')} loading={enviando === 'parceiro'} disabled={!ids.length || !!enviando}>Enviar ao parceiro</Button>
+              </div>
             </div>
             <div className="divide-y divide-outline-variant/10">
               {exames.map(e => (
