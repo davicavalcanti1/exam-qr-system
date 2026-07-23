@@ -47,7 +47,7 @@ export default function CatalogoArea() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold mb-4">Novo exame</h3>
         <form onSubmit={criar} className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 items-end">
           <Field label="Nome do exame"><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Mamografia Parceiro" required /></Field>

@@ -256,7 +256,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
 
   return (
     <div className="space-y-8">
-      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
+      <section className="bg-surface-container-lowest p-5 sm:p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-4">Novo paciente</h3>
         {catalogo.length === 0 ? (
           <p className="text-sm text-on-surface-variant py-4">Nenhum exame no catálogo. Peça ao administrador da empresa para cadastrar os exames em <b>Exames &amp; preços</b>.</p>
@@ -386,7 +386,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
       </section>
 
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
-        <div className="p-6 border-b border-outline-variant/10 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 sm:p-6 border-b border-outline-variant/10 flex flex-wrap items-center justify-between gap-3">
           <h3 className="text-lg font-semibold">Pacientes ({lista.length})</h3>
           {lista.length > 0 && (
             <div className="relative">
@@ -403,7 +403,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
               if (filtrada.length === 0) return <EmptyState icon="search_off" title="Nada encontrado" hint="Nenhum paciente com esse nome ou CPF." />
               return <div className="divide-y divide-outline-variant/10">
               {filtrada.map(p => (
-                <div key={p.id} className="px-6 py-4 hover:bg-black/[.02] transition">
+                <div key={p.id} className="px-4 sm:px-6 py-4 hover:bg-black/[.02] transition">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(p.nome || '?').charAt(0).toUpperCase()}</div>
                     <div className="min-w-0 flex-1"><p className="font-semibold truncate">{p.nome}</p><p className="text-[11px] text-on-surface-variant tabular-nums">{p.anonimizado ? 'dados anonimizados' : p.cpf}</p></div>

@@ -74,7 +74,7 @@ export default function DesenvolvedorArea({ empresaId, empresaNome }) {
       </div>
 
       {/* Seleção do método */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <span className={label}>Método de agendamento</span>
         <div className="grid gap-3 mt-3 sm:grid-cols-2">
           {Object.entries(providers).map(([k, v]) => (

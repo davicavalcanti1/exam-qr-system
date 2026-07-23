@@ -44,7 +44,7 @@ export default function PerfilArea({ onBack }) {
       </div>
 
       {/* Conta */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-4 mb-5">
           <span className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-extrabold text-xl flex-none">{inicial}</span>
           <div className="min-w-0">
@@ -59,14 +59,14 @@ export default function PerfilArea({ onBack }) {
       </Card>
 
       {/* Aparência */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold">Aparência</h3>
         <p className="text-sm text-on-surface-variant mt-1 mb-4">Tema e cor de destaque do sistema.</p>
         <AparenciaControls />
       </Card>
 
       {/* Segurança */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold">Segurança</h3>
         <p className="text-sm text-on-surface-variant mt-1 mb-4">Altere sua senha de acesso.</p>
         <form onSubmit={salvarSenha} className="space-y-4 max-w-sm">

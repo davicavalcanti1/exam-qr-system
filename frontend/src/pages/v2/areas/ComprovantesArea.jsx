@@ -72,7 +72,7 @@ export default function ComprovantesArea() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold">Comprovantes (QR) em lote</h3>
         <p className="text-sm text-on-surface-variant mt-1 mb-4">
           Selecione os pacientes com exame autorizado e baixe <b>um único PDF</b> com todos os QR codes — pronto para enviar ao parceiro pelo WhatsApp ou imprimir. Cada QR também pode ser baixado individualmente pelo comprovante do paciente.

@@ -55,7 +55,7 @@ export default function OwnerArea() {
   return (
     <div className="space-y-6">
       {/* Nova empresa (recolhível) */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Empresas principais</h3>
           <Button size="sm" icon={novo ? 'close' : 'add'} variant={novo ? 'ghost' : 'primary'} onClick={() => setNovo(v => !v)}>{novo ? 'Cancelar' : 'Nova empresa'}</Button>

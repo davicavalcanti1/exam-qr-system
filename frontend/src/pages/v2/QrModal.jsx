@@ -59,14 +59,14 @@ export default function QrModal({ exame, onClose }) {
   const quando = dataHora(c.scheduledAt)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadein" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fadein" onClick={onClose}>
       <style>{`@media print {
         body * { visibility: hidden !important; }
         #comprovante-print, #comprovante-print * { visibility: visible !important; }
         #comprovante-print { position: absolute; inset: 0; margin: 0; box-shadow: none; border-radius: 0; }
         .no-print { display: none !important; }
       }`}</style>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto animate-popin" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto animate-popin" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10 no-print">
           <h3 className="text-lg font-bold">Comprovante do exame</h3>
           <button onClick={onClose} className="p-1 text-on-surface-variant hover:text-on-surface"><span className="material-symbols-outlined">close</span></button>
@@ -83,7 +83,7 @@ export default function QrModal({ exame, onClose }) {
           <p className="p-8 text-sm text-error text-center">{err}</p>
         ) : (
           <>
-            <div id="comprovante-print" className="p-6">
+            <div id="comprovante-print" className="p-4 sm:p-6">
               {/* Cabeçalho: marca da clínica */}
               <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-5">
                 <div className="flex items-center gap-2 min-w-0">

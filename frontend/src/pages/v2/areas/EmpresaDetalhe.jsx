@@ -163,7 +163,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       </div>
 
       {aba === 'info' && (carregando ? <Loading /> : (
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold">Informações</h3>
             <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
 
       {aba === 'config' && <ConfiguracoesEmpresa empresa={emp} onSaved={loadEmpresa} />}
 
-      {aba === 'consumo' && <Card className="p-6"><ConsumoEmpresa empresaId={emp.id} /></Card>}
+      {aba === 'consumo' && <Card className="p-4 sm:p-6"><ConsumoEmpresa empresaId={emp.id} /></Card>}
 
       {aba === 'usuarios' && (
         <Card className="overflow-hidden">

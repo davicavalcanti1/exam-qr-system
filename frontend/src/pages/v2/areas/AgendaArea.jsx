@@ -47,15 +47,15 @@ export default function AgendaArea() {
     <div className="space-y-6">
       {grupos.map(g => (
         <Card key={g.dia} className="overflow-hidden">
-          <div className="px-6 py-3 bg-primary/5 border-b border-outline-variant/10">
+          <div className="px-4 sm:px-6 py-3 bg-primary/5 border-b border-outline-variant/10">
             <h3 className="text-sm font-bold capitalize text-primary">{diaLabel(g.dia)}</h3>
           </div>
           <div className="divide-y divide-outline-variant/10">
             {g.itens.map(e => {
               const st = STATUS[e.status] || STATUS.rascunho
               return (
-                <div key={e.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-black/[.02] transition">
-                  <span className="text-sm font-bold tabular-nums text-primary w-14 flex-none">{hora(e.scheduled_at)}</span>
+                <div key={e.id} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3.5 hover:bg-black/[.02] transition">
+                  <span className="text-sm font-bold tabular-nums text-primary w-12 sm:w-14 flex-none">{hora(e.scheduled_at)}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold truncate">{e.pacientes?.nome || '—'}</p>
                     <p className="text-[11px] text-on-surface-variant truncate">{e.nome} · {e.parceiros?.nome || '—'}</p>

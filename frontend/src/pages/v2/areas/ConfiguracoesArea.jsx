@@ -6,7 +6,7 @@ import UsuariosEmpresa from './UsuariosEmpresa'
 
 function Preferencias() {
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-6">
       <h3 className="text-lg font-semibold">Preferências</h3>
       <p className="text-sm text-on-surface-variant mt-1 mb-5">Aparência e idioma do sistema.</p>
       <AparenciaControls />

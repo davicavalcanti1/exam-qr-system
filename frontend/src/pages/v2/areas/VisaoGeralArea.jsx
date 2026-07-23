@@ -145,7 +145,7 @@ export default function VisaoGeralArea({ irPara }) {
         </Card>
 
         {/* Financeiro / teto */}
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <h3 className="font-semibold mb-4">Financeiro</h3>
           <div className="grid grid-cols-3 gap-3 mb-5">
             <div><p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Em aberto</p><p className="text-lg font-extrabold tabular-nums text-yellow-600">{fmt(d.emAberto)}</p></div>

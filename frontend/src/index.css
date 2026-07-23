@@ -42,6 +42,18 @@
 body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; background: rgb(var(--background)); color: rgb(var(--on-surface)); }
 ::selection { background: #A7EBC5; color: #0C5F30; }
 
+/* ===== Rede de segurança mobile ===== */
+/* nada rola pro lado por acidente; mídia nunca estoura a largura */
+html, body, #root { max-width: 100%; overflow-x: hidden; }
+img, svg, video, canvas { max-width: 100%; height: auto; }
+/* Leaflet posiciona os tiles com tamanho próprio — não pode ser limitado */
+.leaflet-container img { max-width: none !important; height: auto; }
+* { -webkit-tap-highlight-color: transparent; }
+/* no iOS, input com fonte < 16px força zoom ao focar — evita o "pulo" */
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px; }
+}
+
 /* animações base do kit */
 @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
 @keyframes popin { from { opacity: 0; transform: translateY(8px) scale(.98) } to { opacity: 1; transform: none } }

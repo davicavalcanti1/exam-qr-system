@@ -47,7 +47,7 @@ export default function ConfirmacoesArea() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold">Confirmações por link</h3>
         <p className="text-sm text-on-surface-variant mt-1 mb-4">Selecione os exames agendados e gere um link para o parceiro autorizar tudo de uma vez.</p>
         <Field label="Parceiro">

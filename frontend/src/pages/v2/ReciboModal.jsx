@@ -25,14 +25,14 @@ export default function ReciboModal({ cobrancaId, onClose }) {
   }, [cobrancaId])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadein" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadein" onClick={onClose}>
       <style>{`@media print {
         body * { visibility: hidden !important; }
         #recibo-print, #recibo-print * { visibility: visible !important; }
         #recibo-print { position: absolute; inset: 0; margin: 0; box-shadow: none; border-radius: 0; max-height: none; }
         .no-print { display: none !important; }
       }`}</style>
-      <div className="bg-white rounded-2xl shadow-card w-full max-w-lg max-h-[90vh] overflow-y-auto animate-popin" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-card w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] overflow-y-auto animate-popin" onClick={e => e.stopPropagation()}>
         {!c ? <div className="p-10 text-center text-on-surface-variant text-sm">Carregando…</div> : (
           <>
             <div id="recibo-print" className="p-8">

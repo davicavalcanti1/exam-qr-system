@@ -17,8 +17,8 @@ export function ConfirmProvider({ children }) {
     <ConfirmCtx.Provider value={confirm}>
       {children}
       {st && (
-        <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadein" onClick={() => fechar(false)}>
-          <div className="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-popin" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadein" onClick={() => fechar(false)}>
+          <div className="bg-surface-container-lowest rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-popin" onClick={e => e.stopPropagation()}>
             <div className="flex items-start gap-3">
               <span className={`w-10 h-10 rounded-xl flex items-center justify-center flex-none ${st.danger ? 'bg-error-container/50 text-on-error-container' : 'bg-primary/10 text-primary'}`}>
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{st.danger ? 'warning' : 'help'}</span>

@@ -208,8 +208,8 @@ export default function Painel() {
       <div className="flex-1 lg:ml-64 min-w-0 flex flex-col">
         <header className="sticky top-0 z-20 bg-surface/80 backdrop-blur border-b border-outline-variant/10 px-5 lg:px-8 h-16 flex items-center gap-3">
           <button onClick={() => setMenuAberto(true)} className="lg:hidden p-2 -ml-2 text-on-surface-variant"><span className="material-symbols-outlined">menu</span></button>
-          <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>{view === 'perfil' ? 'manage_accounts' : (atual?.icon || 'dashboard')}</span>
-          <h1 className="font-display text-lg font-extrabold tracking-tight">{view === 'perfil' ? 'Perfil' : (atual?.label || 'Painel')}</h1>
+          <span className="material-symbols-outlined text-primary flex-none" style={{ fontVariationSettings: "'FILL' 1" }}>{view === 'perfil' ? 'manage_accounts' : (atual?.icon || 'dashboard')}</span>
+          <h1 className="font-display text-lg font-extrabold tracking-tight truncate min-w-0">{view === 'perfil' ? 'Perfil' : (atual?.label || 'Painel')}</h1>
           {role !== 'owner' && nav.length > 0 && (
             <div className="ml-auto">
               <BuscaGlobal onSelect={() => irPara(role === 'empresa_admin' ? 'agendamentos' : 'pacientes')} />

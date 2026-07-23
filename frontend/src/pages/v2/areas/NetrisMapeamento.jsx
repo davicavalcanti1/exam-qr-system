@@ -89,8 +89,8 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
     marca(cat.id, 'ok')
   }
 
-  if (loading) return <Card className="p-6"><Loading label="Carregando listas do NetRis…" /></Card>
-  if (erro) return <Card className="p-6"><p className="text-sm text-on-error-container">Não foi possível carregar do NetRis: {erro}</p></Card>
+  if (loading) return <Card className="p-4 sm:p-6"><Loading label="Carregando listas do NetRis…" /></Card>
+  if (erro) return <Card className="p-4 sm:p-6"><p className="text-sm text-on-error-container">Não foi possível carregar do NetRis: {erro}</p></Card>
 
   const Selo = ({ id }) => salvo[id] === 'salvando' ? <span className="text-[11px] text-on-surface-variant">salvando…</span>
     : salvo[id] === 'ok' ? <span className="text-[11px] text-primary font-bold">✓ salvo</span>
@@ -105,7 +105,7 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
       <datalist id="dl-planos">{planos.map(p => <option key={p.idPlanoConvenio} value={`${p.idPlanoConvenio} — ${p.nome}`} />)}</datalist>
       <datalist id="dl-procs">{procs.map(p => <option key={p.idProcedimento} value={`${p.idProcedimento} — ${p.nome}`} />)}</datalist>
 
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold mb-1">Parceiros → plano-convênio NetRis</h3>
         <p className="text-sm text-on-surface-variant mb-4">Vincule cada parceiro ao plano-convênio dele no NetRis ({planos.length} planos). O convênio é preenchido junto.</p>
         {parceiros.length === 0 ? <p className="text-sm text-on-surface-variant">Nenhum parceiro cadastrado.</p> : (
@@ -123,7 +123,7 @@ export default function NetrisMapeamento({ empresaId: empresaIdProp }) {
         )}
       </Card>
 
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold mb-1">Exames → procedimento NetRis</h3>
         <p className="text-sm text-on-surface-variant mb-3">Vincule cada exame do catálogo a um procedimento do plano abaixo. Só aparecem procedimentos <b>desse plano</b> — isso garante que o agendamento vai funcionar (evita o erro de mismatch).</p>
         <div className="flex items-center gap-2 mb-4">
