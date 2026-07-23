@@ -166,6 +166,13 @@ export default function PacientesArea({ escolherParceiro = false }) {
     setExames(x => x.map((y, idx) => idx === i ? { ...y, slot } : y))
   }
 
+  // Troca o tipo de exame do item: limpa horários já buscados e o slot escolhido,
+  // pois eram do exame anterior (senão a agenda antiga fica "presa" no formulário).
+  function trocarProc(i, procId) {
+    setExames(x => x.map((y, idx) => idx === i ? { ...y, procId, slot: null } : y))
+    setSlotsPorItem(s => { const n = { ...s }; delete n[i]; return n })
+  }
+
   // LGPD — direito de acesso/portabilidade: baixa todos os dados do paciente.
   async function exportarPaciente(p) {
     try {
@@ -304,7 +311,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
               {exames.map((ex, i) => (
                 <div key={i} className="bg-surface rounded-lg p-3 space-y-2">
                   <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-center">
-                    <select className={input} value={ex.procId} onChange={e => setExames(x => x.map((y, idx) => idx === i ? { ...y, procId: e.target.value } : y))} required>
+                    <select className={input} value={ex.procId} onChange={e => trocarProc(i, e.target.value)} required>
                       <option value="">Selecione o exame…</option>
                       {catalogo.map(c => <option key={c.id} value={c.id}>{c.nome} ({fmt(c.valor)})</option>)}
                     </select>
