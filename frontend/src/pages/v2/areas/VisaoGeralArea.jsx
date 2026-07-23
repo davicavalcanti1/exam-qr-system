@@ -98,9 +98,9 @@ export default function VisaoGeralArea({ irPara }) {
           <h2 className="font-display text-2xl font-extrabold tracking-tight">Olá{nome ? `, ${nome}` : ''} 👋</h2>
           <p className="text-sm text-on-surface-variant">Aqui está o resumo de hoje.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1 -mb-1 sm:flex-wrap">
           {atalhos.map(a => (
-            <button key={a.k} onClick={() => irPara?.(a.k)} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-on-primary text-sm font-bold hover:bg-primary-container transition">
+            <button key={a.k} onClick={() => irPara?.(a.k)} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-on-primary text-sm font-bold hover:bg-primary-container transition flex-none whitespace-nowrap">
               <span className="material-symbols-outlined text-base">{a.icon}</span>{a.label}
             </button>
           ))}
@@ -117,14 +117,14 @@ export default function VisaoGeralArea({ irPara }) {
       )}
 
       {/* Cards de métrica */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {d.parceiros != null && <Stat icon="handshake" label="Parceiros" valor={d.parceiros} tone="primary" onClick={role === 'empresa_admin' ? () => irPara?.('parceiros') : undefined} />}
         <Stat icon="groups" label="Pacientes" valor={d.pacientes} tone="primary" />
         <Stat icon="fact_check" label="Autorizados" valor={d.by.autorizado} tone="gold" />
         <Stat icon="task_alt" label="Realizados" valor={d.by.realizado} tone="green" />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-6 items-start">
         {/* Próximos agendamentos */}
         <Card className="overflow-hidden">
           <div className="px-4 sm:px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between">
