@@ -14,6 +14,15 @@ export default function QrModal({ exame, onClose }) {
   const [dataUrl, setDataUrl] = useState(null)
   const [comp, setComp] = useState(null)
   const [err, setErr] = useState('')
+  const [baixando, setBaixando] = useState(false)
+
+  async function baixarPdf() {
+    setBaixando(true)
+    try {
+      const nome = (comp?.paciente || 'comprovante').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()
+      await adminApi.gerarQrPdf([exame.id], `comprovante-${nome}.pdf`)
+    } catch (e) { setErr(e.message) } finally { setBaixando(false) }
+  }
 
   const liberado = exame && ['autorizado', 'realizado'].includes(exame.status)
 
@@ -88,7 +97,8 @@ export default function QrModal({ exame, onClose }) {
 
             <div className="no-print flex justify-end gap-2 px-6 pb-5">
               <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-on-surface-variant hover:text-on-surface rounded-lg">Fechar</button>
-              <button onClick={() => window.print()} className="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir / PDF</button>
+              <button onClick={() => window.print()} className="px-4 py-2 text-primary font-bold text-sm rounded-lg ring-1 ring-primary/30 hover:bg-primary/5 transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir</button>
+              <button onClick={baixarPdf} disabled={baixando} className="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center gap-1.5 disabled:opacity-60"><span className="material-symbols-outlined text-base">picture_as_pdf</span>{baixando ? 'Gerando…' : 'Baixar PDF'}</button>
             </div>
           </>
         )}

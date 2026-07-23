@@ -24,6 +24,7 @@ import ConfiguracoesArea from './areas/ConfiguracoesArea'
 import ParceiroMarcaArea from './areas/ParceiroMarcaArea'
 import PerfilArea from './areas/PerfilArea'
 import ConfirmacoesArea from './areas/ConfirmacoesArea'
+import ComprovantesArea from './areas/ComprovantesArea'
 import MapaArea from './areas/MapaArea'
 
 // Troca de senha obrigatória no primeiro acesso.
@@ -83,6 +84,7 @@ const NAV = {
     { k: 'parceiros', label: 'Parceiros', icon: 'handshake' },
     { k: 'agendamentos', label: 'Agendamentos', icon: 'event' },
     { k: 'confirmacoes', label: 'Confirmações', icon: 'checklist' },
+    { k: 'comprovantes', label: 'Comprovantes', icon: 'qr_code_2' },
     { k: 'agenda', label: 'Agenda', icon: 'calendar_month' },
     { k: 'catalogo', label: 'Exames & preços', icon: 'medical_services' },
     { k: 'cobrancas', label: 'Cobranças', icon: 'receipt_long' },
@@ -95,6 +97,7 @@ const NAV = {
     { k: 'pacientes', label: 'Pacientes', icon: 'groups' },
     { k: 'agenda', label: 'Agenda', icon: 'calendar_month' },
     { k: 'autorizacoes', label: 'Autorizações', icon: 'fact_check' },
+    { k: 'comprovantes', label: 'Comprovantes', icon: 'qr_code_2' },
     { k: 'cobrancas', label: 'Cobranças', icon: 'receipt_long' },
     { k: 'contrato', label: 'Contrato', icon: 'description' },
     { k: 'equipe', label: 'Funcionários', icon: 'badge' },
@@ -104,6 +107,7 @@ const NAV = {
   empresa_operador: [
     { k: 'agendamentos', label: 'Agendamentos', icon: 'event' },
     { k: 'confirmacoes', label: 'Confirmações', icon: 'checklist' },
+    { k: 'comprovantes', label: 'Comprovantes', icon: 'qr_code_2' },
   ],
 }
 
@@ -119,6 +123,7 @@ function renderArea(role, k, irPara) {
     parceiros: <EmpresaArea />,
     agendamentos: <PacientesArea escolherParceiro />,
     confirmacoes: <ConfirmacoesArea />,
+    comprovantes: <ComprovantesArea />,
     agenda: <AgendaArea />,
     catalogo: <CatalogoArea />,
     contratos: <ContratosArea />,

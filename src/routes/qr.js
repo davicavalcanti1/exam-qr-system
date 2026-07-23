@@ -5,8 +5,78 @@ import { supabaseAdmin, supabaseConfigured, getCaller } from '../lib/supabaseAdm
 import { agendaParaEmpresa } from '../integrations/agenda.js'
 import { SITUACAO } from '../integrations/netris/client.js'
 import { logAudit } from '../lib/audit.js'
+import { gerarKitPdf } from '../utils/qrKitPdf.js'
 
 const router = Router()
+
+// Garante um token de QR ativo para o exame (cria se não existir). Retorna o token.
+async function garantirQrToken(exame) {
+  let { data: qr } = await supabaseAdmin
+    .from('qr_codes').select('token').eq('exame_id', exame.id).eq('status', 'ativo').maybeSingle()
+  if (!qr) {
+    const token = crypto.randomUUID()
+    const { data: novo, error } = await supabaseAdmin.from('qr_codes')
+      .insert({ empresa_id: exame.empresa_id, parceiro_id: exame.parceiro_id, exame_id: exame.id, token, status: 'ativo' })
+      .select('token').single()
+    if (error) throw new Error(error.message)
+    qr = novo
+  }
+  return qr.token
+}
+
+const brData = (s) => s
+  ? new Date(s).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  : null
+
+// Gera um PDF de comprovantes (1..N) — individual (1 id) ou kit em lote para o parceiro.
+router.post('/pdf', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  const p = c.profile
+  const { exameIds } = req.body || {}
+  if (!Array.isArray(exameIds) || exameIds.length === 0) return res.status(400).json({ error: 'exameIds é obrigatório' })
+
+  const { data: exames } = await supabaseAdmin
+    .from('exames').select('id, empresa_id, parceiro_id, status, nome, scheduled_at, created_at, pacientes(nome)')
+    .in('id', exameIds).order('created_at')
+
+  const podeVer = (ex) => {
+    if (p.role === 'owner') return true
+    if (['empresa_admin', 'empresa_operador'].includes(p.role)) return p.empresa_id === ex.empresa_id
+    if (p.role === 'parceiro_coordenador') return p.parceiro_id === ex.parceiro_id
+    return false
+  }
+  const elegiveis = (exames || []).filter(ex => podeVer(ex) && ['autorizado', 'realizado'].includes(ex.status))
+  if (elegiveis.length === 0) return res.status(400).json({ error: 'Nenhum exame elegível (precisa estar autorizado e você ter acesso).' })
+
+  // branding por empresa (com logo, best-effort) — cache no request
+  const cache = {}
+  async function branding(empresaId) {
+    if (cache[empresaId]) return cache[empresaId]
+    const { data: emp } = await supabaseAdmin.from('empresas').select('nome, nome_exibicao, logo_url').eq('id', empresaId).maybeSingle()
+    let logoBuf = null
+    if (emp?.logo_url) { try { const r = await fetch(emp.logo_url); if (r.ok) logoBuf = Buffer.from(await r.arrayBuffer()) } catch { /* sem logo */ } }
+    return (cache[empresaId] = { nome: emp?.nome_exibicao || emp?.nome || 'Clínica', logoBuf })
+  }
+
+  const tickets = []
+  for (const ex of elegiveis) {
+    const token = await garantirQrToken(ex)
+    const qrBuf = await QRCode.toBuffer(token, { width: 300, margin: 1, errorCorrectionLevel: 'H' })
+    const b = await branding(ex.empresa_id)
+    tickets.push({
+      paciente: ex.pacientes?.nome || '—', exame: ex.nome || '—', quando: brData(ex.scheduled_at),
+      protocolo: token.slice(0, 8).toUpperCase(), empresaNome: b.nome, logoBuf: b.logoBuf, qrBuf,
+    })
+  }
+
+  const pdf = await gerarKitPdf(tickets)
+  const empresaId = elegiveis[0].empresa_id
+  logAudit({ empresaId, atorId: p.id, atorNome: p.nome || p.role, acao: 'qr.pdf_gerado', entidade: 'exame', entidadeId: elegiveis[0].id, detalhe: { qtd: tickets.length } })
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Content-Disposition', `attachment; filename="comprovantes-${tickets.length}.pdf"`)
+  res.send(pdf)
+})
 
 // Gera (ou reaproveita) o QR de um exame AUTORIZADO. Auth: coordenador/empresa/owner.
 router.post('/gerar', async (req, res) => {

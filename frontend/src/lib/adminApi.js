@@ -18,6 +18,23 @@ async function req(method, path, body) {
 }
 const post = (path, body) => req('POST', path, body)
 
+// POST que retorna um arquivo (PDF) e dispara o download no navegador.
+async function baixarArquivo(path, body, filename) {
+  const t = await token()
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Falha ao gerar o arquivo') }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename || 'arquivo.pdf'
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+}
+
 export const adminApi = {
   createUser: (payload) => post('/api/admin/users', payload),
   createParceiro: (payload) => post('/api/admin/parceiros', payload),
@@ -26,6 +43,8 @@ export const adminApi = {
   excluirUser: (id) => req('DELETE', `/api/admin/users/${id}`),
   resetarSenha: (id) => post(`/api/admin/users/${id}/reset-senha`, {}),
   gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
+  // PDF de comprovantes (1 = individual do paciente; N = kit em lote pro parceiro)
+  gerarQrPdf: (exameIds, filename) => baixarArquivo('/api/qr/pdf', { exameIds }, filename),
   criarLoteAutorizacao: ({ exameIds, parceiroId, empresaId }) => post('/api/autorizacao/lotes', { exameIds, parceiroId, empresaId }),
   // integrações de agendamento (empresaId opcional: owner configura por empresa)
   listarProviders: () => req('GET', '/api/integracao/providers'),
