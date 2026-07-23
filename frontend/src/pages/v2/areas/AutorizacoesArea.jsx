@@ -87,7 +87,7 @@ export default function AutorizacoesArea() {
     )}
     {aviso && <div className="text-sm px-4 py-3 rounded-xl bg-surface-container-lowest shadow-card">{aviso}</div>}
     <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
-      <div className="p-6 border-b border-outline-variant/10">
+      <div className="p-4 sm:p-6 border-b border-outline-variant/10">
         <h3 className="text-lg font-semibold">Aguardando sua autorização ({itens.length})</h3>
         <p className="text-sm text-on-surface-variant mt-1">Exames registrados pelos funcionários. Autorize para liberar a geração do QR.</p>
       </div>
@@ -95,15 +95,15 @@ export default function AutorizacoesArea() {
         ? <p className="text-center py-16 text-on-surface-variant text-sm">Nada pendente. Tudo em dia. 🎉</p>
         : <div className="divide-y divide-outline-variant/10">
             {itens.map(ex => (
-              <div key={ex.id} className="flex items-center justify-between gap-4 px-6 py-4">
+              <div key={ex.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4">
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{ex.pacientes?.nome || '—'}</p>
                   <p className="text-sm text-on-surface-variant truncate">{ex.nome}{ex.indicacao ? ` · ${ex.indicacao}` : ''} · <span className="tabular-nums">{fmt(ex.valor)}</span></p>
                   {ex.netris_slot && <p className="text-[11px] text-primary font-bold flex items-center gap-1 mt-0.5"><span className="material-symbols-outlined" style={{ fontSize: '13px' }}>schedule</span>NetRis: {String(ex.netris_slot.data || '').slice(0, 5)} {ex.netris_slot.horarioString} (agenda ao autorizar)</p>}
                 </div>
-                <div className="flex gap-2 flex-none">
-                  <Button size="sm" loading={busy === ex.id} disabled={tetoAtingido} onClick={() => decidir(ex, true)} icon="check" title={tetoAtingido ? 'Teto atingido' : ''}>Autorizar</Button>
-                  <Button size="sm" variant="danger" disabled={busy === ex.id} onClick={() => decidir(ex, false)}>Recusar</Button>
+                <div className="flex gap-2 flex-none w-full sm:w-auto">
+                  <Button size="sm" loading={busy === ex.id} disabled={tetoAtingido} onClick={() => decidir(ex, true)} icon="check" title={tetoAtingido ? 'Teto atingido' : ''} className="flex-1 sm:flex-none">Autorizar</Button>
+                  <Button size="sm" variant="danger" disabled={busy === ex.id} onClick={() => decidir(ex, false)} className="flex-1 sm:flex-none">Recusar</Button>
                 </div>
               </div>
             ))}

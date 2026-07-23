@@ -96,7 +96,7 @@ export default function CobrancasArea({ somenteLeitura = false }) {
   return (
     <div className="space-y-8">
       {!somenteLeitura && (
-      <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card">
+      <section className="bg-surface-container-lowest p-5 sm:p-6 rounded-2xl shadow-card">
         <h3 className="text-lg font-semibold mb-1">Fechar lote de cobrança</h3>
         <p className="text-sm text-on-surface-variant mb-4">Soma os exames <b>realizados</b> (débito no scan) do parceiro no período, ainda não faturados.</p>
         <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr_auto] gap-3 items-end">
@@ -137,14 +137,14 @@ export default function CobrancasArea({ somenteLeitura = false }) {
       )}
 
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
-        <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">{somenteLeitura ? 'Suas cobranças' : 'Lotes'} ({lista.length})</h3></div>
+        <div className="p-4 sm:p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">{somenteLeitura ? 'Suas cobranças' : 'Lotes'} ({lista.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
           : lista.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum lote fechado ainda.</p>
           : <div className="divide-y divide-outline-variant/10">
               {lista.map(c => {
                 const st = ST[c.status] || ST.aberta
                 return (
-                  <div key={c.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-black/[.02] transition">
+                  <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-black/[.02] transition">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(c.parceiros?.nome || '?').charAt(0).toUpperCase()}</span>
                       <div className="min-w-0">
@@ -152,7 +152,7 @@ export default function CobrancasArea({ somenteLeitura = false }) {
                         <p className="text-[11px] text-on-surface-variant tabular-nums">{c.periodo_inicio} → {c.periodo_fim} · {c.qtd_exames} exame(s)</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 flex-none">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap pl-12 sm:pl-0">
                       <span className="tabular-nums font-semibold">{fmt(c.valor_total)}</span>
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
                       <button onClick={() => setRecibo(c.id)} className="p-2 text-on-surface-variant hover:text-primary" title="Recibo"><span className="material-symbols-outlined">receipt_long</span></button>

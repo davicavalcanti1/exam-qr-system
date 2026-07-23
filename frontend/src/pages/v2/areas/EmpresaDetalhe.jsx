@@ -153,10 +153,10 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       </div>
 
       {/* Abas */}
-      <div className="flex gap-1 bg-surface-container rounded-xl p-1 w-fit">
+      <div className="flex gap-1 bg-surface-container rounded-xl p-1 w-full sm:w-fit overflow-x-auto">
         {ABAS.map(a => (
           <button key={a.k} onClick={() => setAba(a.k)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition ${aba === a.k ? 'bg-surface-container-lowest text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-sm font-bold transition flex-none whitespace-nowrap ${aba === a.k ? 'bg-surface-container-lowest text-primary shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{a.icon}</span>{a.label}
           </button>
         ))}
@@ -251,7 +251,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
 
       {aba === 'usuarios' && (
         <Card className="overflow-hidden">
-          <div className="p-6 border-b border-outline-variant/10 flex items-center justify-between">
+          <div className="p-4 sm:p-6 border-b border-outline-variant/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h3 className="text-lg font-semibold">Usuários da empresa</h3>
             <div className="flex flex-wrap items-center gap-2">
               <Button size="sm" variant="secondary" icon="mail" onClick={() => setConvidar(true)}>Convidar</Button>
@@ -263,7 +263,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
             : admins.length === 0 ? <EmptyState icon="group_add" title="Nenhum administrador" hint="Crie o administrador desta empresa." />
             : <div className="divide-y divide-outline-variant/10">
                 {admins.map(u => (
-                  <div key={u.id} className="flex items-center gap-3 px-6 py-3.5">
+                  <div key={u.id} className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3.5">
                     <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(u.nome || '?').charAt(0).toUpperCase()}</span>
                     <div className={`min-w-0 flex-1 ${u.ativo ? '' : 'opacity-50'}`}>
                       <p className={`font-semibold text-sm truncate ${u.ativo ? '' : 'line-through'}`}>{u.nome}</p>

@@ -99,18 +99,18 @@ export default function EmpresaArea() {
       </section>
 
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
-        <div className="p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Parceiros ({parceiros.length})</h3></div>
+        <div className="p-4 sm:p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">Parceiros ({parceiros.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
           : parceiros.length === 0 ? <p className="text-center py-10 text-on-surface-variant text-sm">Nenhum parceiro ainda.</p>
           : <div className="divide-y divide-outline-variant/10">
               {parceiros.map(p => (
                 <div key={p.id}>
-                  <button onClick={() => toggle(p.id)} className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50/60 transition text-left">
-                    <div><p className="font-semibold">{p.nome}</p><p className="text-[11px] text-on-surface-variant">Teto {fmt(p.teto)} · contrato {p.contrato_status}{p.documento ? ` · ${(p.tipo_documento || 'doc').toUpperCase()} ${p.documento}` : ''}</p></div>
-                    <span className="material-symbols-outlined text-on-surface-variant">{expanded === p.id ? 'expand_less' : 'expand_more'}</span>
+                  <button onClick={() => toggle(p.id)} className="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 hover:bg-slate-50/60 transition text-left">
+                    <div className="min-w-0"><p className="font-semibold truncate">{p.nome}</p><p className="text-[11px] text-on-surface-variant truncate">Teto {fmt(p.teto)} · contrato {p.contrato_status}{p.documento ? ` · ${(p.tipo_documento || 'doc').toUpperCase()} ${p.documento}` : ''}</p></div>
+                    <span className="material-symbols-outlined text-on-surface-variant flex-none">{expanded === p.id ? 'expand_less' : 'expand_more'}</span>
                   </button>
                   {expanded === p.id && (
-                    <div className="px-6 pb-5 bg-slate-50/40">
+                    <div className="px-4 sm:px-6 pb-5 bg-slate-50/40">
                       <div className="flex flex-wrap items-end gap-3 py-3 border-b border-outline-variant/10">
                         <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Teto (R$)</label><input type="number" min="0" step="100" className="w-32 px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.teto ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], teto: e.target.value } }))} /></div>
                         <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Status</label>
@@ -138,9 +138,9 @@ export default function EmpresaArea() {
                         ? <p className="text-sm text-on-surface-variant py-2">Nenhum usuário. Crie o coordenador do parceiro.</p>
                         : <div className="space-y-1">
                             {users[p.id].map(u => (
-                              <div key={u.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 text-sm">
-                                <span className={u.ativo ? '' : 'opacity-50 line-through'}>{u.nome} <span className="text-on-surface-variant">· {u.username}</span></span>
-                                <div className="flex items-center gap-2">
+                              <div key={u.id} className="flex items-center justify-between gap-2 bg-white rounded-lg px-3 py-2 text-sm">
+                                <span className={`min-w-0 truncate ${u.ativo ? '' : 'opacity-50 line-through'}`}>{u.nome} <span className="text-on-surface-variant">· {u.username}</span></span>
+                                <div className="flex items-center gap-2 flex-none">
                                   <span className="text-[10px] font-bold uppercase text-on-surface-variant">{roleLabel(u.role)}</span>
                                   <button onClick={() => resetarSenha(u)} title="Redefinir senha" className="p-1 text-on-surface-variant hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '16px' }}>key</span></button>
                                   <button onClick={() => toggleUser(p.id, u)} title={u.ativo ? 'Desativar' : 'Ativar'} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.ativo ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant hover:bg-error-container/50 hover:text-on-error-container' : 'bg-surface-container text-on-surface-variant hover:bg-primary/10 hover:text-primary'}`}>{u.ativo ? 'ativo' : 'inativo'}</button>
