@@ -223,7 +223,7 @@ router.post('/agendar-exame', async (req, res) => {
     // fecha o ciclo: grava no exame o vínculo e o horário (netris_slot = vaga ocupada)
     await supabaseAdmin.from('exames').update({
       netris_atendimento_id: agId, netris_agendamento_id: agId,
-      scheduled_at: `${slot.dataString}T${slot.horarioString}:00`,
+      scheduled_at: `${slot.dataString}T${slot.horarioString}:00-03:00`, // horário de Brasília (BRT) — sem isto o Postgres grava como UTC e some 3h
       netris_slot: { dataString: slot.dataString, horarioString: slot.horarioString, idMedico: Number(slot.idMedico), idSala: Number(slot.idSala) },
     }).eq('id', exameId)
     logAudit({ empresaId: ctx.exame.empresa_id, atorId: c.profile.id, atorNome: c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: agId, slot } })
