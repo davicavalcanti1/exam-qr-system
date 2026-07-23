@@ -119,10 +119,10 @@
 <body class="bg-background text-on-background font-body-md selection:bg-primary selection:text-white overflow-x-hidden">
 <!-- TopAppBar Navigation -->
 <nav class="fixed top-0 w-full z-50 glass-nav shadow-sm shadow-on-surface/5">
-<div class="max-w-[1200px] mx-auto px-container-padding flex justify-between items-center h-20">
-<a href="#" class="flex items-center gap-2">
-<img alt="ExameQR" class="h-16 w-16 object-contain" src="/brotopay.png"/>
-<span class="font-headline-lg text-3xl font-extrabold tracking-tight text-primary">ExameQR</span>
+<div class="max-w-[1200px] mx-auto px-container-padding flex justify-between items-center gap-3 h-20">
+<a href="#" class="flex items-center gap-2 min-w-0">
+<img alt="ExameQR" class="h-10 w-10 sm:h-16 sm:w-16 object-contain flex-none" src="/brotopay.png"/>
+<span class="font-headline-lg text-xl sm:text-3xl font-extrabold tracking-tight text-primary truncate">ExameQR</span>
 </a>
 <div class="hidden md:flex items-center gap-8">
 <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#como-funciona">Como funciona</a>
@@ -130,8 +130,8 @@
 <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#planos">Planos</a>
 <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#contato">Contato</a>
 </div>
-<div class="flex items-center gap-4"><a href="#contato" class="bg-primary text-on-primary px-6 py-3 rounded-xl font-label-md text-label-md font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20">
-                Quero ser parceiro
+<div class="flex items-center gap-4 flex-none"><a href="#contato" class="bg-primary text-on-primary px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-label-md text-label-md font-bold whitespace-nowrap hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20">
+                <span class="sm:hidden">Seja parceiro</span><span class="hidden sm:inline">Quero ser parceiro</span>
             </a>
 </div>
 </div>
@@ -140,7 +140,7 @@
 <!-- Hero Section -->
 <section class="max-w-[1200px] mx-auto px-container-padding py-section-gap grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 <div class="reveal">
-<h1 class="font-headline-xl text-headline-xl text-on-surface leading-tight mb-6">
+<h1 class="font-headline-xl text-[32px] leading-[40px] sm:text-headline-xl font-bold text-on-surface mb-6">
                     Saúde por parceria, com <span class="text-primary italic">controle</span> de verdade.
                 </h1>
 <p class="font-body-lg text-body-lg text-on-surface-variant mb-10 max-w-lg">
@@ -258,7 +258,7 @@
 </section>
 <!-- QR Code Section -->
 <section class="max-w-[1200px] mx-auto px-container-padding py-section-gap overflow-hidden" id="como-funciona">
-<div class="bg-primary text-on-primary rounded-xl p-12 lg:p-20 relative grid lg:grid-cols-2 gap-12 items-center">
+<div class="bg-primary text-on-primary rounded-xl p-6 sm:p-12 lg:p-20 relative grid lg:grid-cols-2 gap-12 items-center">
 <div class="reveal">
 <h2 class="font-headline-lg text-headline-lg mb-6">Autorização via QR Code</h2>
 <p class="font-body-lg text-body-lg text-on-primary-container opacity-90 mb-8">
@@ -283,7 +283,7 @@
 <div class="absolute -left-[2px] top-52 w-[3px] h-12 bg-neutral-600 rounded-l-sm"></div>
 <div class="absolute -right-[2px] top-40 w-[3px] h-16 bg-neutral-600 rounded-r-sm"></div>
 <!-- corpo do iPhone (moldura titânio) -->
-<div class="relative w-[300px] h-[610px] rounded-[52px] p-[13px] shadow-2xl" style="background:linear-gradient(150deg,#4a4e54 0%,#1b1e22 45%,#33373d 100%);">
+<div class="relative w-[260px] h-[528px] sm:w-[300px] sm:h-[610px] rounded-[52px] p-[13px] shadow-2xl" style="background:linear-gradient(150deg,#4a4e54 0%,#1b1e22 45%,#33373d 100%);">
 <div class="w-full h-full bg-white rounded-[42px] overflow-hidden relative flex flex-col">
 <!-- Dynamic Island -->
 <div class="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-[26px] bg-black rounded-full z-30"></div>
