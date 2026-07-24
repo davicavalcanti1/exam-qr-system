@@ -72,7 +72,7 @@ router.put('/', async (req, res) => {
 
   await supabaseAdmin.from('empresas').update({ agendamento_provider: provider }).eq('id', empresa_id)
 
-  res.json({ ok: true, provider, ativo: provider === 'manual' ? false : !!ativo, config: mascarar(provider, merged) })
+  res.json({ ok: true, provider, ativo: provider === 'manual' ? false : !!ativo, config: mascarar(provider, mapa[provider]) })
 })
 
 // Testa a conexão do provedor com o config salvo.
