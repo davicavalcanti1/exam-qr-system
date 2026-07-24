@@ -71,7 +71,7 @@ export default function ComprovantesArea() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <Card className="p-4 sm:p-6">
         <h3 className="text-lg font-semibold">Comprovantes (QR) em lote</h3>
         <p className="text-sm text-on-surface-variant mt-1 mb-4">
