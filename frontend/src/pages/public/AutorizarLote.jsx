@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase, resolveLoginEmail } from '../../lib/supabase'
+import { adminApi } from '../../lib/adminApi'
 
 export default function AutorizarLote() {
   const { token } = useParams()
@@ -37,9 +38,14 @@ export default function AutorizarLote() {
 
   async function confirmar() {
     setMsg(''); setConfirmando(true)
-    const { data, error } = await supabase.rpc('confirmar_lote_autorizacao', { p_token: token })
+    const { error } = await supabase.rpc('confirmar_lote_autorizacao', { p_token: token })
+    if (error) {
+      setConfirmando(false)
+      return setMsg(error.message.includes('permiss') ? 'Este login não é o coordenador responsável por este parceiro.' : error.message)
+    }
+    // envia os exames ao NetRis (best-effort: a autorização já valeu, não bloqueia)
+    try { await adminApi.agendarLoteNetris(token) } catch { /* clínica pode reagendar depois */ }
     setConfirmando(false)
-    if (error) return setMsg(error.message.includes('permiss') ? 'Este login não é o coordenador responsável por este parceiro.' : error.message)
     setFeito(true)
   }
 

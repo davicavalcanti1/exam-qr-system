@@ -48,6 +48,8 @@ export const adminApi = {
   // envia o comprovante (PDF) por WhatsApp — destino: 'paciente' | 'parceiro'
   enviarComprovanteWhatsapp: (exameIds, destino) => post('/api/qr/enviar-whatsapp', { exameIds, destino }),
   criarLoteAutorizacao: ({ exameIds, parceiroId, empresaId }) => post('/api/autorizacao/lotes', { exameIds, parceiroId, empresaId }),
+  // agenda no NetRis os exames de um lote já confirmado pelo parceiro
+  agendarLoteNetris: (token) => post(`/api/autorizacao/${token}/agendar-netris`, {}),
   // integrações de agendamento (empresaId opcional: owner configura por empresa)
   listarProviders: () => req('GET', '/api/integracao/providers'),
   getIntegracao: (empresaId) => req('GET', `/api/integracao${empresaId ? `?empresaId=${empresaId}` : ''}`),

@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { getCaller, supabaseAdmin } from '../../lib/supabaseAdmin.js'
 import { netrisParaEmpresa } from './empresa.js'
-import { resolverContextoExame } from './agendamento.js'
+import { resolverContextoExame, agendarExameNoNetris } from './agendamento.js'
 import { SITUACAO, normalizePaciente, normalizeHorarios } from './client.js'
 import { logAudit } from '../../lib/audit.js'
 
@@ -204,33 +204,10 @@ router.post('/agendar-exame', async (req, res) => {
   if (!exameId || !slot?.dataString || !slot?.horarioString || !slot?.idMedico || !slot?.idSala) {
     return res.status(400).json({ error: 'exameId e slot {dataString, horarioString, idMedico, idSala} são obrigatórios' })
   }
-  const ctx = await resolverContextoExame(exameId)
-  if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
-  try {
-    // reagendamento: cancela o encaixe anterior antes de criar o novo (evita duplicar)
-    if (ctx.exame.netris_atendimento_id) {
-      try { await ctx.client.alterarSituacao(ctx.exame.netris_atendimento_id, SITUACAO.CANCELADO) } catch { /* best-effort */ }
-    }
-    const r = await ctx.client.criarEncaixe({
-      dataString: slot.dataString, horarioString: slot.horarioString,
-      idConvenio: ctx.idConvenio, idPlanoConvenio: ctx.idPlanoConvenio,
-      idProcedimento: ctx.idProcedimento, idPaciente: ctx.idPaciente,
-      idMedico: Number(slot.idMedico), idSala: Number(slot.idSala),
-    })
-    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'NetRis recusou o agendamento', upstream: r.body })
-    let parsed = null; try { parsed = JSON.parse(r.body) } catch { parsed = r.body }
-    const agId = parsed?.message?.match?.(/ID:\s*(\d+)/)?.[1] || parsed?.id || null
-    // fecha o ciclo: grava no exame o vínculo e o horário (netris_slot = vaga ocupada)
-    await supabaseAdmin.from('exames').update({
-      netris_atendimento_id: agId, netris_agendamento_id: agId,
-      scheduled_at: `${slot.dataString}T${slot.horarioString}:00-03:00`, // horário de Brasília (BRT) — sem isto o Postgres grava como UTC e some 3h
-      netris_slot: { dataString: slot.dataString, horarioString: slot.horarioString, idMedico: Number(slot.idMedico), idSala: Number(slot.idSala) },
-    }).eq('id', exameId)
-    logAudit({ empresaId: ctx.exame.empresa_id, atorId: c.profile.id, atorNome: c.profile.nome || c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: agId, slot } })
-    res.json({ ok: true, agendamentoId: agId, upstream: parsed })
-  } catch (err) {
-    res.status(502).json({ error: 'Erro ao agendar no NetRis', detail: err.message })
-  }
+  const result = await agendarExameNoNetris(exameId, slot)
+  if (!result.ok) return res.status(result.status || 502).json({ error: result.error, upstream: result.upstream })
+  logAudit({ empresaId: result.empresaId, atorId: c.profile.id, atorNome: c.profile.nome || c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: result.agId, slot } })
+  res.json({ ok: true, agendamentoId: result.agId, upstream: result.parsed })
 })
 
 // Cancela o agendamento do exame no NetRis (situação CANCELADO) e limpa o vínculo.

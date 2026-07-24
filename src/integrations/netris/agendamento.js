@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js'
 import { netrisParaEmpresa } from './empresa.js'
+import { SITUACAO } from './client.js'
 
 // Resolve tudo que o NetRis precisa para agendar um exame do ExameQR:
 // cliente da empresa, mapeamento do parceiro (plano/convênio), procedimento e
@@ -42,5 +43,39 @@ export async function resolverContextoExame(exameId) {
     idConvenio: Number(idConvenio),
     idUnidade: idUnidade ? Number(idUnidade) : undefined,
     idPaciente, peso,
+  }
+}
+
+// Agenda de fato um exame no NetRis (criar encaixe) e grava vínculo/horário no exame.
+// Reutilizado pela rota /agendar-exame E pela confirmação de lote (link do parceiro).
+// Retorna { ok, agId, empresaId, parsed } ou { ok:false, error, upstream, status }.
+export async function agendarExameNoNetris(exameId, slot) {
+  if (!slot?.dataString || !slot?.horarioString || !slot?.idMedico || !slot?.idSala) {
+    return { ok: false, error: 'slot incompleto (dataString/horarioString/idMedico/idSala)', status: 400 }
+  }
+  const ctx = await resolverContextoExame(exameId)
+  if (ctx.error) return { ok: false, error: ctx.error, status: ctx.status }
+  try {
+    // reagendamento: cancela o encaixe anterior antes de criar o novo (evita duplicar)
+    if (ctx.exame.netris_atendimento_id) {
+      try { await ctx.client.alterarSituacao(ctx.exame.netris_atendimento_id, SITUACAO.CANCELADO) } catch { /* best-effort */ }
+    }
+    const r = await ctx.client.criarEncaixe({
+      dataString: slot.dataString, horarioString: slot.horarioString,
+      idConvenio: ctx.idConvenio, idPlanoConvenio: ctx.idPlanoConvenio,
+      idProcedimento: ctx.idProcedimento, idPaciente: ctx.idPaciente,
+      idMedico: Number(slot.idMedico), idSala: Number(slot.idSala),
+    })
+    if (!r.ok) return { ok: false, error: 'NetRis recusou o agendamento', upstream: r.body, status: r.status >= 500 ? 502 : r.status }
+    let parsed = null; try { parsed = JSON.parse(r.body) } catch { parsed = r.body }
+    const agId = parsed?.message?.match?.(/ID:\s*(\d+)/)?.[1] || parsed?.id || null
+    await supabaseAdmin.from('exames').update({
+      netris_atendimento_id: agId, netris_agendamento_id: agId,
+      scheduled_at: `${slot.dataString}T${slot.horarioString}:00-03:00`, // BRT
+      netris_slot: { dataString: slot.dataString, horarioString: slot.horarioString, idMedico: Number(slot.idMedico), idSala: Number(slot.idSala) },
+    }).eq('id', exameId)
+    return { ok: true, agId, empresaId: ctx.exame.empresa_id, parsed }
+  } catch (e) {
+    return { ok: false, error: e.message, status: 502 }
   }
 }
