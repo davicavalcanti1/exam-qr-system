@@ -298,7 +298,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
                     </select>
                   </div>
                   <div><label className={label}>Nascimento{!netrisId && <span className="text-error"> *</span>}</label><input type="date" className={input} value={nascimento} onChange={e => setNascimento(e.target.value)} /></div>
-                  <div><label className={label}>Telefone</label><input className={input} value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(83) 9…" /></div>
+                  <div><label className={label}>Telefone</label><input className={input} value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="Número com DDD" /></div>
                 </div>
                 <p className="text-[11px] text-on-surface-variant">Com o NetRis ativo, o paciente é vinculado (ou criado) lá automaticamente ao salvar. Use “Buscar NetRis” para puxar quem já existe.</p>
               </>

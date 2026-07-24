@@ -31,7 +31,7 @@ export default function ConvidarModal({ empresaId, parceiroId, roles, onClose, o
   return (
     <Modal open onClose={onClose} title="Convidar por e-mail" subtitle="A pessoa acessa com a conta Google desse e-mail" icon="mail">
       <form onSubmit={enviar} className="p-6 space-y-4">
-        <Field label="E-mail"><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="pessoa@gmail.com" autoFocus required /></Field>
+        <Field label="E-mail"><Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="E-mail da pessoa" autoFocus required /></Field>
         <Field label="Nome (opcional)"><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome da pessoa" /></Field>
         {roles.length > 1 && (
           <Field label="Papel">

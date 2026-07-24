@@ -81,18 +81,18 @@ export default function EmpresaArea() {
         <h3 className="text-lg font-semibold mb-1">Novo parceiro</h3>
         <p className="text-sm text-on-surface-variant mb-4">Quem encaminha os pacientes. O parceiro não usa CNPJ — é identificado pelo nome.</p>
         <form onSubmit={createParceiro} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <div className="md:col-span-2"><label className={label}>Nome do parceiro *</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="ex.: Dr. Fulano / Prefeitura de…" required /></div>
+          <div className="md:col-span-2"><label className={label}>Nome do parceiro *</label><input className={input} value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Nome completo" required /></div>
           <div><label className={label}>Tipo</label>
             <select className={input} value={form.tipoDoc} onChange={e => setForm({ ...form, tipoDoc: e.target.value })}>
               <option value="cnpj">CNPJ (empresa)</option>
               <option value="cpf">CPF (pessoa física)</option>
             </select>
           </div>
-          <div><label className={label}>{form.tipoDoc === 'cpf' ? 'CPF' : 'CNPJ'} <span className="font-normal normal-case">(opcional)</span></label><input className={input} value={form.documento} onChange={e => setForm({ ...form, documento: e.target.value })} placeholder={form.tipoDoc === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'} /></div>
+          <div><label className={label}>{form.tipoDoc === 'cpf' ? 'CPF' : 'CNPJ'} <span className="font-normal normal-case">(opcional)</span></label><input className={input} value={form.documento} onChange={e => setForm({ ...form, documento: e.target.value })} placeholder="Somente números" /></div>
           <div><label className={label}>Teto de crédito (R$)</label><input className={input} type="number" min="0" step="100" value={form.teto} onChange={e => setForm({ ...form, teto: e.target.value })} /></div>
-          <div><label className={label}>WhatsApp <span className="font-normal normal-case">(link de confirmação)</span></label><input className={input} type="tel" value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="83 99999-9999" /></div>
-          <div><label className={label}>E-mail <span className="font-normal normal-case">(opcional)</span></label><input className={input} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="contato@exemplo.com" /></div>
-          <div><label className={label}>Endereço <span className="font-normal normal-case">(opcional)</span></label><input className={input} value={form.endereco} onChange={e => setForm({ ...form, endereco: e.target.value })} placeholder="cidade / referência" /></div>
+          <div><label className={label}>WhatsApp <span className="font-normal normal-case">(link de confirmação)</span></label><input className={input} type="tel" value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} placeholder="Número com DDD" /></div>
+          <div><label className={label}>E-mail <span className="font-normal normal-case">(opcional)</span></label><input className={input} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="E-mail de contato" /></div>
+          <div><label className={label}>Endereço <span className="font-normal normal-case">(opcional)</span></label><input className={input} value={form.endereco} onChange={e => setForm({ ...form, endereco: e.target.value })} placeholder="Endereço completo" /></div>
           {err && <div className="md:col-span-2 text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
           <div className="md:col-span-2 flex justify-end"><button disabled={saving} className="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{saving ? 'Criando…' : 'Criar parceiro'}</button></div>
         </form>
@@ -118,7 +118,7 @@ export default function EmpresaArea() {
                             <option value="ativo">Ativo</option><option value="bloqueado">Bloqueado</option><option value="suspenso">Suspenso</option>
                           </select>
                         </div>
-                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">WhatsApp (confirmação)</label><input type="tel" placeholder="83 99999-9999" className="w-40 px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.whatsapp ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], whatsapp: e.target.value } }))} /></div>
+                        <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">WhatsApp (confirmação)</label><input type="tel" placeholder="Número com DDD" className="w-40 px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.whatsapp ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], whatsapp: e.target.value } }))} /></div>
                         <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Tipo</label>
                           <select className="px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.tipoDocumento || 'cnpj'} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], tipoDocumento: e.target.value } }))}>
                             <option value="cnpj">CNPJ</option><option value="cpf">CPF</option>
