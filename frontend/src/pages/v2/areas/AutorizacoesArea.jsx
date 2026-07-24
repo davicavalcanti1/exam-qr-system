@@ -43,7 +43,7 @@ export default function AutorizacoesArea() {
     // trava do teto: só bloqueia quando JÁ atingiu/passou o teto (se está abaixo,
     // deixa encaixar mais um, mesmo que ultrapasse). Recusar sempre é permitido.
     if (aprovar && teto != null && comprometido >= teto) {
-      setAviso(`⛔ Teto do parceiro atingido (${fmt(comprometido)} de ${fmt(teto)}). Não é possível autorizar novos exames até quitar as cobranças em aberto.`)
+      setAviso(`Teto do parceiro atingido (${fmt(comprometido)} de ${fmt(teto)}). Não é possível autorizar novos exames até quitar as cobranças em aberto.`)
       return
     }
     setBusy(ex.id); setAviso('')
@@ -92,7 +92,7 @@ export default function AutorizacoesArea() {
         <p className="text-sm text-on-surface-variant mt-1">Exames registrados pelos funcionários. Autorize para liberar a geração do QR.</p>
       </div>
       {itens.length === 0
-        ? <p className="text-center py-16 text-on-surface-variant text-sm">Nada pendente. Tudo em dia. 🎉</p>
+        ? <p className="text-center py-16 text-on-surface-variant text-sm">Nenhuma autorização pendente no momento.</p>
         : <div className="divide-y divide-outline-variant/10">
             {itens.map(ex => (
               <div key={ex.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4">

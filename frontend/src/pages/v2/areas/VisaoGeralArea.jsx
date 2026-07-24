@@ -95,7 +95,7 @@ export default function VisaoGeralArea({ irPara }) {
       {/* Boas-vindas + atalhos */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight">Olá{nome ? `, ${nome}` : ''} 👋</h2>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">Olá{nome ? `, ${nome}` : ''}</h2>
           <p className="text-sm text-on-surface-variant">Aqui está o resumo de hoje.</p>
         </div>
         <div className="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1 -mb-1 sm:flex-wrap">

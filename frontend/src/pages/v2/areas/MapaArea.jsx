@@ -109,7 +109,7 @@ export default function MapaArea() {
               </button>
             ))}
           </div>
-          {posicionando && <p className="text-xs text-primary font-bold mt-2 animate-pulse">👆 Agora clique no mapa para posicionar.</p>}
+          {posicionando && <p className="text-xs text-primary font-bold mt-2 animate-pulse">Agora clique no mapa para posicionar.</p>}
         </Card>
       )}
 

@@ -66,7 +66,7 @@ export default function ConfirmacoesArea() {
             <Button variant="secondary" onClick={() => { navigator.clipboard?.writeText(resultado.link); toast.success('Link copiado.') }} className="flex-none">Copiar</Button>
           </div>
           <p className="text-[12px] text-on-surface-variant mt-2">
-            WhatsApp: {resultado.whatsapp?.enviado ? '✅ enviado ao parceiro' : `⚠️ não enviado (${resultado.whatsapp?.motivo}) — copie e envie manualmente`}
+            WhatsApp: {resultado.whatsapp?.enviado ? 'enviado ao parceiro' : `não enviado (${resultado.whatsapp?.motivo}) — copie e envie manualmente`}
           </p>
         </Card>
       )}
