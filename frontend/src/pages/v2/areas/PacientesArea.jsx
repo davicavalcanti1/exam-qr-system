@@ -410,7 +410,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
                     <span className="text-sm font-semibold text-on-surface tabular-nums flex-none">{fmt((p.exames || []).reduce((s, e) => s + Number(e.valor || 0), 0))}</span>
                     <div className="flex items-center gap-0.5 flex-none">
                       <button onClick={() => exportarPaciente(p)} title="Exportar dados (LGPD)" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-primary"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span></button>
-                      {!p.anonimizado && <button onClick={() => anonimizarPaciente(p)} title="Anonimizar (LGPD)" className="p-1.5 rounded-lg text-on-surface-variant hover:bg-black/5 hover:text-error"><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person_off</span></button>}
+                      {/* Anonimizar (LGPD) removido por enquanto — a função anonimizarPaciente() segue no arquivo para reativar depois. */}
                     </div>
                   </div>
                   <div className="mt-2.5 ml-[52px] flex flex-wrap gap-2">
