@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
+import { adminApi } from '../../../lib/adminApi'
+import { useToast } from '../../../components/ui'
 import ContratoModal from '../ContratoModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -17,12 +19,17 @@ const ST = {
   pendente: { label: 'Aguardando assinatura', cls: 'bg-yellow-50 text-yellow-700' },
   assinado: { label: 'Assinado', cls: 'bg-primary/10 text-primary' },
   cancelado: { label: 'Cancelado', cls: 'bg-error-container/40 text-on-error-container' },
+  recusado: { label: 'Recusado', cls: 'bg-error-container/40 text-on-error-container' },
+  expirado: { label: 'Expirado', cls: 'bg-surface-container text-on-surface-variant' },
 }
 
 const preencher = (txt, ctx) => String(txt || '').replace(/\{\{(\w+)\}\}/g, (_, k) => (ctx[k] ?? `{{${k}}}`))
 
 export default function ContratosArea() {
   const { empresaId } = useAuth()
+  const toast = useToast()
+  const [zapsign, setZapsign] = useState({ ativo: false })
+  const [enviando, setEnviando] = useState(null)
   const [empresa, setEmpresa] = useState(null)
   const [modelo, setModelo] = useState({ titulo: 'Contrato de Parceria', conteudo: MODELO_PADRAO })
   const [savingModelo, setSavingModelo] = useState(false)
@@ -38,13 +45,34 @@ export default function ContratosArea() {
       supabase.from('empresas').select('nome, cnpj').eq('id', empresaId).maybeSingle(),
       supabase.from('contrato_modelos').select('titulo, conteudo').eq('empresa_id', empresaId).maybeSingle(),
       supabase.from('parceiros').select('id, nome, cnpj, teto').order('nome'),
-      supabase.from('contratos').select('id, parceiro_id, titulo, conteudo, status, assinante_nome, assinado_at, created_at').order('created_at', { ascending: false }),
+      supabase.from('contratos').select('id, parceiro_id, titulo, conteudo, status, assinante_nome, assinado_at, created_at, provedor, sign_url, arquivo_path, signatario_email, enviado_at').order('created_at', { ascending: false }),
     ])
     setEmpresa(emp)
     if (mod) setModelo(mod)
     setParceiros(parc || []); setContratos(cont || []); setLoading(false)
   }
   useEffect(() => { load() }, [])
+
+  // A integração vive em integracao_configs, que o navegador não lê (RLS sem
+  // policy) — quem responde se está ligada é o backend.
+  useEffect(() => {
+    adminApi.zapsignConfig().then(setZapsign).catch(() => setZapsign({ ativo: false }))
+  }, [empresaId])
+
+  async function enviarAssinatura(contrato) {
+    setEnviando(contrato.id)
+    try {
+      const r = await adminApi.zapsignEnviarContrato(contrato.id)
+      toast.success(r.jaEnviado
+        ? 'Este contrato já estava aguardando assinatura.'
+        : 'Enviado — o parceiro recebeu o link por e-mail.')
+      await load()
+    } catch (e) {
+      toast.error(e.message || 'Falha ao enviar para assinatura.')
+    } finally {
+      setEnviando(null)
+    }
+  }
 
   async function salvarModelo() {
     setSavingModelo(true); setModeloMsg('')
@@ -70,7 +98,11 @@ export default function ContratosArea() {
   }
 
   async function cancelar(id) {
-    await supabase.from('contratos').update({ status: 'cancelado' }).eq('id', id)
+    // O trigger `trg_contratos_protege` recusa alterações indevidas (reescrever o
+    // texto, forjar assinatura). Sem checar o erro, a recusa passava despercebida
+    // e a linha continuava na tela como se nada tivesse acontecido.
+    const { error } = await supabase.from('contratos').update({ status: 'cancelado' }).eq('id', id)
+    if (error) return toast.error(error.message)
     await load()
   }
 
@@ -113,6 +145,27 @@ export default function ContratosArea() {
                       {c
                         ? <>
                             <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
+
+                            {/* Com o ZapSign ligado, o contrato pendente deixa de esperar
+                                um clique do coordenador e passa a esperar a assinatura
+                                autenticada — daí o botão de enviar. */}
+                            {zapsign.ativo && ['pendente', 'recusado', 'expirado'].includes(c.status) && (
+                              c.provedor === 'zapsign' && c.sign_url && c.status === 'pendente'
+                                ? <button
+                                    onClick={async () => {
+                                      try { await navigator.clipboard.writeText(c.sign_url); toast.success('Link de assinatura copiado.') }
+                                      catch { toast.error('Não foi possível copiar.') }
+                                    }}
+                                    className="p-2 text-on-surface-variant hover:text-primary"
+                                    title={`Link enviado a ${c.signatario_email || 'e-mail do parceiro'} — copiar novamente`}
+                                  ><span className="material-symbols-outlined">link</span></button>
+                                : <button
+                                    disabled={enviando === c.id}
+                                    onClick={() => enviarAssinatura(c)}
+                                    className="px-3 py-1.5 text-[11px] font-bold bg-secondary-container text-on-secondary-container rounded-md hover:brightness-95 transition disabled:opacity-50"
+                                  >{enviando === c.id ? 'Enviando…' : c.status === 'pendente' ? 'Enviar para assinar' : 'Reenviar'}</button>
+                            )}
+
                             <button onClick={() => setVer(c)} className="p-2 text-on-surface-variant hover:text-primary" title="Ver contrato"><span className="material-symbols-outlined">description</span></button>
                             {c.status !== 'assinado' && <button onClick={() => cancelar(c.id)} className="p-2 text-on-surface-variant hover:text-error" title="Cancelar"><span className="material-symbols-outlined">close</span></button>}
                           </>

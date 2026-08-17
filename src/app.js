@@ -9,6 +9,7 @@ import adminRouter from './routes/admin.js'
 import qrRouter from './routes/qr.js'
 import integracaoRouter from './routes/integracao.js'
 import autorizacaoRouter from './routes/autorizacao.js'
+import zapsignRouter from './integrations/zapsign/routes.js'
 
 // ── Rotas legadas do MVP (SQLite) desativadas ────────────────────────────────
 // O sistema v2 usa Supabase Auth + RLS direto no frontend e apenas os endpoints
@@ -24,9 +25,24 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
+// Alguns caminhos carregam o segredo NO PRÓPRIO path (é assim que o webhook do
+// ZapSign se autentica, e é assim que o parceiro abre o lote de autorização).
+// Logar o path cru publicaria esses segredos no stdout — e o stdout vai para o
+// log do EasyPanel, que muita gente enxerga.
+const SEGREDO_NO_PATH = [
+  /^\/api\/zapsign\/webhook\//,
+  /^\/api\/autorizacao\/(?!lotes)[^/]+/,
+]
+function caminhoSeguro(p) {
+  for (const re of SEGREDO_NO_PATH) {
+    if (re.test(p)) return p.replace(/[^/]{8,}/g, m => `${m.slice(0, 4)}…(${m.length})`)
+  }
+  return p
+}
+
 // Debug middleware
 app.use((req, res, next) => {
-  console.log(`[${req.method}] ${req.path} - Auth: ${req.headers.authorization ? '✓' : '✗'}`)
+  console.log(`[${req.method}] ${caminhoSeguro(req.path)} - Auth: ${req.headers.authorization ? '✓' : '✗'}`)
   next()
 })
 
@@ -36,6 +52,7 @@ app.use('/api/integracao', integracaoRouter) // método de agendamento por empre
 app.use('/api/netris', netrisRouter) // integração NetRis (agendamento futuro)
 app.use('/api/feegow', feegowRouter) // integração Feegow (mesma interface do NetRis)
 app.use('/api/autorizacao', autorizacaoRouter) // lote de autorização por link público
+app.use('/api/zapsign', zapsignRouter) // assinatura eletrônica de contrato e DPA
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))

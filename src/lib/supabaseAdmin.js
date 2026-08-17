@@ -29,9 +29,12 @@ export async function getCaller(req) {
   if (!token) return { status: 401, error: 'Não autenticado' }
   const { data, error } = await supabaseAdmin.auth.getUser(token)
   if (error || !data?.user) return { status: 401, error: 'Sessão inválida' }
+  // `nome` e `email` entram aqui porque a auditoria grava o nome de quem agiu
+  // (sem eles, todo `atorNome: p.nome || p.role` acabava gravando o papel) e o
+  // ZapSign precisa do e-mail real de quem assina.
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('id, role, empresa_id, parceiro_id')
+    .select('id, nome, email, role, empresa_id, parceiro_id')
     .eq('id', data.user.id)
     .maybeSingle()
   if (!profile) return { status: 403, error: 'Perfil não encontrado' }

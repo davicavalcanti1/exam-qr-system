@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../auth/AuthContext'
 import { logAudit } from '../../lib/audit'
+import { adminApi } from '../../lib/adminApi'
 
 const dataBR = (s) => s ? new Date(s).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 
@@ -9,6 +10,8 @@ const ST = {
   pendente: { label: 'Aguardando assinatura', cls: 'bg-yellow-50 text-yellow-700' },
   assinado: { label: 'Assinado', cls: 'bg-primary/10 text-primary' },
   cancelado: { label: 'Cancelado', cls: 'bg-error-container/40 text-on-error-container' },
+  recusado: { label: 'Recusado', cls: 'bg-error-container/40 text-on-error-container' },
+  expirado: { label: 'Expirado', cls: 'bg-surface-container text-on-surface-variant' },
 }
 
 export default function ContratoModal({ contrato, podeAssinar = false, onClose, onChange }) {
@@ -19,6 +22,21 @@ export default function ContratoModal({ contrato, podeAssinar = false, onClose, 
   const [err, setErr] = useState('')
 
   const st = ST[contrato.status] || ST.pendente
+  // Contrato conduzido pelo provedor: o aceite interno (nome + checkbox) não se
+  // aplica, e o trigger no banco recusaria a escrita de qualquer jeito.
+  const viaZapsign = contrato.provedor === 'zapsign'
+  const [baixando, setBaixando] = useState(false)
+
+  async function baixarAssinado() {
+    setBaixando(true); setErr('')
+    try {
+      const { url } = await adminApi.zapsignArquivo('contrato', contrato.id)
+      if (!url) throw new Error('O arquivo assinado ainda não chegou do provedor.')
+      window.open(url, '_blank', 'noopener')
+    } catch (e) {
+      setErr(e.message || 'Não foi possível abrir o arquivo assinado.')
+    } finally { setBaixando(false) }
+  }
 
   async function assinar() {
     if (!aceite) return setErr('Marque que leu e concorda com os termos.')
@@ -61,14 +79,73 @@ export default function ContratoModal({ contrato, podeAssinar = false, onClose, 
             <div className="mt-8 pt-4 border-t border-outline-variant/20 text-sm">
               <p className="font-bold">Assinado eletronicamente</p>
               <p className="text-on-surface-variant">{contrato.assinante_nome} · {dataBR(contrato.assinado_at)}</p>
-              <p className="text-[10px] text-on-surface-variant mt-1">Aceite eletrônico registrado por {branding.nome} (ID {contrato.id.slice(0, 8).toUpperCase()}).</p>
+              <p className="text-[10px] text-on-surface-variant mt-1">
+                {viaZapsign
+                  ? `Assinatura autenticada via ZapSign${contrato.signatario_email ? ` (${contrato.signatario_email})` : ''}. O documento assinado, com a trilha do provedor, está guardado no sistema.`
+                  : `Aceite eletrônico registrado por ${branding.nome} (ID ${contrato.id.slice(0, 8).toUpperCase()}).`}
+              </p>
+              {viaZapsign && contrato.hash_sha256 && (
+                <p className="text-[10px] text-on-surface-variant font-mono mt-1 break-all">
+                  SHA-256 {contrato.hash_sha256}
+                </p>
+              )}
             </div>
           )}
         </div>
 
         <div className="no-print border-t border-outline-variant/10 p-5 space-y-3">
           {err && <div className="text-sm px-3 py-2 rounded-lg bg-error-container/50 text-on-error-container">{err}</div>}
-          {podeAssinar && contrato.status === 'pendente' ? (
+
+          {viaZapsign ? (
+            <>
+              {contrato.status === 'pendente' && (
+                podeAssinar && contrato.sign_url ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-on-surface-variant">
+                      Este contrato é assinado com autenticação: o link abre a página do ZapSign,
+                      que envia um código ao e-mail <b>{contrato.signatario_email}</b> antes de você assinar.
+                    </p>
+                    <a
+                      href={contrato.sign_url} target="_blank" rel="noreferrer"
+                      className="w-full px-5 py-3 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition flex items-center justify-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-base">draw</span>Assinar pelo ZapSign
+                    </a>
+                    <p className="text-[11px] text-on-surface-variant text-center">
+                      Depois de assinar, o contrato aqui muda sozinho para “Assinado”.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2 text-sm px-3 py-2.5 rounded-lg bg-yellow-50 text-yellow-700">
+                    <span className="material-symbols-outlined flex-none" style={{ fontSize: 18 }}>hourglass_top</span>
+                    <span>
+                      Enviado para assinatura{contrato.signatario_email ? <> em <b>{contrato.signatario_email}</b></> : ''}
+                      {contrato.enviado_at ? ` · ${dataBR(contrato.enviado_at)}` : ''}. O status muda quando o ZapSign confirmar.
+                    </span>
+                  </div>
+                )
+              )}
+              {contrato.status === 'recusado' && (
+                <div className="flex items-start gap-2 text-sm px-3 py-2.5 rounded-lg bg-error-container/50 text-on-error-container">
+                  <span className="material-symbols-outlined flex-none" style={{ fontSize: 18 }}>block</span>
+                  <span>Assinatura recusada pelo signatário{contrato.recusado_motivo ? `: ${contrato.recusado_motivo}` : '.'}</span>
+                </div>
+              )}
+              <div className="flex justify-end gap-2">
+                <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-on-surface-variant hover:text-on-surface rounded-lg">Fechar</button>
+                {contrato.status === 'assinado' && contrato.arquivo_path && (
+                  <button
+                    onClick={baixarAssinado} disabled={baixando}
+                    className="px-5 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <span className="material-symbols-outlined text-base">download</span>
+                    {baixando ? 'Abrindo…' : 'Baixar assinado'}
+                  </button>
+                )}
+                <button onClick={() => window.print()} className="px-5 py-2 bg-surface-container text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-high transition flex items-center gap-1.5"><span className="material-symbols-outlined text-base">print</span>Imprimir</button>
+              </div>
+            </>
+          ) : podeAssinar && contrato.status === 'pendente' ? (
             <>
               <label className="flex items-start gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={aceite} onChange={e => setAceite(e.target.checked)} className="w-4 h-4 accent-primary mt-0.5" />

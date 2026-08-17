@@ -148,7 +148,11 @@ export default function Painel() {
   useEffect(() => {
     if (role !== 'empresa_admin' || !profile?.empresa_id) { setDpaOk(true); return }
     setDpaOk(null)
-    supabase.from('dpa_aceites').select('id').eq('empresa_id', profile.empresa_id).eq('versao', DPA_VERSAO).limit(1)
+    // `status` entra aqui porque, com a assinatura pelo ZapSign, a linha passa a
+    // nascer PENDENTE no envio. Sem o filtro, mandar o Termo para assinar já
+    // liberaria o painel — e a empresa entraria sem ter aceitado nada.
+    supabase.from('dpa_aceites').select('id').eq('empresa_id', profile.empresa_id)
+      .eq('versao', DPA_VERSAO).eq('status', 'assinado').limit(1)
       .then(({ data }) => setDpaOk((data?.length || 0) > 0))
   }, [role, profile?.empresa_id])
 

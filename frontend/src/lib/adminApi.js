@@ -69,6 +69,21 @@ export const adminApi = {
     req('GET', `/api/netris/horarios-catalogo?procedimentoId=${procedimentoId}&parceiroId=${parceiroId}&idPaciente=${idPaciente}&pesoPaciente=${pesoPaciente || 70}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
   netrisAgendarExame: (exameId, slot) => post('/api/netris/agendar-exame', { exameId, slot }),
   netrisCancelarExame: (exameId) => post('/api/netris/cancelar-exame', { exameId }),
+
+  // ── ZapSign: assinatura eletrônica de contrato e DPA ──────────────────────
+  // empresaId é opcional e só o owner usa (ele configura por empresa). O token
+  // nunca trafega de volta: o GET só diz SE existe um guardado.
+  zapsignConfig: (empresaId) => req('GET', `/api/zapsign/config${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  zapsignSalvarConfig: (payload) => req('PUT', '/api/zapsign/config', payload),
+  zapsignTestar: (payload) => post('/api/zapsign/testar', payload || {}),
+  zapsignEnviarContrato: (contratoId, empresaId) =>
+    post(`/api/zapsign/contratos/${contratoId}/enviar`, empresaId ? { empresaId } : {}),
+  zapsignEnviarDpa: ({ versao, titulo, conteudo, empresaId }) =>
+    post('/api/zapsign/dpa/enviar', { versao, titulo, conteudo, ...(empresaId ? { empresaId } : {}) }),
+  zapsignStatus: (tipo, id, empresaId) =>
+    req('GET', `/api/zapsign/status/${tipo}/${id}${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  // devolve { url } — assinada e válida por 5 minutos (o bucket é privado)
+  zapsignArquivo: (tipo, id) => req('GET', `/api/zapsign/arquivo/${tipo}/${id}`),
 }
 
 // carrega todas as páginas de uma listagem NetRis (planos/procedimentos)

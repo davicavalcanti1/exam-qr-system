@@ -57,12 +57,16 @@ router.put('/', async (req, res) => {
 
   // Config é um mapa por provedor. Atualiza SÓ a sub-config do provedor escolhido
   // e preserva as dos outros (trocar de provedor não apaga as credenciais antigas).
+  //
+  // Preserva o mapa INTEIRO, não só as chaves de PROVIDERS: aqui existem também
+  // integrações que não são de agendamento (ZapSign). Copiar apenas os provedores
+  // conhecidos de agenda apagava silenciosamente as outras a cada save — foi o que
+  // fez o token da NFS-e sumir toda vez que alguém salvava o método de agendamento.
   const { data: atual } = await supabaseAdmin
     .from('integracao_configs').select('config, provider').eq('empresa_id', empresa_id).maybeSingle()
   const src = (atual?.config && typeof atual.config === 'object' && !Array.isArray(atual.config)) ? atual.config : {}
-  const mapa = {}
-  for (const k of Object.keys(PROVIDERS)) if (src[k] && typeof src[k] === 'object') mapa[k] = src[k]
-  mapa[provider] = mesclar(provider, mapa[provider] || subConfig(atual?.config, provider), config)
+  const mapa = { ...src }
+  mapa[provider] = mesclar(provider, subConfig(atual?.config, provider), config)
 
   const { error: upErr } = await supabaseAdmin.from('integracao_configs').upsert({
     empresa_id, provider, config: mapa, ativo: provider === 'manual' ? false : !!ativo,

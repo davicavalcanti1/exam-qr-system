@@ -18,6 +18,21 @@ As rotas são montadas em `src/app.js` (`app.use('/api/...', <router>)`).
 - **netris/** — agendamento/atendimentos NetRis (Netpacs). `client.js` (factory por
   empresa), `empresa.js` (monta o cliente da config salva), `agendamento.js`
   (resolve exame→plano/procedimento/paciente), `routes.js` (`/api/netris/*`).
+- **feegow/** — mesma interface do NetRis para clínicas que usam Feegow Clinic.
+  Esqueleto: o shape das respostas ainda não foi confirmado com token real.
+- **zapsign/** — assinatura eletrônica do contrato de parceria e do DPA.
+  `client.js` (API v1 + `testarToken`), `empresa.js` (config por empresa e
+  resolução do webhook pelo segredo), `routes.js` (`/api/zapsign/*`). O PDF é
+  montado no servidor com `src/utils/documentoPdf.js`. Ver `docs/ZAPSIGN.md`.
+- **uazapi/** — envio por WhatsApp (link do lote de autorização e comprovantes em
+  PDF). Só `client.js`: é chamado de dentro de outras rotas, não expõe router.
+  **Atenção:** hoje é single-tenant (`UAZAPI_URL`/`UAZAPI_TOKEN` globais).
+
+> Os dois eixos não se confundem: `netris`/`feegow` são **métodos de agendamento**
+> (a empresa escolhe um, e ele aparece em `PROVIDERS`); `zapsign` é **assinatura**
+> e roda em paralelo a qualquer um deles. Por isso `integracaoProviders.js` separa
+> `PROVIDERS` de `CHAVES_NAO_AGENDA` — misturar os dois foi o que fazia salvar o
+> agendamento apagar a credencial da outra integração.
 
 ## Integrações no frontend
 Serviços públicos, sem chave e com CORS (não precisam do backend) vivem em

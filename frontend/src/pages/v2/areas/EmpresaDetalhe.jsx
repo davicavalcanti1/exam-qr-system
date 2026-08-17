@@ -6,6 +6,7 @@ import CreateUserModal from '../CreateUserModal'
 import ConvidarModal from '../ConvidarModal'
 import EditarUsuarioModal from '../EditarUsuarioModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
+import IntegracaoZapsign from './IntegracaoZapsign'
 import ConsumoEmpresa from './ConsumoEmpresa'
 import ConfiguracoesEmpresa from './ConfiguracoesEmpresa'
 import { geocodificar } from '../../../integrations/nominatim/geocode'
@@ -279,7 +280,12 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
         </Card>
       )}
 
-      {aba === 'integracao' && <DesenvolvedorArea empresaId={emp.id} empresaNome={emp.nome} />}
+      {aba === 'integracao' && (
+        <div className="space-y-6">
+          <IntegracaoZapsign empresaId={emp.id} />
+          <DesenvolvedorArea empresaId={emp.id} empresaNome={emp.nome} />
+        </div>
+      )}
 
       <CreateUserModal
         open={!!criarRole}

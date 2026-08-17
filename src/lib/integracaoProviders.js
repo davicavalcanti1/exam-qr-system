@@ -31,13 +31,29 @@ export const PROVIDERS = {
 
 export const MASK = '••••••••'
 
-// config agora é um mapa { netris: {...}, feegow: {...} }. Devolve a sub-config do
-// provedor pedido; tolera o formato antigo (plano) de linhas ainda não migradas.
+// Integrações que também moram no mapa `config` mas NÃO são métodos de
+// agendamento — vivem em eixo próprio (a empresa pode usar NetRis para agenda e
+// ZapSign para assinatura ao mesmo tempo). Elas não entram em PROVIDERS porque
+// não devem aparecer como opção de "como esta clínica marca exame", mas precisam
+// ser conhecidas aqui para que ninguém as trate como config solta.
+export const CHAVES_NAO_AGENDA = ['zapsign']
+
+export const CHAVES_CONHECIDAS = [...Object.keys(PROVIDERS), ...CHAVES_NAO_AGENDA]
+
+// config é um mapa { netris: {...}, feegow: {...}, zapsign: {...} }. Devolve a
+// sub-config do provedor pedido; tolera o formato antigo (plano) de linhas ainda
+// não migradas.
 export function subConfig(config, provider) {
   if (config && typeof config === 'object' && !Array.isArray(config)) {
     if (config[provider] && typeof config[provider] === 'object') return config[provider]
-    // formato antigo plano: sem chaves de provedor conhecidas → é a config do ativo
-    if (!('netris' in config) && !('feegow' in config) && !('manual' in config)) return config
+    // Formato antigo plano: nenhuma chave de provedor conhecida → o objeto todo
+    // É a config do provedor ativo.
+    //
+    // A checagem precisa cobrir TODAS as chaves conhecidas, não só as de agenda:
+    // com um mapa `{ zapsign: {...} }`, testar apenas netris/feegow/manual dava
+    // "formato antigo" e devolvia a config do ZapSign como se fosse a do NetRis
+    // — foi assim que a emissão de NFS-e saía autenticada com o token do NetRis.
+    if (!CHAVES_CONHECIDAS.some(k => k in config)) return config
   }
   return {}
 }
