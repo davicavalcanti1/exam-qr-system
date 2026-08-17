@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { logAudit } from '../../../lib/audit'
+import { adminApi } from '../../../lib/adminApi'
 import ReciboModal from '../ReciboModal'
+import NfseConfig from './NfseConfig'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const hoje = () => new Date().toISOString().slice(0, 10)
@@ -27,6 +29,9 @@ export default function CobrancasArea({ somenteLeitura = false }) {
   const [lista, setLista] = useState([])
   const [loading, setLoading] = useState(true)
   const [recibo, setRecibo] = useState(null)
+  const [notas, setNotas] = useState({})       // cobranca_id -> nota fiscal
+  const [emitindo, setEmitindo] = useState({}) // cobranca_id -> bool
+  const nfseAtiva = !somenteLeitura && !!empresa?.nfse_ativo
 
   useEffect(() => {
     supabase.from('parceiros').select('id, nome').order('nome').then(({ data }) => setParceiros(data || []))
@@ -38,8 +43,33 @@ export default function CobrancasArea({ somenteLeitura = false }) {
       .select('id, periodo_inicio, periodo_fim, valor_total, qtd_exames, status, created_at, parceiros(nome)')
       .order('created_at', { ascending: false })
     setLista(data || []); setLoading(false)
+    const ids = (data || []).map(c => c.id)
+    if (ids.length) {
+      const { data: nfs } = await supabase
+        .from('notas_fiscais').select('cobranca_id, status, numero, url_pdf, erro_msg').in('cobranca_id', ids)
+      setNotas(Object.fromEntries((nfs || []).map(n => [n.cobranca_id, n])))
+    }
   }
   useEffect(() => { load() }, [])
+
+  // Emite a NFS-e do lote e acompanha (a emissão é assíncrona no provedor).
+  async function emitirNfse(cobrancaId) {
+    setEmitindo(s => ({ ...s, [cobrancaId]: true }))
+    try {
+      const { nota } = await adminApi.nfseEmitir(cobrancaId)
+      setNotas(s => ({ ...s, [cobrancaId]: nota }))
+      // se ainda processando, reconsulta algumas vezes (o provedor autoriza em segundos)
+      let atual = nota
+      for (let i = 0; i < 5 && atual?.status === 'processando'; i++) {
+        await new Promise(r => setTimeout(r, 2500))
+        const r = await adminApi.nfseStatus(cobrancaId)
+        if (r.nota) { atual = r.nota; setNotas(s => ({ ...s, [cobrancaId]: r.nota })) }
+      }
+      if (atual?.status === 'erro') setErr(`NFS-e recusada: ${atual.erro_msg || 'ver detalhes'}`)
+    } catch (e) { setErr(e.message) } finally {
+      setEmitindo(s => ({ ...s, [cobrancaId]: false }))
+    }
+  }
 
   async function calcular() {
     setErr(''); setPreview(null)
@@ -136,6 +166,8 @@ export default function CobrancasArea({ somenteLeitura = false }) {
       </section>
       )}
 
+      {!somenteLeitura && empresaId && <NfseConfig onChanged={load} />}
+
       <section className="bg-surface-container-lowest rounded-2xl shadow-card overflow-hidden">
         <div className="p-4 sm:p-6 border-b border-outline-variant/10"><h3 className="text-lg font-semibold">{somenteLeitura ? 'Suas cobranças' : 'Lotes'} ({lista.length})</h3></div>
         {loading ? <p className="text-center py-10 text-on-surface-variant text-sm">Carregando…</p>
@@ -155,6 +187,16 @@ export default function CobrancasArea({ somenteLeitura = false }) {
                     <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap pl-12 sm:pl-0">
                       <span className="tabular-nums font-semibold">{fmt(c.valor_total)}</span>
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
+                      {nfseAtiva && c.status !== 'cancelada' && (() => {
+                        const nf = notas[c.id]
+                        if (emitindo[c.id] || nf?.status === 'processando')
+                          return <span className="text-[11px] font-bold text-on-surface-variant px-2 py-1 inline-flex items-center gap-1"><span className="material-symbols-outlined animate-spin" style={{ fontSize: 14 }}>progress_activity</span> Emitindo…</span>
+                        if (nf?.status === 'autorizada')
+                          return <a href={nf.url_pdf || '#'} target="_blank" rel="noreferrer" className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary inline-flex items-center gap-1" title={nf.numero ? `NFS-e ${nf.numero}` : 'NFS-e'}><span className="material-symbols-outlined" style={{ fontSize: 14 }}>receipt</span> NFS-e</a>
+                        if (nf?.status === 'erro')
+                          return <button onClick={() => emitirNfse(c.id)} title={nf.erro_msg || 'Erro ao emitir'} className="px-2.5 py-1 text-[11px] font-bold bg-error-container/50 text-on-error-container rounded-md inline-flex items-center gap-1"><span className="material-symbols-outlined" style={{ fontSize: 14 }}>error</span> Reemitir</button>
+                        return <button onClick={() => emitirNfse(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-secondary-container text-on-secondary-container rounded-md hover:brightness-95 transition">Emitir NFS-e</button>
+                      })()}
                       <button onClick={() => setRecibo(c.id)} className="p-2 text-on-surface-variant hover:text-primary" title="Recibo"><span className="material-symbols-outlined">receipt_long</span></button>
                       {!somenteLeitura && c.status === 'aberta' && <>
                         <button onClick={() => marcarPaga(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-on-primary rounded-md hover:bg-primary-container transition">Marcar paga</button>

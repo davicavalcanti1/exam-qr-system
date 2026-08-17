@@ -69,6 +69,11 @@ export const adminApi = {
     req('GET', `/api/netris/horarios-catalogo?procedimentoId=${procedimentoId}&parceiroId=${parceiroId}&idPaciente=${idPaciente}&pesoPaciente=${pesoPaciente || 70}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
   netrisAgendarExame: (exameId, slot) => post('/api/netris/agendar-exame', { exameId, slot }),
   netrisCancelarExame: (exameId) => post('/api/netris/cancelar-exame', { exameId }),
+  // NFS-e (Focus NFe) — v2. empresaId opcional (owner configura/emite por empresa).
+  nfseConfig: (empresaId) => req('GET', `/api/nfse/config${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  nfseSalvarToken: (token, empresaId) => req('PUT', '/api/nfse/config-token', { token, ...(empresaId ? { empresaId } : {}) }),
+  nfseEmitir: (cobrancaId, empresaId) => post(`/api/nfse/emitir/${cobrancaId}`, empresaId ? { empresaId } : {}),
+  nfseStatus: (cobrancaId, empresaId) => req('GET', `/api/nfse/${cobrancaId}${empresaId ? `?empresaId=${empresaId}` : ''}`),
 }
 
 // carrega todas as páginas de uma listagem NetRis (planos/procedimentos)
