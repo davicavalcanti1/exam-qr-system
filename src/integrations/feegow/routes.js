@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { getCaller } from '../../lib/supabaseAdmin.js'
 import { feegowParaEmpresa } from './empresa.js'
 import { normalizePaciente, normalizeHorarios } from './client.js'
+import { ehGestor } from '../../lib/permissoes.js'
 
 // Rotas do Feegow — espelham as operacionais do NetRis (mesmos caminhos relativos),
 // só que sob /api/feegow. Trocar de provedor = mudar a config da empresa e apontar
@@ -82,8 +83,13 @@ router.post('/cancelar', async (req, res) => {
   } catch (err) { res.status(502).json({ error: 'Erro ao cancelar no Feegow', detail: err.message }) }
 })
 
-// Proxy genérico autenticado — qualquer endpoint sob api/.
+// Proxy genérico — qualquer endpoint sob api/, com o token da clínica.
+// Console de desenvolvedor: restrito a quem administra a empresa (mesma regra do
+// proxy do NetRis).
 router.all('/proxy/*', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  if (!ehGestor(c.profile)) return res.status(403).json({ error: 'Sem permissão' })
   const ctx = await comFeegow(req, res); if (!ctx) return
   try {
     const path = req.params[0] || ''

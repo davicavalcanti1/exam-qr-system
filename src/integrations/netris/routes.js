@@ -4,8 +4,25 @@ import { netrisParaEmpresa } from './empresa.js'
 import { resolverContextoExame, agendarExameNoNetris } from './agendamento.js'
 import { SITUACAO, normalizePaciente, normalizeHorarios } from './client.js'
 import { logAudit } from '../../lib/audit.js'
+import { podeOperarExame, ehGestor } from '../../lib/permissoes.js'
 
 const router = Router()
+
+// Carrega o exame e confere se quem chamou pode mexer nele.
+//
+// Estas rotas usam `service_role`, que ignora RLS: sem esta checagem o banco não
+// protege nada e basta conhecer o UUID de um exame para agir sobre ele. Devolve
+// { exame } ou { status, error } — 404 em vez de 403 quando o exame é de outro
+// tenant, para não confirmar a existência do UUID.
+async function exameDoCaller(exameId, profile) {
+  if (!exameId) return { status: 400, error: 'exameId é obrigatório' }
+  const { data: ex } = await supabaseAdmin
+    .from('exames').select('id, empresa_id, parceiro_id, status, netris_atendimento_id')
+    .eq('id', exameId).maybeSingle()
+  if (!ex) return { status: 404, error: 'Exame não encontrado' }
+  if (!podeOperarExame(profile, ex)) return { status: 404, error: 'Exame não encontrado' }
+  return { exame: ex }
+}
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const isoToBR = (iso) => { const [y, m, d] = String(iso).split('-'); return `${d}/${m}/${y}` }
 
@@ -137,8 +154,9 @@ router.post('/confirmar-exame', async (req, res) => {
 router.get('/horarios-exame', async (req, res) => {
   const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
   const { exameId, dataInicial, dataFinal } = req.query
-  if (!exameId) return res.status(400).json({ error: 'exameId é obrigatório' })
   if (!DATE_RE.test(dataInicial || '')) return res.status(400).json({ error: 'dataInicial em YYYY-MM-DD' })
+  const dono = await exameDoCaller(exameId, c.profile)
+  if (dono.error) return res.status(dono.status).json({ error: dono.error })
   const ctx = await resolverContextoExame(exameId)
   if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
   try {
@@ -171,8 +189,18 @@ router.get('/horarios-catalogo', async (req, res) => {
   const client = await netrisParaEmpresa(empresaId)
   if (!client) return res.status(400).json({ error: 'NetRis não está ativo para esta empresa.' })
 
-  const { data: proc } = await supabaseAdmin.from('procedimentos').select('netris_procedimento_id').eq('id', procedimentoId).maybeSingle()
-  const { data: parc } = await supabaseAdmin.from('parceiros').select('netris_id_plano_convenio, netris_id_convenio, netris_id_unidade').eq('id', parceiroId).maybeSingle()
+  // Recorte por empresa nas duas consultas: sem ele, passar o id de um parceiro
+  // de outra clínica devolvia o mapeamento NetRis dela.
+  const { data: proc } = await supabaseAdmin.from('procedimentos')
+    .select('netris_procedimento_id').eq('id', procedimentoId).eq('empresa_id', empresaId).maybeSingle()
+  const { data: parc } = await supabaseAdmin.from('parceiros')
+    .select('netris_id_plano_convenio, netris_id_convenio, netris_id_unidade').eq('id', parceiroId).eq('empresa_id', empresaId).maybeSingle()
+
+  // Coordenador/funcionário de parceiro só consulta a agenda do PRÓPRIO parceiro.
+  if (['parceiro_coordenador', 'parceiro_funcionario'].includes(c.profile.role) && c.profile.parceiro_id !== parceiroId) {
+    return res.status(404).json({ error: 'Parceiro não encontrado' })
+  }
+
   const faltando = []
   if (!proc?.netris_procedimento_id) faltando.push('exame sem procedimento NetRis')
   if (!parc?.netris_id_plano_convenio) faltando.push('parceiro sem plano-convênio')
@@ -204,6 +232,8 @@ router.post('/agendar-exame', async (req, res) => {
   if (!exameId || !slot?.dataString || !slot?.horarioString || !slot?.idMedico || !slot?.idSala) {
     return res.status(400).json({ error: 'exameId e slot {dataString, horarioString, idMedico, idSala} são obrigatórios' })
   }
+  const dono = await exameDoCaller(exameId, c.profile)
+  if (dono.error) return res.status(dono.status).json({ error: dono.error })
   const result = await agendarExameNoNetris(exameId, slot)
   if (!result.ok) return res.status(result.status || 502).json({ error: result.error, upstream: result.upstream })
   logAudit({ empresaId: result.empresaId, atorId: c.profile.id, atorNome: c.profile.nome || c.profile.role, acao: 'netris.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: result.agId, slot } })
@@ -214,10 +244,9 @@ router.post('/agendar-exame', async (req, res) => {
 router.post('/cancelar-exame', async (req, res) => {
   const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
   const { exameId } = req.body || {}
-  if (!exameId) return res.status(400).json({ error: 'exameId é obrigatório' })
-  const { data: ex } = await supabaseAdmin
-    .from('exames').select('empresa_id, netris_atendimento_id').eq('id', exameId).maybeSingle()
-  if (!ex) return res.status(404).json({ error: 'Exame não encontrado' })
+  const dono = await exameDoCaller(exameId, c.profile)
+  if (dono.error) return res.status(dono.status).json({ error: dono.error })
+  const ex = dono.exame
   if (!ex.netris_atendimento_id) return res.status(400).json({ error: 'Este exame não tem agendamento no NetRis' })
   const client = await netrisParaEmpresa(ex.empresa_id)
   if (!client) return res.status(400).json({ error: 'NetRis não está ativo para esta empresa' })
@@ -259,8 +288,16 @@ router.get('/procedimentos', async (req, res) => {
   } catch (err) { res.status(502).json({ error: 'Erro ao listar procedimentos', detail: err.message }) }
 })
 
-// Proxy genérico autenticado — qualquer endpoint sob netris/api/.
+// Proxy genérico — qualquer endpoint sob netris/api/, com o token da clínica.
+//
+// É o console de desenvolvedor, não uma rota de produto: restrito a quem
+// administra a empresa. Aberto a qualquer papel autenticado, ele dava a um
+// funcionário de parceiro acesso GET/POST/PATCH/PUT a todo o RIS da clínica —
+// listar pacientes, alterar situações, criar encaixes — usando a credencial dela.
 router.all('/proxy/*', async (req, res) => {
+  const c = await getCaller(req)
+  if (c.error) return res.status(c.status).json({ error: c.error })
+  if (!ehGestor(c.profile)) return res.status(403).json({ error: 'Sem permissão' })
   const ctx = await comNetris(req, res); if (!ctx) return
   try {
     const path = req.params[0] || ''
