@@ -322,7 +322,7 @@ avulso. Migrations propostas: `cobrancas` (gateway), `exames` (origem do preço)
 - **Cancelamento de NFS-e pelo sistema** — Campina Grande–PB não permite por API (só portal).
 - Custo de transporte/lanche.
 - Onboarding self-service de novas clínicas / billing do próprio SaaS (produtização) —
-  frente futura, tratada em `docs/negocio/`.
+  frente futura, tratada no material comercial interno (fora deste repositório).
 
 ## 10. Ordem de execução proposta
 
