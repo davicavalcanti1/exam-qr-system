@@ -6,6 +6,24 @@
 alter table empresas add column if not exists plano text;
 
 -- Recria o agregador incluindo o plano.
+--
+-- O `drop` antes do `create` nao e redundante: esta versao acrescenta a coluna
+-- `plano` ao `returns table`, e isso MUDA O TIPO DE RETORNO da funcao. Postgres
+-- recusa `create or replace` nesse caso:
+--
+--   ERROR: cannot change return type of existing function
+--   HINT:  Use DROP FUNCTION public.get_empresa_uso() first.
+--
+-- Sem o drop, `supabase db push` aborta aqui — e aborta so em ambiente NOVO,
+-- onde a versao de 20260720180000 acabou de ser criada. Em quem ja aplicou tudo,
+-- esta migration esta registrada e nunca roda de novo, entao o erro fica
+-- invisivel: o sintoma e "nao consigo criar ambiente nenhum", que no white-label
+-- significa "nao consigo fazer onboarding de empresa nova".
+--
+-- `cascade` fica FORA de proposito: se algo depender desta funcao, e melhor o
+-- push falhar dizendo o que depende do que apagar a dependencia em silencio.
+drop function if exists public.get_empresa_uso();
+
 create or replace function public.get_empresa_uso()
 returns table (
   empresa_id        uuid,
