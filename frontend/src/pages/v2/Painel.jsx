@@ -148,6 +148,12 @@ export default function Painel() {
   const [secao, setSecao] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
   const [view, setView] = useState(null) // 'perfil' | null
+
+  // Embutido = exibido dentro do Controle Operacional. Calculado no render:
+  // uma página não deixa de estar em iframe no meio da vida. try/catch por
+  // segurança. Ver ADR 0003 em imago-platform/docs/adr.
+  let embutido = false
+  try { embutido = window.self !== window.top } catch { embutido = true }
   const [dpaOk, setDpaOk] = useState(null) // null=carregando; true=aceito/não aplicável; false=pendente
 
   useEffect(() => {
@@ -181,7 +187,17 @@ export default function Painel() {
       {menuAberto && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setMenuAberto(false)} />}
 
       {/* Sidebar */}
+      {/* ── Casca em modo embutido ──────────────────────────────────────────
+          Exibido dentro do Controle Operacional, este painel some com o que a
+          casca de lá já oferece — marca e menu de perfil — e mantém o que é só
+          dele: a navegação entre as áreas. São níveis diferentes de navegação;
+          esconder a lateral inteira deixaria o módulo sem como circular.
+
+          O "Sair" some por um motivo além da duplicação: sair daqui sem sair do
+          sistema faria o SSO entrar de novo no carregamento seguinte. O botão
+          existiria para não funcionar. */}
       <aside className={`fixed z-40 inset-y-0 left-0 w-64 bg-surface-container-lowest border-r border-outline-variant/15 flex flex-col transition-transform lg:translate-x-0 ${menuAberto ? 'translate-x-0' : '-translate-x-full'}`}>
+        {!embutido && (
         <div className="px-5 py-5 border-b border-outline-variant/10">
           {branding.tenant && branding.logo
             ? <img src={branding.logo} alt={branding.nome} className="h-14 max-w-full object-contain object-left" />
@@ -195,6 +211,7 @@ export default function Painel() {
                   </div>
                 </div>}
         </div>
+        )}
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {nav.map(n => {
@@ -210,7 +227,9 @@ export default function Painel() {
           })}
         </nav>
 
-        <PerfilMenu profile={profile} role={role} signOut={signOut} onPerfil={() => { setView('perfil'); setMenuAberto(false) }} />
+        {!embutido && (
+          <PerfilMenu profile={profile} role={role} signOut={signOut} onPerfil={() => { setView('perfil'); setMenuAberto(false) }} />
+        )}
       </aside>
 
       {/* Conteúdo */}
