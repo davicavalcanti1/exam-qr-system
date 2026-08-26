@@ -108,7 +108,11 @@ router.post('/entrar', async (req, res) => {
         co_user_id: coUserId,
         role: papel,
         empresa_id: mapaTenant.empresa_id,
-        full_name: nome || email || 'Equipe Imago',
+        // A chave e `nome`, e nao `full_name`: e ela que o trigger le (ver a
+        // migration). Com a chave errada ele cai no fallback, que e o pedaco
+        // antes do @ do e-mail SINTETICO — e a pessoa aparece na tela como
+        // "co.d69a6f8e-162c-...". Aconteceu na primeira entrada real.
+        nome: nome || email || 'Equipe Imago',
         // O trigger usa `email_contato` no lugar do e-mail da conta (que aqui e
         // sintetico). Guardar o e-mail REAL e o que permite perceber depois que
         // a mesma pessoa tem conta nativa e sombra — ver a lista de duplicados
@@ -121,11 +125,14 @@ router.post('/entrar', async (req, res) => {
     // com mensagem legível em vez de deixar linha pela metade.
     if (erroCriar) return res.status(403).json(RECUSA)
   } else {
-    // Já existe: papel e empresa podem ter mudado no CO desde a última entrada.
-    await supabaseAdmin
-      .from('profiles')
-      .update({ role: papel, empresa_id: mapaTenant.empresa_id })
-      .eq('co_user_id', coUserId)
+    // Já existe: papel, empresa, nome e e-mail podem ter mudado no CO desde a
+    // última entrada. Atualizar os quatro mantém os dois lados coerentes sem
+    // job de sincronia — e faz sombra antiga se corrigir sozinha na entrada
+    // seguinte, em vez de exigir UPDATE manual.
+    const atualizacao = { role: papel, empresa_id: mapaTenant.empresa_id }
+    if (nome) atualizacao.nome = nome
+    if (email) atualizacao.email = email
+    await supabaseAdmin.from('profiles').update(atualizacao).eq('co_user_id', coUserId)
   }
 
   // Sessão. Mesmo mecanismo do link mágico, sem e-mail no meio: o cliente troca
