@@ -163,8 +163,14 @@ router.post('/entrar', async (req, res) => {
   }
 
   if (!perfil) {
+    // `co_user_id is null` = so contas NATIVAS contam como "e-mail ocupado".
+    // Sem esse filtro a checagem se engana sozinha: sombra guarda o e-mail real
+    // como CONTATO, entao a propria pessoa apareceria como ocupante do proprio
+    // e-mail e cairia no sintetico para sempre. O que precisa ser evitado e
+    // colidir com uma conta que autentica por esse e-mail — e sombra nao
+    // autentica por ele.
     const { data: ocupado } = await supabaseAdmin
-      .from('profiles').select('id').eq('email', email || '').limit(1)
+      .from('profiles').select('id').eq('email', email || '').is('co_user_id', null).limit(1)
     const podeUsarReal = !!email && !(ocupado ?? []).length
     emailConta = podeUsarReal ? email : emailSintetico
 
