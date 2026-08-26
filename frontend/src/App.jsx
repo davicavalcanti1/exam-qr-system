@@ -48,6 +48,16 @@ export default function App() {
         <Route path="/docs/arquitetura" element={<Arquitetura />} />
         <Route path="/docs/dados" element={<DadosDoc />} />
         <Route path="/docs/contas" element={<Contas />} />
+        {/* Porta de entrada quando este app e exibido dentro do Controle
+            Operacional. La o modulo ocupa /scan-parceiros, entao o iframe abre
+            nesse caminho — que aqui nao corresponde a tela nenhuma. Sem esta
+            linha o usuario cairia no catch-all vindo do menu do sistema.
+
+            /painel e o destino certo: quem chega pelo sistema ja esta
+            autenticado por SSO, e o painel e que decide qual area mostrar pelo
+            papel da pessoa. */}
+        <Route path="/scan-parceiros" element={<Navigate to="/painel" replace />} />
+
         {/* rotas legadas (Express/clinic/partner) desativadas — tudo cai no login v2 */}
         <Route path="/login" element={<Navigate to="/entrar" replace />} />
         <Route path="*" element={<Navigate to="/entrar" replace />} />
