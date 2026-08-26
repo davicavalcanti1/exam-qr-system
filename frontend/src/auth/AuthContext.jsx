@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase, supabaseReady } from '../lib/supabase'
+import { tentarEntrarPeloSistema } from './ssoDoSistema'
 
 const AuthContext = createContext(null)
 
@@ -42,8 +43,19 @@ export function AuthProvider({ children }) {
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return
-      setSession(data.session)
-      await loadProfile(data.session?.user?.id)
+
+      // Sem sessão, mas exibido dentro do Controle Operacional: tenta a entrada
+      // por ticket antes de mostrar o login. Falha em silêncio — quem abre o app
+      // direto, ou quem não tem papel traduzido, vê a tela de sempre.
+      let sessao = data.session
+      if (!sessao) {
+        const entrou = await tentarEntrarPeloSistema()
+        if (!mounted) return
+        if (entrou) sessao = (await supabase.auth.getSession()).data.session
+      }
+
+      setSession(sessao)
+      await loadProfile(sessao?.user?.id)
       setLoading(false)
     })
 

@@ -9,6 +9,7 @@ import adminRouter from './routes/admin.js'
 import qrRouter from './routes/qr.js'
 import integracaoRouter from './routes/integracao.js'
 import autorizacaoRouter from './routes/autorizacao.js'
+import ssoRouter from './routes/sso.js'
 import zapsignRouter from './integrations/zapsign/routes.js'
 
 // ── Rotas legadas do MVP (SQLite) desativadas ────────────────────────────────
@@ -53,6 +54,7 @@ app.use('/api/netris', netrisRouter) // integração NetRis (agendamento futuro)
 app.use('/api/feegow', feegowRouter) // integração Feegow (mesma interface do NetRis)
 app.use('/api/autorizacao', autorizacaoRouter) // lote de autorização por link público
 app.use('/api/zapsign', zapsignRouter) // assinatura eletrônica de contrato e DPA
+app.use('/api/sso', ssoRouter)         // consumo do ticket vindo do Controle Operacional
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))
