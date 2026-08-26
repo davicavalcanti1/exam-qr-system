@@ -126,9 +126,30 @@ router.post('/vinculos', async (req, res) => {
   // A conta de destino precisa existir: vincular para um e-mail sem conta
   // criaria um vinculo que so falha na hora de usar, e o erro apareceria longe
   // daqui.
-  const { data: destino } = await supabaseAdmin
-    .from('profiles').select('id, role').eq('email', destino_email).maybeSingle()
-  if (!destino) return res.status(400).json({ error: 'Não existe conta com esse e-mail aqui' })
+  //
+  // Sem `maybeSingle()`, de proposito: ele ERRA quando encontra mais de uma
+  // linha, e mais de uma e o caso NORMAL aqui — a pessoa costuma ter a conta
+  // nativa e a sombra criada pelo SSO, as duas com o mesmo e-mail. Com
+  // maybeSingle o retorno vinha nulo e a tela dizia "nao existe conta com esse
+  // e-mail" justamente para quem tem duas. Foi o que aconteceu na primeira
+  // tentativa real.
+  const { data: candidatos, error: erroBusca } = await supabaseAdmin
+    .from('profiles').select('id, role, co_user_id').eq('email', destino_email)
+  if (erroBusca) return res.status(500).json({ error: erroBusca.message })
+
+  // Vincular para a conta NATIVA: a sombra e o que estamos deixando de usar.
+  const nativas = (candidatos ?? []).filter(c => !c.co_user_id)
+  if (nativas.length === 0) {
+    return res.status(400).json({
+      error: (candidatos ?? []).length
+        ? 'Esse e-mail só tem conta criada pelo acesso externo. Vincule para uma conta nativa.'
+        : 'Não existe conta com esse e-mail aqui',
+    })
+  }
+  if (nativas.length > 1) {
+    return res.status(400).json({ error: 'Há mais de uma conta nativa com esse e-mail — resolva a duplicidade antes de vincular' })
+  }
+  const destino = nativas[0]
 
   const { error } = await supabaseAdmin
     .from('sso_vinculos')
