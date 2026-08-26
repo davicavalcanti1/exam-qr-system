@@ -30,7 +30,11 @@ import { supabaseAdmin } from '../lib/supabaseAdmin.js'
 
 const router = Router()
 
-const CHAVE_PUBLICA = process.env.SSO_CO_PUBLIC_KEY || ''
+// PEM tem quebras de linha, e campo de variável de ambiente de painel costuma
+// não aceitar — então a chave quase sempre chega com "\n" literal, em uma linha
+// só. Sem normalizar, a verificação falha com erro de formato, e todo ticket
+// legítimo é recusado como se fosse forjado.
+const CHAVE_PUBLICA = (process.env.SSO_CO_PUBLIC_KEY || '').replace(/\\n/g, '\n')
 const EMISSOR_ESPERADO = 'controleoperacional'
 const AUDIENCIA = process.env.SSO_AUDIENCIA || 'parceiros'
 
