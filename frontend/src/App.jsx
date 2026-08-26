@@ -21,9 +21,9 @@ import Contas from './pages/public/docs/Contas'
 import AutorizarLote from './pages/public/AutorizarLote'
 
 // Onde este app está montado. Ele atende em dois endereços com as MESMAS
-// rotas: no host próprio (raiz) e sob `/parceiros-app` quando exibido dentro do
+// rotas: no host próprio (raiz) e sob `/scan-parceiros-app` quando exibido dentro do
 // Controle Operacional. Lido do endereço porque é o mesmo build nos dois.
-const BASENAME = window.location.pathname.startsWith('/parceiros-app') ? '/parceiros-app' : '/'
+const BASENAME = window.location.pathname.startsWith('/scan-parceiros-app') ? '/scan-parceiros-app' : '/'
 
 export default function App() {
   return (

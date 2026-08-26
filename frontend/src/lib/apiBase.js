@@ -2,7 +2,7 @@
 //
 // Por que não é `/api`: este app roda em dois lugares. No host próprio ele é a
 // raiz do domínio e `/api` estaria livre. Mas ele também é servido sob
-// `gestao.imagoradiologia.cloud/parceiros-app`, por proxy do nginx do Controle
+// `gestao.imagoradiologia.cloud/scan-parceiros-app`, por proxy do nginx do Controle
 // Operacional — e lá `/api/` já é do Express do sistema. Uma chamada daqui para
 // `/api/...` chegaria no backend errado, com sessão válida, e o erro seria
 // difícil de ler.
@@ -15,4 +15,4 @@
 // visível.
 //
 // Ver ADR 0003 em imago-platform/docs/adr.
-export const API_BASE = '/parceiros-api'
+export const API_BASE = '/scan-parceiros-api'

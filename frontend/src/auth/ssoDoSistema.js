@@ -22,7 +22,7 @@ import { API_BASE } from '../lib/apiBase'
  */
 
 /** Nome do módulo no Controle Operacional. Vira o `aud` do ticket. */
-const DESTINO = import.meta.env.VITE_SSO_DESTINO || 'parceiros'
+const DESTINO = import.meta.env.VITE_SSO_DESTINO || 'scan-parceiros'
 
 /** true = entrou. false = seguir para a tela de login normal. */
 export async function tentarEntrarPeloSistema() {

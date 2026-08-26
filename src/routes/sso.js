@@ -36,7 +36,7 @@ const router = Router()
 // legítimo é recusado como se fosse forjado.
 const CHAVE_PUBLICA = (process.env.SSO_CO_PUBLIC_KEY || '').replace(/\\n/g, '\n')
 const EMISSOR_ESPERADO = 'controleoperacional'
-const AUDIENCIA = process.env.SSO_AUDIENCIA || 'parceiros'
+const AUDIENCIA = process.env.SSO_AUDIENCIA || 'scan-parceiros'
 
 /** Todas as recusas dizem a mesma coisa: distinguir contaria o que existe. */
 const RECUSA = { error: 'Sem acesso' }
