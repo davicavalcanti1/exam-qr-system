@@ -227,7 +227,27 @@ export default function Painel() {
           })}
         </nav>
 
-        {!embutido && (
+        {embutido ? (
+          /* Embutido, "Sair" nao faz sentido — a casca de fora e que manda na
+             sessao do sistema. Mas ALGUMA acao precisa existir: o SSO so decide
+             quem voce e quando NAO ha sessao, entao mudanca de papel, de empresa
+             ou de vinculo so chega na proxima entrada. Sem isto a pessoa fica
+             presa na identidade da primeira vez, sem nada na tela para
+             explicar. Aconteceu em 26/ago: o vinculo foi criado e o painel
+             continuou mostrando a conta antiga.
+
+             Encerra a sessao daqui e recarrega; o SSO reentra sozinho, agora com
+             os dados atuais. */
+          <button
+            type="button"
+            onClick={async () => { await signOut(); window.location.reload() }}
+            className="m-3 flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 px-3 py-2 text-xs font-bold text-on-surface-variant transition hover:bg-black/[.04]"
+            title="Reentra pelo sistema com papel e empresa atualizados"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
+            Atualizar acesso
+          </button>
+        ) : (
           <PerfilMenu profile={profile} role={role} signOut={signOut} onPerfil={() => { setView('perfil'); setMenuAberto(false) }} />
         )}
       </aside>
