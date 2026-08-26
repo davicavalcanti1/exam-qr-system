@@ -92,6 +92,45 @@ router.post('/entrar', async (req, res) => {
   }
   if (!papel) return res.status(403).json(RECUSA)
 
+  // ── Vínculo com conta existente ──────────────────────────────────────────
+  // Antes de pensar em sombra: se alguém declarou que esta identidade externa
+  // entra numa conta que JÁ existe aqui, é nela que a pessoa entra — com o
+  // papel que ela já tem. É como o dono da plataforma continua sendo dono ao
+  // entrar pelo sistema, sem que cargo nenhum de fora conceda isso.
+  //
+  // Nada é atualizado nessa conta: papel, empresa e nome são dela, não do
+  // sistema de origem. O vínculo diz quem pode entrar, não o que pode fazer.
+  if (email) {
+    const { data: vinculo } = await supabaseAdmin
+      .from('sso_vinculos')
+      .select('origem_email, origem_sub, destino_email, ativo')
+      .eq('origem_email', email)
+      .maybeSingle()
+
+    if (vinculo?.ativo) {
+      // Mesma trava da sombra: e-mail reaproveitado por outra pessoa lá não
+      // herda a conta daqui.
+      if (vinculo.origem_sub && vinculo.origem_sub !== coUserId) {
+        return res.status(403).json(RECUSA)
+      }
+
+      const { data: linkVinculo, error: erroVinculo } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: vinculo.destino_email,
+      })
+      if (erroVinculo || !linkVinculo?.properties?.hashed_token) {
+        return res.status(403).json(RECUSA)
+      }
+
+      await supabaseAdmin
+        .from('sso_vinculos')
+        .update({ ultimo_acesso: new Date().toISOString(), origem_sub: vinculo.origem_sub ?? coUserId })
+        .eq('origem_email', email)
+
+      return res.json({ token_hash: linkVinculo.properties.hashed_token })
+    }
+  }
+
   // A sombra. E-mail sintético e determinístico: o mesmo usuário do CO sempre
   // cai na mesma conta daqui.
   const emailSombra = `co.${coUserId}@sso.exameqr.app`

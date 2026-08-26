@@ -98,6 +98,53 @@ router.post('/papeis', async (req, res) => {
   res.json({ ok: true })
 })
 
+// ── Vinculos com conta existente ───────────────────────────────────────────
+// Quem tem vinculo entra NA conta que ja tem, com o papel dela, em vez de
+// ganhar uma sombra. E como o dono da plataforma continua dono ao entrar pelo
+// sistema — sem que cargo nenhum de fora conceda isso.
+
+router.get('/vinculos', async (req, res) => {
+  if (!await somenteOwner(req, res)) return
+  const { data, error } = await supabaseAdmin
+    .from('sso_vinculos')
+    .select('origem_email, destino_email, ativo, ultimo_acesso, observacao')
+    .order('origem_email')
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ vinculos: data ?? [] })
+})
+
+router.post('/vinculos', async (req, res) => {
+  if (!await somenteOwner(req, res)) return
+  const origem_email = String(req.body?.origem_email || '').trim().toLowerCase()
+  const destino_email = String(req.body?.destino_email || '').trim().toLowerCase()
+  const observacao = String(req.body?.observacao || '').trim() || null
+  const eEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+  if (!eEmail.test(origem_email) || !eEmail.test(destino_email)) {
+    return res.status(400).json({ error: 'E-mail inválido' })
+  }
+
+  // A conta de destino precisa existir: vincular para um e-mail sem conta
+  // criaria um vinculo que so falha na hora de usar, e o erro apareceria longe
+  // daqui.
+  const { data: destino } = await supabaseAdmin
+    .from('profiles').select('id, role').eq('email', destino_email).maybeSingle()
+  if (!destino) return res.status(400).json({ error: 'Não existe conta com esse e-mail aqui' })
+
+  const { error } = await supabaseAdmin
+    .from('sso_vinculos')
+    .upsert({ origem_email, destino_email, observacao, ativo: true }, { onConflict: 'origem_email' })
+  if (error) return res.status(400).json({ error: error.message })
+  res.json({ ok: true, papel_destino: destino.role })
+})
+
+router.delete('/vinculos/:origemEmail', async (req, res) => {
+  if (!await somenteOwner(req, res)) return
+  const { error } = await supabaseAdmin
+    .from('sso_vinculos').delete().eq('origem_email', String(req.params.origemEmail).toLowerCase())
+  if (error) return res.status(400).json({ error: error.message })
+  res.json({ ok: true })
+})
+
 // ── Pessoas com conta nativa E sombra ──────────────────────────────────────
 // Quem ja tinha conta aqui antes do SSO acaba com duas: a nativa, com senha, e
 // a sombra criada na primeira entrada pelo sistema de origem. Sao pessoas

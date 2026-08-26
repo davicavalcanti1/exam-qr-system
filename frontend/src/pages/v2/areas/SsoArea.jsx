@@ -19,18 +19,21 @@ export default function SsoArea() {
   const [tenants, setTenants] = useState([])
   const [papeis, setPapeis] = useState([])
   const [duplicados, setDuplicados] = useState([])
+  const [vinculos, setVinculos] = useState([])
+  const [novoVinculo, setNovoVinculo] = useState({ origem_email: '', destino_email: '' })
   const [carregando, setCarregando] = useState(true)
   const [msg, setMsg] = useState('')
   const [novo, setNovo] = useState({ co_tenant_id: '', empresa_id: '' })
 
   async function carregar() {
     try {
-      const [t, p, d] = await Promise.all([
-        adminApi.ssoTenants(), adminApi.ssoPapeis(), adminApi.ssoDuplicados(),
+      const [t, p, d, v] = await Promise.all([
+        adminApi.ssoTenants(), adminApi.ssoPapeis(), adminApi.ssoDuplicados(), adminApi.ssoVinculos(),
       ])
       setTenants(t.tenants || [])
       setPapeis(p.papeis || [])
       setDuplicados(d.duplicados || [])
+      setVinculos(v.vinculos || [])
     } catch (e) { setMsg(e.message) } finally { setCarregando(false) }
   }
 
@@ -48,6 +51,20 @@ export default function SsoArea() {
   async function removerTenant(id) {
     setMsg('')
     try { await adminApi.ssoRemoverTenant(id); await carregar() } catch (e) { setMsg(e.message) }
+  }
+
+  async function salvarVinculo() {
+    setMsg('')
+    try {
+      await adminApi.ssoSalvarVinculo(novoVinculo)
+      setNovoVinculo({ origem_email: '', destino_email: '' })
+      await carregar()
+    } catch (e) { setMsg(e.message) }
+  }
+
+  async function removerVinculo(origemEmail) {
+    setMsg('')
+    try { await adminApi.ssoRemoverVinculo(origemEmail); await carregar() } catch (e) { setMsg(e.message) }
   }
 
   async function salvarPapel(co_role, exameqr_role) {
@@ -134,6 +151,56 @@ export default function SsoArea() {
           </p>
         </Card>
       )}
+
+      <Card title="Entrar numa conta que já existe">
+        <p className="mb-4 text-sm text-slate-600">
+          Por padrão, quem chega de fora ganha uma conta nova aqui, com o papel
+          traduzido pela tabela abaixo. Um vínculo muda isso: a pessoa entra
+          <strong> na conta que ela já tem</strong>, com o papel que ela já tem.
+          É assim que o dono da plataforma continua dono ao entrar pelo sistema —
+          sem que cargo nenhum de fora possa conceder isso.
+        </p>
+
+        {vinculos.length === 0 ? (
+          <p className="mb-4 text-sm text-slate-500">Nenhum vínculo. Todos ganham conta nova.</p>
+        ) : (
+          <div className="mb-4 divide-y rounded border">
+            {vinculos.map(v => (
+              <div key={v.origem_email} className="flex items-center gap-3 p-3 text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate">{v.origem_email} <span className="text-slate-400">→</span> <strong>{v.destino_email}</strong></p>
+                  <p className="text-xs text-slate-500">
+                    {v.ultimo_acesso ? `último acesso em ${new Date(v.ultimo_acesso).toLocaleString('pt-BR')}` : 'nunca usado'}
+                  </p>
+                </div>
+                <Button variant="ghost" onClick={() => removerVinculo(v.origem_email)}>Remover</Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="E-mail da pessoa no sistema de origem">
+            <Input value={novoVinculo.origem_email}
+              onChange={e => setNovoVinculo({ ...novoVinculo, origem_email: e.target.value })}
+              placeholder="pessoa@empresa.com" />
+          </Field>
+          <Field label="E-mail da conta dela aqui">
+            <Input value={novoVinculo.destino_email}
+              onChange={e => setNovoVinculo({ ...novoVinculo, destino_email: e.target.value })}
+              placeholder="pessoa@empresa.com" />
+          </Field>
+        </div>
+        <Button className="mt-3" onClick={salvarVinculo}>Vincular</Button>
+
+        <p className="mt-3 text-xs text-slate-500">
+          Vale saber o preço: a conta vinculada é daqui e tem senha, então
+          <strong> para ela, remover o acesso no sistema de origem não basta</strong> —
+          a entrada por senha continua existindo. É aceitável para o dono da
+          plataforma, que não deveria poder ser trancado do lado de fora por um
+          sistema externo; para o resto da equipe, a conta nova é mais segura.
+        </p>
+      </Card>
 
       <Card title="Cargos de fora, papéis aqui">
         <p className="mb-4 text-sm text-slate-600">
