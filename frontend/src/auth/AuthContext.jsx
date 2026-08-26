@@ -13,14 +13,20 @@ export function AuthProvider({ children }) {
   const [parceiro, setParceiro] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Quem chamou precisa saber se havia perfil: sessao valida sem perfil e uma
+  // sessao orfa, e ela deve ser descartada em vez de virar "sem acesso".
+  let perfilEncontrado = false
+
   async function loadProfile(userId) {
-    if (!userId) { setProfile(null); setEmpresa(null); setParceiro(null); return }
+    perfilEncontrado = false
+    if (!userId) { setProfile(null); setEmpresa(null); setParceiro(null); return false }
     const { data } = await supabase
       .from('profiles')
       .select('id, empresa_id, parceiro_id, nome, email, role, ativo, username, must_change_password')
       .eq('id', userId)
       .maybeSingle()
     setProfile(data || null)
+    perfilEncontrado = !!data
     // Marca do tenant: empresa do usuário (owner não tem empresa → marca da plataforma).
     if (data?.empresa_id) {
       const { data: emp } = await supabase.from('empresas').select('*').eq('id', data.empresa_id).maybeSingle()
@@ -56,6 +62,24 @@ export function AuthProvider({ children }) {
 
       setSession(sessao)
       await loadProfile(sessao?.user?.id)
+
+      // Sessão válida e perfil inexistente = sessão órfã. Acontece quando a
+      // conta é apagada e o navegador ainda tem o token, que vale por cerca de
+      // uma hora: o app fica "autenticado" e sem acesso a nada, e o SSO nem
+      // chega a ser tentado, porque só roda quando NÃO há sessão.
+      //
+      // Descartar e tentar de novo faz a pessoa reentrar pelo sistema com uma
+      // conta nova, em vez de esperar o token expirar sem entender por quê.
+      if (sessao && !perfilEncontrado) {
+        await supabase.auth.signOut()
+        if (!mounted) return
+        const reentrou = await tentarEntrarPeloSistema()
+        if (!mounted) return
+        sessao = reentrou ? (await supabase.auth.getSession()).data.session : null
+        setSession(sessao)
+        await loadProfile(sessao?.user?.id)
+      }
+
       setLoading(false)
     })
 
