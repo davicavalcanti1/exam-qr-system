@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { API_BASE } from './apiBase'
 
 async function token() {
   const { data } = await supabase.auth.getSession()
@@ -37,59 +38,59 @@ async function baixarArquivo(path, body, filename) {
 
 export const adminApi = {
   // SSO — quem, de fora, entra aqui. Restrito a owner no servidor.
-  ssoTenants:        ()            => req('GET',    '/api/sso-admin/tenants'),
-  ssoSalvarTenant:   (payload)     => post('/api/sso-admin/tenants', payload),
-  ssoRemoverTenant:  (coTenantId)  => req('DELETE', `/api/sso-admin/tenants/${coTenantId}`),
-  ssoPapeis:         ()            => req('GET',    '/api/sso-admin/papeis'),
-  ssoSalvarPapel:    (payload)     => post('/api/sso-admin/papeis', payload),
-  createUser: (payload) => post('/api/admin/users', payload),
-  createParceiro: (payload) => post('/api/admin/parceiros', payload),
-  updateParceiro: (id, payload) => req('PUT', `/api/admin/parceiros/${id}`, payload),
-  updateUser: (id, payload) => req('PATCH', `/api/admin/users/${id}`, payload),
-  excluirUser: (id) => req('DELETE', `/api/admin/users/${id}`),
-  resetarSenha: (id) => post(`/api/admin/users/${id}/reset-senha`, {}),
-  gerarQr: (exameId) => post('/api/qr/gerar', { exameId }),
+  ssoTenants:        ()            => req('GET',    `${API_BASE}/sso-admin/tenants`),
+  ssoSalvarTenant:   (payload)     => post(`${API_BASE}/sso-admin/tenants`, payload),
+  ssoRemoverTenant:  (coTenantId)  => req('DELETE', `${API_BASE}/sso-admin/tenants/${coTenantId}`),
+  ssoPapeis:         ()            => req('GET',    `${API_BASE}/sso-admin/papeis`),
+  ssoSalvarPapel:    (payload)     => post(`${API_BASE}/sso-admin/papeis`, payload),
+  createUser: (payload) => post(`${API_BASE}/admin/users`, payload),
+  createParceiro: (payload) => post(`${API_BASE}/admin/parceiros`, payload),
+  updateParceiro: (id, payload) => req('PUT', `${API_BASE}/admin/parceiros/${id}`, payload),
+  updateUser: (id, payload) => req('PATCH', `${API_BASE}/admin/users/${id}`, payload),
+  excluirUser: (id) => req('DELETE', `${API_BASE}/admin/users/${id}`),
+  resetarSenha: (id) => post(`${API_BASE}/admin/users/${id}/reset-senha`, {}),
+  gerarQr: (exameId) => post(`${API_BASE}/qr/gerar`, { exameId }),
   // PDF de comprovantes (1 = individual do paciente; N = kit em lote pro parceiro)
-  gerarQrPdf: (exameIds, filename) => baixarArquivo('/api/qr/pdf', { exameIds }, filename),
+  gerarQrPdf: (exameIds, filename) => baixarArquivo(`${API_BASE}/qr/pdf`, { exameIds }, filename),
   // envia o comprovante (PDF) por WhatsApp — destino: 'paciente' | 'parceiro'
-  enviarComprovanteWhatsapp: (exameIds, destino) => post('/api/qr/enviar-whatsapp', { exameIds, destino }),
-  criarLoteAutorizacao: ({ exameIds, parceiroId, empresaId }) => post('/api/autorizacao/lotes', { exameIds, parceiroId, empresaId }),
+  enviarComprovanteWhatsapp: (exameIds, destino) => post(`${API_BASE}/qr/enviar-whatsapp`, { exameIds, destino }),
+  criarLoteAutorizacao: ({ exameIds, parceiroId, empresaId }) => post(`${API_BASE}/autorizacao/lotes`, { exameIds, parceiroId, empresaId }),
   // agenda no NetRis os exames de um lote já confirmado pelo parceiro
-  agendarLoteNetris: (token) => post(`/api/autorizacao/${token}/agendar-netris`, {}),
+  agendarLoteNetris: (token) => post(`${API_BASE}/autorizacao/${token}/agendar-netris`, {}),
   // integrações de agendamento (empresaId opcional: owner configura por empresa)
-  listarProviders: () => req('GET', '/api/integracao/providers'),
-  getIntegracao: (empresaId) => req('GET', `/api/integracao${empresaId ? `?empresaId=${empresaId}` : ''}`),
-  salvarIntegracao: (payload) => req('PUT', '/api/integracao', payload),
-  testarIntegracao: (payload) => post('/api/integracao/testar', payload || {}),
+  listarProviders: () => req('GET', `${API_BASE}/integracao/providers`),
+  getIntegracao: (empresaId) => req('GET', `${API_BASE}/integracao${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  salvarIntegracao: (payload) => req('PUT', `${API_BASE}/integracao`, payload),
+  testarIntegracao: (payload) => post(`${API_BASE}/integracao/testar`, payload || {}),
   // console NetRis (dentro do sistema)
-  netrisStatus: (empresaId) => req('GET', `/api/netris/status${empresaId ? `?empresaId=${empresaId}` : ''}`),
-  netrisPaciente: (cpf, raw = false, empresaId) => req('GET', `/api/netris/pacientes/cpf/${encodeURIComponent(cpf)}?${raw ? 'raw=1&' : ''}${empresaId ? `empresaId=${empresaId}` : ''}`),
-  netrisCriarPaciente: (dados) => post('/api/netris/pacientes', dados),
+  netrisStatus: (empresaId) => req('GET', `${API_BASE}/netris/status${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  netrisPaciente: (cpf, raw = false, empresaId) => req('GET', `${API_BASE}/netris/pacientes/cpf/${encodeURIComponent(cpf)}?${raw ? `raw=1&` : ''}${empresaId ? `empresaId=${empresaId}` : ''}`),
+  netrisCriarPaciente: (dados) => post(`${API_BASE}/netris/pacientes`, dados),
   // mapeamento (Fase 4)
-  updateParceiroNetris: (id, payload) => req('PUT', `/api/admin/parceiros/${id}/netris`, payload),
-  netrisPlanos: (page = 1, empresaId) => req('GET', `/api/netris/planos?page=${page}${empresaId ? `&empresaId=${empresaId}` : ''}`),
-  netrisProcedimentos: (page = 1, idPlanoConvenio, empresaId) => req('GET', `/api/netris/procedimentos?page=${page}${idPlanoConvenio ? `&idPlanoConvenio=${idPlanoConvenio}` : ''}${empresaId ? `&empresaId=${empresaId}` : ''}`),
+  updateParceiroNetris: (id, payload) => req('PUT', `${API_BASE}/admin/parceiros/${id}/netris`, payload),
+  netrisPlanos: (page = 1, empresaId) => req('GET', `${API_BASE}/netris/planos?page=${page}${empresaId ? `&empresaId=${empresaId}` : ''}`),
+  netrisProcedimentos: (page = 1, idPlanoConvenio, empresaId) => req('GET', `${API_BASE}/netris/procedimentos?page=${page}${idPlanoConvenio ? `&idPlanoConvenio=${idPlanoConvenio}` : ''}${empresaId ? `&empresaId=${empresaId}` : ''}`),
   // agendamento no fluxo do exame
-  netrisHorariosExame: (exameId, dataInicial, dataFinal) => req('GET', `/api/netris/horarios-exame?exameId=${exameId}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
+  netrisHorariosExame: (exameId, dataInicial, dataFinal) => req('GET', `${API_BASE}/netris/horarios-exame?exameId=${exameId}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
   netrisHorariosCatalogo: ({ procedimentoId, parceiroId, idPaciente, pesoPaciente, dataInicial, dataFinal }) =>
-    req('GET', `/api/netris/horarios-catalogo?procedimentoId=${procedimentoId}&parceiroId=${parceiroId}&idPaciente=${idPaciente}&pesoPaciente=${pesoPaciente || 70}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
-  netrisAgendarExame: (exameId, slot) => post('/api/netris/agendar-exame', { exameId, slot }),
-  netrisCancelarExame: (exameId) => post('/api/netris/cancelar-exame', { exameId }),
+    req('GET', `${API_BASE}/netris/horarios-catalogo?procedimentoId=${procedimentoId}&parceiroId=${parceiroId}&idPaciente=${idPaciente}&pesoPaciente=${pesoPaciente || 70}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
+  netrisAgendarExame: (exameId, slot) => post(`${API_BASE}/netris/agendar-exame`, { exameId, slot }),
+  netrisCancelarExame: (exameId) => post(`${API_BASE}/netris/cancelar-exame`, { exameId }),
 
   // ── ZapSign: assinatura eletrônica de contrato e DPA ──────────────────────
   // empresaId é opcional e só o owner usa (ele configura por empresa). O token
   // nunca trafega de volta: o GET só diz SE existe um guardado.
-  zapsignConfig: (empresaId) => req('GET', `/api/zapsign/config${empresaId ? `?empresaId=${empresaId}` : ''}`),
-  zapsignSalvarConfig: (payload) => req('PUT', '/api/zapsign/config', payload),
-  zapsignTestar: (payload) => post('/api/zapsign/testar', payload || {}),
+  zapsignConfig: (empresaId) => req('GET', `${API_BASE}/zapsign/config${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  zapsignSalvarConfig: (payload) => req('PUT', `${API_BASE}/zapsign/config`, payload),
+  zapsignTestar: (payload) => post(`${API_BASE}/zapsign/testar`, payload || {}),
   zapsignEnviarContrato: (contratoId, empresaId) =>
-    post(`/api/zapsign/contratos/${contratoId}/enviar`, empresaId ? { empresaId } : {}),
+    post(`${API_BASE}/zapsign/contratos/${contratoId}/enviar`, empresaId ? { empresaId } : {}),
   zapsignEnviarDpa: ({ versao, titulo, conteudo, empresaId }) =>
-    post('/api/zapsign/dpa/enviar', { versao, titulo, conteudo, ...(empresaId ? { empresaId } : {}) }),
+    post(`${API_BASE}/zapsign/dpa/enviar`, { versao, titulo, conteudo, ...(empresaId ? { empresaId } : {}) }),
   zapsignStatus: (tipo, id, empresaId) =>
-    req('GET', `/api/zapsign/status/${tipo}/${id}${empresaId ? `?empresaId=${empresaId}` : ''}`),
+    req('GET', `${API_BASE}/zapsign/status/${tipo}/${id}${empresaId ? `?empresaId=${empresaId}` : ''}`),
   // devolve { url } — assinada e válida por 5 minutos (o bucket é privado)
-  zapsignArquivo: (tipo, id) => req('GET', `/api/zapsign/arquivo/${tipo}/${id}`),
+  zapsignArquivo: (tipo, id) => req('GET', `${API_BASE}/zapsign/arquivo/${tipo}/${id}`),
 }
 
 // carrega todas as páginas de uma listagem NetRis (planos/procedimentos)

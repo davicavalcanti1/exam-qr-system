@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { API_BASE } from '../lib/apiBase'
 
 /**
  * Entrada sem senha para a equipe da Imago, quando este app é exibido dentro do
@@ -36,6 +37,9 @@ export async function tentarEntrarPeloSistema() {
   try {
     // 1) Pede o ticket ao Controle Operacional. `credentials: 'include'` é o
     //    que leva o cookie de sessão dele.
+    // `/api` aqui é do CONTROLE OPERACIONAL, não nosso — e por isso não usa
+    // API_BASE. Trocar faria o pedido chegar neste servidor, onde a rota não
+    // existe, e o SSO pararia sem erro visível.
     const rTicket = await fetch(`/api/sso/ticket/${DESTINO}`, {
       method: 'POST',
       credentials: 'include',
@@ -46,7 +50,7 @@ export async function tentarEntrarPeloSistema() {
 
     // 2) Entrega o ticket ao NOSSO servidor, que verifica a assinatura com a
     //    chave pública do CO e decide empresa e papel pelas tabelas daqui.
-    const rSessao = await fetch('/api/sso/entrar', {
+    const rSessao = await fetch(`${API_BASE}/sso/entrar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticket }),

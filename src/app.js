@@ -48,14 +48,23 @@ app.use((req, res, next) => {
   next()
 })
 
+app.use('/parceiros-api/admin', adminRouter)
 app.use('/api/admin', adminRouter)   // criação da hierarquia (service role)
+app.use('/parceiros-api/qr', qrRouter)
 app.use('/api/qr', qrRouter)         // gerar/validar QR do exame
+app.use('/parceiros-api/integracao', integracaoRouter)
 app.use('/api/integracao', integracaoRouter) // método de agendamento por empresa
+app.use('/parceiros-api/netris', netrisRouter)
 app.use('/api/netris', netrisRouter) // integração NetRis (agendamento futuro)
+app.use('/parceiros-api/feegow', feegowRouter)
 app.use('/api/feegow', feegowRouter) // integração Feegow (mesma interface do NetRis)
+app.use('/parceiros-api/autorizacao', autorizacaoRouter)
 app.use('/api/autorizacao', autorizacaoRouter) // lote de autorização por link público
+app.use('/parceiros-api/zapsign', zapsignRouter)
 app.use('/api/zapsign', zapsignRouter) // assinatura eletrônica de contrato e DPA
+app.use('/parceiros-api/sso', ssoRouter)
 app.use('/api/sso', ssoRouter)         // consumo do ticket vindo do Controle Operacional
+app.use('/parceiros-api/sso-admin', ssoAdminRouter)
 app.use('/api/sso-admin', ssoAdminRouter) // gestao do SSO (owner): tenants e mapa de papeis
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
@@ -64,7 +73,7 @@ const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))
 if (!frontendBuilt) {
   console.warn('⚠️  frontend/dist não encontrado. Execute: npm run build')
   app.get('*', (req, res) => {
-    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Rota não encontrada' })
+    if (req.path.startsWith('/api/') || req.path.startsWith('/parceiros-api/')) return res.status(404).json({ error: 'Rota não encontrada' })
     res.status(503).send('<h2>Frontend não buildado.</h2><p>Execute <code>npm run build</code> e reinicie.</p>')
   })
 } else {
@@ -72,9 +81,19 @@ if (!frontendBuilt) {
   app.get('/', (req, res) => {
     res.sendFile(path.join(frontendDist, 'landing.html'))
   })
+  // Assets primeiro, com cache longo: o nome tem hash, então são imutáveis por
+  // construção. Sem isto o navegador revalida cada arquivo em cada abertura.
+  const assetsDir = path.join(frontendDist, 'assets')
+  const cacheImutavel = { maxAge: '1y', immutable: true }
+  app.use('/parceiros-app/assets', express.static(assetsDir, cacheImutavel))
+  app.use('/assets', express.static(assetsDir, cacheImutavel))
+
+  // `/parceiros-app` é onde o Controle Operacional encontra este módulo (ver
+  // ADR 0003). A raiz continua servindo o host próprio.
+  app.use('/parceiros-app', express.static(frontendDist, { index: false, redirect: false }))
   app.use(express.static(frontendDist, { index: false }))
   app.get('*', (req, res) => {
-    if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Rota não encontrada' })
+    if (req.path.startsWith('/api/') || req.path.startsWith('/parceiros-api/')) return res.status(404).json({ error: 'Rota não encontrada' })
     res.sendFile(path.join(frontendDist, 'index.html'))
   })
 }

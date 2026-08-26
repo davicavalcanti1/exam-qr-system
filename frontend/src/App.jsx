@@ -20,9 +20,14 @@ import DadosDoc from './pages/public/docs/Dados'
 import Contas from './pages/public/docs/Contas'
 import AutorizarLote from './pages/public/AutorizarLote'
 
+// Onde este app está montado. Ele atende em dois endereços com as MESMAS
+// rotas: no host próprio (raiz) e sob `/parceiros-app` quando exibido dentro do
+// Controle Operacional. Lido do endereço porque é o mesmo build nos dois.
+const BASENAME = window.location.pathname.startsWith('/parceiros-app') ? '/parceiros-app' : '/'
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={BASENAME}>
       <Routes>
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/painel" element={<Painel />} />

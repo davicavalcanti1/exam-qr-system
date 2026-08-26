@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase, resolveLoginEmail } from '../../lib/supabase'
 import { adminApi } from '../../lib/adminApi'
+import { API_BASE } from '../../lib/apiBase'
 
 export default function AutorizarLote() {
   const { token } = useParams()
@@ -16,7 +17,7 @@ export default function AutorizarLote() {
 
   async function carregar() {
     try {
-      const r = await fetch(`/api/autorizacao/${token}`)
+      const r = await fetch(`${API_BASE}/autorizacao/${token}`)
       const d = await r.json()
       if (!r.ok) { setErro(d.error || 'Link inválido'); setDados(null); return }
       setDados(d)
