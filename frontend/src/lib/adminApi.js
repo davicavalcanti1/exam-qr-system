@@ -36,6 +36,12 @@ async function baixarArquivo(path, body, filename) {
 }
 
 export const adminApi = {
+  // SSO — quem, de fora, entra aqui. Restrito a owner no servidor.
+  ssoTenants:        ()            => req('GET',    '/api/sso-admin/tenants'),
+  ssoSalvarTenant:   (payload)     => post('/api/sso-admin/tenants', payload),
+  ssoRemoverTenant:  (coTenantId)  => req('DELETE', `/api/sso-admin/tenants/${coTenantId}`),
+  ssoPapeis:         ()            => req('GET',    '/api/sso-admin/papeis'),
+  ssoSalvarPapel:    (payload)     => post('/api/sso-admin/papeis', payload),
   createUser: (payload) => post('/api/admin/users', payload),
   createParceiro: (payload) => post('/api/admin/parceiros', payload),
   updateParceiro: (id, payload) => req('PUT', `/api/admin/parceiros/${id}`, payload),

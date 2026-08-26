@@ -10,6 +10,7 @@ import qrRouter from './routes/qr.js'
 import integracaoRouter from './routes/integracao.js'
 import autorizacaoRouter from './routes/autorizacao.js'
 import ssoRouter from './routes/sso.js'
+import ssoAdminRouter from './routes/sso-admin.js'
 import zapsignRouter from './integrations/zapsign/routes.js'
 
 // ── Rotas legadas do MVP (SQLite) desativadas ────────────────────────────────
@@ -55,6 +56,7 @@ app.use('/api/feegow', feegowRouter) // integração Feegow (mesma interface do 
 app.use('/api/autorizacao', autorizacaoRouter) // lote de autorização por link público
 app.use('/api/zapsign', zapsignRouter) // assinatura eletrônica de contrato e DPA
 app.use('/api/sso', ssoRouter)         // consumo do ticket vindo do Controle Operacional
+app.use('/api/sso-admin', ssoAdminRouter) // gestao do SSO (owner): tenants e mapa de papeis
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))

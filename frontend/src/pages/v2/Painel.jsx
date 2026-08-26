@@ -8,6 +8,7 @@ import PerfilMenu from './PerfilMenu'
 import AceiteDPA from './AceiteDPA'
 import { DPA_VERSAO } from '../../legal/dpa'
 import OwnerArea from './areas/OwnerArea'
+import SsoArea from './areas/SsoArea'
 import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
 import PacientesArea from './areas/PacientesArea'
@@ -78,6 +79,9 @@ const NAV = {
     { k: 'empresas', label: 'Empresas', icon: 'business' },
     { k: 'mapa', label: 'Mapa', icon: 'map' },
     { k: 'uso', label: 'Consumo', icon: 'monitoring' },
+    // Quem, de fora, entra aqui. Decisao de plataforma, nao de clinica — por
+    // isso so aparece para owner.
+    { k: 'sso', label: 'Acesso externo', icon: 'key' },
   ],
   empresa_admin: [
     { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
@@ -116,6 +120,7 @@ const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Empresa', empresa_operador: 
 function renderArea(role, k, irPara) {
   const map = {
     empresas: <OwnerArea />,
+    sso: <SsoArea />,
     uso: <UsoArea />,
     mapa: <MapaArea />,
     config: <ConfiguracoesArea />,
