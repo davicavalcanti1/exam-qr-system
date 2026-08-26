@@ -43,6 +43,7 @@ export const adminApi = {
   ssoRemoverTenant:  (coTenantId)  => req('DELETE', `${API_BASE}/sso-admin/tenants/${coTenantId}`),
   ssoPapeis:         ()            => req('GET',    `${API_BASE}/sso-admin/papeis`),
   ssoSalvarPapel:    (payload)     => post(`${API_BASE}/sso-admin/papeis`, payload),
+  ssoDuplicados:     ()            => req('GET',    `${API_BASE}/sso-admin/duplicados`),
   createUser: (payload) => post(`${API_BASE}/admin/users`, payload),
   createParceiro: (payload) => post(`${API_BASE}/admin/parceiros`, payload),
   updateParceiro: (id, payload) => req('PUT', `${API_BASE}/admin/parceiros/${id}`, payload),

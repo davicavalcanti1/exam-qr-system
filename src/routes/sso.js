@@ -109,6 +109,11 @@ router.post('/entrar', async (req, res) => {
         role: papel,
         empresa_id: mapaTenant.empresa_id,
         full_name: nome || email || 'Equipe Imago',
+        // O trigger usa `email_contato` no lugar do e-mail da conta (que aqui e
+        // sintetico). Guardar o e-mail REAL e o que permite perceber depois que
+        // a mesma pessoa tem conta nativa e sombra — ver a lista de duplicados
+        // na tela de Acesso externo.
+        email_contato: email || null,
       },
     })
     // handle_new_user() escreve a profiles a partir deste metadata — ver a

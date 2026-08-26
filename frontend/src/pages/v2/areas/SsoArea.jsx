@@ -18,15 +18,19 @@ import { Card, Button, Field, Input, Loading } from '../../../components/ui'
 export default function SsoArea() {
   const [tenants, setTenants] = useState([])
   const [papeis, setPapeis] = useState([])
+  const [duplicados, setDuplicados] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [msg, setMsg] = useState('')
   const [novo, setNovo] = useState({ co_tenant_id: '', empresa_id: '' })
 
   async function carregar() {
     try {
-      const [t, p] = await Promise.all([adminApi.ssoTenants(), adminApi.ssoPapeis()])
+      const [t, p, d] = await Promise.all([
+        adminApi.ssoTenants(), adminApi.ssoPapeis(), adminApi.ssoDuplicados(),
+      ])
       setTenants(t.tenants || [])
       setPapeis(p.papeis || [])
+      setDuplicados(d.duplicados || [])
     } catch (e) { setMsg(e.message) } finally { setCarregando(false) }
   }
 
@@ -99,6 +103,37 @@ export default function SsoArea() {
         </div>
         <Button className="mt-3" onClick={salvarTenant}>Liberar sistema</Button>
       </Card>
+
+      {duplicados.length > 0 && (
+        <Card title="Mesma pessoa, duas contas">
+          <p className="mb-4 text-sm text-slate-600">
+            Estas pessoas já tinham conta aqui antes do acesso externo, e ganharam
+            uma segunda ao entrar pelo sistema de origem. Para o banco são pessoas
+            diferentes: o que cada conta criou fica com ela, e a mesma pessoa
+            aparece duas vezes em listagens e na auditoria.
+          </p>
+          <div className="divide-y rounded border">
+            {duplicados.map(d => (
+              <div key={d.email} className="p-3 text-sm">
+                <p className="font-medium">{d.sombra.nome || d.email}</p>
+                <p className="font-mono text-xs text-slate-500">{d.email}</p>
+                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-600">
+                  <span>vinda de fora: <strong>{d.sombra.role || 'sem papel'}</strong></span>
+                  <span>conta daqui: <strong>{d.nativo.role || 'sem papel'}</strong></span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            Nada é feito automaticamente — juntar ou desativar conta é decisão de
+            quem conhece o histórico de cada uma. O caminho mais limpo costuma ser
+            desativar a conta antiga depois de conferir o que estava preso a ela;
+            transformar a antiga em conta de acesso externo <strong>não</strong> é
+            recomendado, porque ela continuaria tendo senha — e é justamente não
+            ter senha que faz revogar no sistema de origem bastar.
+          </p>
+        </Card>
+      )}
 
       <Card title="Cargos de fora, papéis aqui">
         <p className="mb-4 text-sm text-slate-600">

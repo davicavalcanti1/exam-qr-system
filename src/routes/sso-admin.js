@@ -98,4 +98,38 @@ router.post('/papeis', async (req, res) => {
   res.json({ ok: true })
 })
 
+// ── Pessoas com conta nativa E sombra ──────────────────────────────────────
+// Quem ja tinha conta aqui antes do SSO acaba com duas: a nativa, com senha, e
+// a sombra criada na primeira entrada pelo sistema de origem. Sao pessoas
+// diferentes para o banco — id diferente, historico separado — e a duplicidade
+// so apareceria por acaso, numa listagem, meses depois.
+//
+// Esta lista existe para que ela apareca de proposito.
+router.get('/duplicados', async (req, res) => {
+  if (!await somenteOwner(req, res)) return
+
+  const { data: sombras, error: e1 } = await supabaseAdmin
+    .from('profiles')
+    .select('id, nome, email, role, co_user_id')
+    .not('co_user_id', 'is', null)
+  if (e1) return res.status(500).json({ error: e1.message })
+
+  const emails = (sombras ?? []).map(s => s.email).filter(Boolean)
+  if (emails.length === 0) return res.json({ duplicados: [] })
+
+  const { data: nativos, error: e2 } = await supabaseAdmin
+    .from('profiles')
+    .select('id, nome, email, role')
+    .is('co_user_id', null)
+    .in('email', emails)
+  if (e2) return res.status(500).json({ error: e2.message })
+
+  const porEmail = new Map((nativos ?? []).map(n => [n.email, n]))
+  const duplicados = (sombras ?? [])
+    .filter(s => porEmail.has(s.email))
+    .map(s => ({ email: s.email, sombra: s, nativo: porEmail.get(s.email) }))
+
+  res.json({ duplicados })
+})
+
 export default router
