@@ -131,16 +131,45 @@ router.post('/entrar', async (req, res) => {
     }
   }
 
-  // A sombra. E-mail sintético e determinístico: o mesmo usuário do CO sempre
-  // cai na mesma conta daqui.
-  const emailSombra = `co.${coUserId}@sso.exameqr.app`
+  // ── Que conta criar para quem chega pela primeira vez ────────────────────
+  // Com o e-mail REAL, quando ele existe e ainda esta livre. Assim a pessoa
+  // tambem consegue entrar pelo dominio proprio deste produto: e-mail real tem
+  // caixa de entrada, entao "esqueci minha senha" funciona e ela define a
+  // propria senha quando precisar.
+  //
+  // O PRECO, e ele e real: essa conta passa a ter uma segunda porta que o
+  // sistema de origem nao fecha. Tirar o acesso da pessoa la deixa de bastar —
+  // a recuperacao de senha continua valendo. Foi uma escolha consciente do
+  // Davi, porque a equipe da Imago precisa dos dois caminhos.
+  //
+  // E-mail sintetico continua sendo o fallback: sem e-mail no ticket, ou com o
+  // e-mail ja usado por outra conta daqui, cai na sombra sem senha. O caso do
+  // e-mail ocupado NAO entra na conta existente de proposito — isso seria
+  // adotar uma conta sem ninguem ter autorizado. Para esse caso existe o
+  // vinculo, que e explicito.
+  const emailSintetico = `co.${coUserId}@sso.exameqr.app`
 
   const { data: perfil } = await supabaseAdmin
-    .from('profiles').select('id').eq('co_user_id', coUserId).maybeSingle()
+    .from('profiles').select('id, email').eq('co_user_id', coUserId).maybeSingle()
+
+  // Para quem JA tem conta, o e-mail que importa e o de AUTENTICACAO, e ele nao
+  // e o `profiles.email`: nas sombras antigas este guarda o e-mail real (de
+  // contato) enquanto a autenticacao usa o sintetico. Usar o de contato mandaria
+  // o link para a conta errada — ou para nenhuma.
+  let emailConta = emailSintetico
+  if (perfil) {
+    const { data: contaAtual } = await supabaseAdmin.auth.admin.getUserById(perfil.id)
+    emailConta = contaAtual?.user?.email || emailSintetico
+  }
 
   if (!perfil) {
+    const { data: ocupado } = await supabaseAdmin
+      .from('profiles').select('id').eq('email', email || '').limit(1)
+    const podeUsarReal = !!email && !(ocupado ?? []).length
+    emailConta = podeUsarReal ? email : emailSintetico
+
     const { error: erroCriar } = await supabaseAdmin.auth.admin.createUser({
-      email: emailSombra,
+      email: emailConta,
       email_confirm: true,
       user_metadata: {
         origem: 'controleoperacional',
@@ -178,7 +207,7 @@ router.post('/entrar', async (req, res) => {
   // este token de uso único por sessão.
   const { data: link, error: erroLink } = await supabaseAdmin.auth.admin.generateLink({
     type: 'magiclink',
-    email: emailSombra,
+    email: emailConta,
   })
   if (erroLink || !link?.properties?.hashed_token) return res.status(403).json(RECUSA)
 
