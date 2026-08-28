@@ -1,6 +1,15 @@
-// Fonte única do modelo padrão do Contrato de Parceria — o texto que a clínica
-// vê pré-carregado em Contratos → Modelo, e que ela pode editar por empresa
-// (`contrato_modelos.conteudo`). Mesma convenção de `legal/dpa.js`.
+// Fonte única do modelo padrão do Contrato de Parceria.
+//
+// Este arquivo é a SEMENTE do contrato da plataforma: o dono o publica como
+// versão em `contrato_padrao` (painel do dono → Contratos), e as empresas que
+// adotam (`contrato_modelos.usa_padrao`) geram a partir da versão vigente no
+// banco — não deste arquivo. O bundle continua sendo o fallback de quando nada
+// foi publicado ainda, que é o comportamento anterior à migration
+// 20260828120000_contrato_padrao.
+//
+// Editar aqui NÃO muda o contrato de ninguém em produção: é preciso publicar
+// versão nova no painel. Isso é de propósito — deploy não deve reescrever texto
+// jurídico em uso.
 //
 // ⚠️ REVISÃO JURÍDICA PENDENTE. Este texto foi redigido a partir da legislação
 // aplicável (referências ao pé), mas NÃO substitui parecer de advogado. O ponto
@@ -11,19 +20,19 @@
 //
 // PREMISSAS DESTE MODELO (mudam o texto, não o código):
 //   - o Parceiro é sempre PESSOA JURÍDICA (clínica ou consultório);
-//   - a forma de repasse ao paciente VARIA por parceiro → cláusula 8.1, com
-//     campo a preencher (ver PENDÊNCIAS no fim do arquivo).
+//   - a forma de repasse ao paciente VARIA por parceiro → cláusula 8.1, vinda
+//     de `parceiros.forma_repasse` (ver REPASSE no fim do arquivo).
 //
-// PLACEHOLDERS resolvidos na geração (`ContratosArea.jsx` → `preencher`):
-//   {{empresa_nome}} {{empresa_cnpj}} {{empresa_endereco}}
-//   {{parceiro_nome}} {{parceiro_cnpj}} {{parceiro_endereco}}
-//   {{teto}} {{data}}
-// Não introduza placeholder novo sem incluí-lo no `ctx` de `gerar()`: o que não
-// resolve fica escrito como "{{...}}" no PDF que vai para assinatura.
+// PLACEHOLDERS. Três origens, todas resolvidas em `ContratosArea.jsx` → `gerar`:
+//   1. cadastro, automático: {{empresa_nome}} {{empresa_cnpj}} {{empresa_endereco}}
+//      {{parceiro_nome}} {{parceiro_cnpj}} {{parceiro_endereco}} {{teto}} {{data}}
+//   2. parâmetros da clínica (PARAMETROS abaixo): prazos, multa, juros, foro…
+//   3. por parceiro: {{forma_repasse}}, de `parceiros.forma_repasse` (REPASSE).
+// Não introduza placeholder novo sem origem: o que não resolve fica escrito como
+// "{{...}}" no PDF que vai para assinatura.
 //
-// COLCHETES [ ] são campos da clínica, preenchidos uma única vez ao editar o
-// modelo (comarca, endereço, prazos, percentuais). Confira que não sobrou
-// nenhum antes de mandar assinar.
+// O texto NÃO tem mais colchetes. Era o que impedia a clínica de simplesmente
+// adotar o contrato do sistema: `[comarca/UF]` em branco chegava na assinatura.
 //
 // BASE LEGAL das cláusulas 7.3 e 14: MP 2.200-2/2001 art. 10 §2; Lei
 // 14.063/2020 art. 4º; CPC art. 784, III e §4º (redação da Lei 14.620/2023).
@@ -85,22 +94,22 @@ Modelo versão ${CONTRATO_VERSAO}
 6. PREÇOS, COBRANÇA E PAGAMENTO
 
 6.1. Os valores de cada EXAME são os da tabela de preços vigente na PLATAFORMA na data da autorização, disponível ao PARCEIRO no seu painel.
-6.2. Reajustes de tabela são comunicados com antecedência mínima de [30] dias e não retroagem a exames já autorizados.
+6.2. Reajustes de tabela são comunicados com antecedência mínima de {{reajuste_aviso}} dias e não retroagem a exames já autorizados.
 6.3. A CLÍNICA fecha as cobranças por LOTE, conforme a periodicidade por ela definida, disponibilizando ao PARCEIRO a relação dos exames confirmados, com data, paciente, procedimento e valor.
-6.4. O pagamento do LOTE vence em [__] dias contados da disponibilização da cobrança, pelo meio indicado pela CLÍNICA.
+6.4. O pagamento do LOTE vence em {{prazo_pagamento}} dias contados da disponibilização da cobrança, pelo meio indicado pela CLÍNICA.
 6.5. A CLÍNICA emite o documento fiscal correspondente aos serviços prestados, na forma da legislação aplicável.
-6.6. Divergências sobre o LOTE devem ser apontadas em até [5] dias da disponibilização; após esse prazo, o LOTE é considerado aceito quanto aos itens não impugnados. A impugnação de um item não suspende o vencimento dos demais.
+6.6. Divergências sobre o LOTE devem ser apontadas em até {{prazo_impugnacao}} dias da disponibilização; após esse prazo, o LOTE é considerado aceito quanto aos itens não impugnados. A impugnação de um item não suspende o vencimento dos demais.
 
 7. INADIMPLÊNCIA
 
-7.1. O atraso no pagamento sujeita o PARCEIRO a multa de [2]% sobre o valor em atraso, juros de mora de [1]% ao mês, pro rata die, e correção monetária pelo [IPCA], sem prejuízo das despesas de cobrança.
+7.1. O atraso no pagamento sujeita o PARCEIRO a multa de {{multa}}% sobre o valor em atraso, juros de mora de {{juros}}% ao mês, pro rata die, e correção monetária pelo {{correcao}}, sem prejuízo das despesas de cobrança.
 7.2. Verificado o atraso, a CLÍNICA pode suspender o TETO DE CRÉDITO e as novas autorizações, restabelecendo-os com a regularização.
 7.3. As Partes reconhecem que a relação dos EXAMES confirmados por leitura de QR CODE, integrante do LOTE e disponibilizada na PLATAFORMA, constitui dívida líquida, certa e exigível, e que este instrumento, assinado eletronicamente, é título executivo extrajudicial, nos termos do art. 784, inciso III e § 4º, do Código de Processo Civil.
 
 8. RELAÇÃO DO PARCEIRO COM O PACIENTE
 
 8.1. Forma de repasse do custo do EXAME ao paciente, adotada por este PARCEIRO:
-   [indicar uma: (a) sem repasse — o custo é integralmente absorvido pelo PARCEIRO; (b) repasse integral, sem acréscimo de margem pelo PARCEIRO; (c) repasse com margem própria do PARCEIRO]
+   {{forma_repasse}}
 
 8.2. Qualquer valor cobrado do paciente pelo PARCEIRO é de sua exclusiva responsabilidade, inclusive quanto à informação prévia ao paciente, à emissão de documento fiscal e ao recolhimento de tributos, não cabendo à CLÍNICA qualquer participação nesse valor.
 8.3. O PARCEIRO não se apresentará como prestador do serviço de diagnóstico nem utilizará a marca da CLÍNICA sem autorização escrita.
@@ -136,7 +145,7 @@ Modelo versão ${CONTRATO_VERSAO}
 
 13. CONFIDENCIALIDADE
 
-13.1. As Partes manterão sigilo sobre tabelas de preço, condições comerciais, dados de pacientes e informações a que tiverem acesso em razão deste contrato, obrigação que subsiste por [2] anos após o término, e por prazo indeterminado quanto a dados de pacientes e ao segredo profissional.
+13.1. As Partes manterão sigilo sobre tabelas de preço, condições comerciais, dados de pacientes e informações a que tiverem acesso em razão deste contrato, obrigação que subsiste por {{sigilo_anos}} anos após o término, e por prazo indeterminado quanto a dados de pacientes e ao segredo profissional.
 
 14. ASSINATURA ELETRÔNICA E VALIDADE PROBATÓRIA
 
@@ -147,9 +156,9 @@ Modelo versão ${CONTRATO_VERSAO}
 
 15. VIGÊNCIA E RESCISÃO
 
-15.1. Este contrato vigora por [12] meses a contar da data da assinatura eletrônica, renovando-se automaticamente por iguais períodos, salvo denúncia de qualquer das Partes com [30] dias de antecedência.
-15.2. Qualquer das Partes pode rescindir imotivadamente mediante aviso escrito com [30] dias de antecedência.
-15.3. A rescisão é imediata, independentemente de aviso prévio, em caso de: inadimplemento não sanado em [10] dias da notificação; uso indevido da PLATAFORMA ou compartilhamento de credenciais; infração ao item 4.2; perda de licença sanitária ou de registro profissional indispensável à atividade; falência, recuperação judicial ou insolvência.
+15.1. Este contrato vigora por {{vigencia_meses}} meses a contar da data da assinatura eletrônica, renovando-se automaticamente por iguais períodos, salvo denúncia de qualquer das Partes com {{aviso_previo}} dias de antecedência.
+15.2. Qualquer das Partes pode rescindir imotivadamente mediante aviso escrito com {{aviso_previo}} dias de antecedência.
+15.3. A rescisão é imediata, independentemente de aviso prévio, em caso de: inadimplemento não sanado em {{prazo_cura}} dias da notificação; uso indevido da PLATAFORMA ou compartilhamento de credenciais; infração ao item 4.2; perda de licença sanitária ou de registro profissional indispensável à atividade; falência, recuperação judicial ou insolvência.
 15.4. A rescisão não afeta as obrigações de pagamento dos exames já confirmados, que permanecem exigíveis.
 15.5. Rescindido o contrato, cessam as autorizações de novos exames; os exames já autorizados e ainda não realizados podem ser cancelados pela CLÍNICA.
 
@@ -163,25 +172,59 @@ Modelo versão ${CONTRATO_VERSAO}
 
 17. FORO
 
-17.1. Fica eleito o foro da comarca de [comarca/UF] para dirimir controvérsias oriundas deste contrato, com renúncia a qualquer outro.
+17.1. Fica eleito o foro da comarca de {{foro_comarca}} para dirimir controvérsias oriundas deste contrato, com renúncia a qualquer outro.
 
 E por estarem de acordo, as Partes firmam este instrumento por assinatura eletrônica, em via única e digital, na data de {{data}}.`
+
+// Parâmetros que a CLÍNICA define uma vez (`contrato_modelos.parametros`), com o
+// default vindo da versão publicada (`contrato_padrao.parametros`). `obrigatorio`
+// = sem valor, a geração do contrato é bloqueada em vez de escrever vazio.
+export const PARAMETROS = [
+  { k: 'prazo_pagamento', label: 'Prazo de pagamento do lote', sufixo: 'dias', padrao: '15', obrigatorio: true, clausula: '6.4' },
+  { k: 'reajuste_aviso', label: 'Aviso prévio de reajuste de tabela', sufixo: 'dias', padrao: '30', clausula: '6.2' },
+  { k: 'prazo_impugnacao', label: 'Prazo para contestar o lote', sufixo: 'dias', padrao: '5', clausula: '6.6' },
+  { k: 'multa', label: 'Multa por atraso', sufixo: '%', padrao: '2', clausula: '7.1' },
+  { k: 'juros', label: 'Juros de mora ao mês', sufixo: '%', padrao: '1', clausula: '7.1' },
+  { k: 'correcao', label: 'Índice de correção monetária', padrao: 'IPCA', clausula: '7.1' },
+  { k: 'sigilo_anos', label: 'Confidencialidade após o término', sufixo: 'anos', padrao: '2', clausula: '13.1' },
+  { k: 'vigencia_meses', label: 'Vigência', sufixo: 'meses', padrao: '12', clausula: '15.1' },
+  { k: 'aviso_previo', label: 'Aviso prévio para denúncia', sufixo: 'dias', padrao: '30', clausula: '15.1 e 15.2' },
+  { k: 'prazo_cura', label: 'Prazo para sanar inadimplemento', sufixo: 'dias', padrao: '10', clausula: '15.3' },
+  // Sem default possível: depende de onde a clínica está.
+  { k: 'foro_comarca', label: 'Foro (comarca/UF)', padrao: '', obrigatorio: true, clausula: '17.1' },
+]
+
+export const PARAMETROS_PADRAO = Object.fromEntries(PARAMETROS.map(p => [p.k, p.padrao]))
+
+// Cláusula 8.1, por parceiro (`parceiros.forma_repasse`). O texto de cada opção
+// entra inteiro no contrato — é a redação que separa compra de serviço de
+// vantagem por encaminhamento, então não é para resumir na tela e sim para o
+// parceiro assinar declarando qual é o caso dele.
+export const REPASSE = {
+  sem_repasse: {
+    label: 'Sem repasse ao paciente',
+    texto: '(a) Sem repasse: o custo do EXAME é integralmente absorvido pelo PARCEIRO, nada sendo cobrado do paciente a esse título.',
+  },
+  repasse_integral: {
+    label: 'Repasse integral, sem margem',
+    texto: '(b) Repasse integral: o PARCEIRO repassa ao paciente exatamente o valor que paga à CLÍNICA, sem acréscimo de margem.',
+  },
+  repasse_margem: {
+    label: 'Repasse com margem do parceiro',
+    texto: '(c) Repasse com margem: o PARCEIRO cobra do paciente valor próprio, superior ao que paga à CLÍNICA, por sua exclusiva conta e responsabilidade, observado o item 8.2.',
+  },
+}
 
 // PENDÊNCIAS deste modelo — não são defeitos do texto, são dados que o sistema
 // ainda não tem:
 //
-//  1. A cláusula 8.1 é um colchete porque a forma de repasse varia POR PARCEIRO,
-//     e o modelo é POR EMPRESA (`contrato_modelos` tem `empresa_id` como PK).
-//     Para virar preenchimento automático: coluna `parceiros.forma_repasse`,
-//     campo no cadastro do parceiro e placeholder {{forma_repasse}} no `ctx` de
-//     `gerar()`.
-//  2. O endereço das duas partes vem de `empresas.endereco` e
+//  1. O endereço das duas partes vem de `empresas.endereco` e
 //     `parceiros.endereco` (migration 20260715160000_dados_cnpj), preenchidos
 //     pela consulta de CNPJ. Cadastro sem endereço gera contrato com "—" na
 //     qualificação: o painel do dono sinaliza. Já o REPRESENTANTE LEGAL não
 //     existe em nenhuma das duas tabelas — a cláusula 1.2 resolve remetendo a
 //     quem assina eletronicamente, e a 1.1 continua genérica.
-//  3. A cláusula 14.2 promete registro de IP e hora do aceite. Isso é verdade no
+//  2. A cláusula 14.2 promete registro de IP e hora do aceite. Isso é verdade no
 //     caminho ZapSign e AINDA NÃO no aceite interno, que grava `assinado_at` com
 //     o relógio do navegador (`pages/v2/ContratoModal.jsx`) e não registra IP.
 //     Enquanto esse aceite não for para o servidor, o item 14.2 descreve mais do

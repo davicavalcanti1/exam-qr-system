@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { adminApi } from '../../../lib/adminApi'
 import { Card, Loading, EmptyState, Badge, Button, PageHeader, useToast } from '../../../components/ui'
+import ContratoPadraoEditor from './ContratoPadraoEditor'
 
 // Controle de contratos da PLATAFORMA (só o dono). Não é a tela da clínica
 // (`ContratosArea`, que gera e envia): aqui é o painel de conformidade — quais
@@ -99,7 +100,7 @@ export default function ContratosPlataformaArea() {
       supabase.from('empresas').select('id, nome, cnpj, status').order('nome'),
       supabase.from('parceiros').select('id, empresa_id, nome, email, status, contrato_status'),
       supabase.from('contratos').select('id, empresa_id, parceiro_id, titulo, conteudo, status, provedor, assinante_nome, assinado_at, created_at, enviado_at, signatario_email, hash_sha256, arquivo_path, recusado_motivo').order('created_at', { ascending: false }),
-      supabase.from('contrato_modelos').select('empresa_id, titulo, conteudo, updated_at'),
+      supabase.from('contrato_modelos').select('empresa_id, titulo, conteudo, updated_at, usa_padrao, parametros'),
     ])
     const erro = emp.error || parc.error || cont.error || mod.error
     if (erro) { toast.error(erro.message); setDados({ empresas: [], parceiros: [], contratos: [], modelos: [], zapsign: {} }); return }
@@ -146,6 +147,11 @@ export default function ContratosPlataformaArea() {
     : filtro === 'alertas' ? comAlertas.filter(c => c.alertas.length)
     : comAlertas.filter(c => c.alertas.some(a => a.k === filtro))
 
+  // Adota o contrato do sistema quem marcou `usa_padrao` E quem nunca salvou
+  // modelo nenhum: sem linha, a geração já resolve pelo padrão vigente.
+  const adota = (id) => { const m = modeloDe(id); return !m || m.usa_padrao !== false }
+  const adotantes = empresas.filter(e => adota(e.id)).length
+
   // Linha por empresa: o estado da parceria do lado da plataforma.
   const linhasEmpresa = empresas.map(e => {
     const meus = comAlertas.filter(c => c.empresa_id === e.id)
@@ -158,6 +164,7 @@ export default function ContratosPlataformaArea() {
       zapsignToken: !!z?.tokenConfigurado,
       zapsignAmbiente: z?.ambiente || null,
       modeloSalvo: !!modelo,
+      adotaPadrao: adota(e.id),
       modeloOk: !!modelo?.conteudo && TEM_ANUENCIA.test(modelo.conteudo) && TEM_ETICA.test(modelo.conteudo),
       modeloColchetes: !!modelo?.conteudo && COLCHETE.test(modelo.conteudo),
       modeloEm: modelo?.updated_at || null,
@@ -206,6 +213,8 @@ export default function ContratosPlataformaArea() {
         <Resumo icon="warning" label="Alertas" valor={totalAlertas} tone={totalAlertas ? 'danger' : 'primary'} />
       </div>
 
+      <ContratoPadraoEditor adotantes={adotantes} totalEmpresas={empresas.length} onPublicado={() => { setDados(null); load() }} />
+
       {/* Por empresa */}
       <Card className="overflow-hidden">
         <div className="p-5 border-b border-outline-variant/10">
@@ -237,10 +246,10 @@ export default function ContratosPlataformaArea() {
                           : <Badge tone={e.zapsignToken ? 'warn' : 'danger'} icon="link_off">{e.zapsignToken ? 'Token, desligado' : 'Sem token'}</Badge>}
                       </td>
                       <td className="py-3 px-3">
-                        {!e.modeloSalvo ? <Badge tone="neutral">Padrão do sistema</Badge>
+                        {e.adotaPadrao ? <Badge tone="primary" icon="verified">Contrato do sistema</Badge>
                           : e.modeloOk
-                            ? <Badge tone={e.modeloColchetes ? 'warn' : 'success'} icon={e.modeloColchetes ? 'edit_note' : 'check'}>{e.modeloColchetes ? 'Colchetes em branco' : `Completo · ${fmtData(e.modeloEm)}`}</Badge>
-                            : <Badge tone="danger" icon="gavel">Sem cláusulas obrigatórias</Badge>}
+                            ? <Badge tone={e.modeloColchetes ? 'warn' : 'success'} icon={e.modeloColchetes ? 'edit_note' : 'check'}>{e.modeloColchetes ? 'Próprio · colchetes em branco' : `Próprio · ${fmtData(e.modeloEm)}`}</Badge>
+                            : <Badge tone="danger" icon="gavel">Próprio · sem cláusulas obrigatórias</Badge>}
                       </td>
                       <td className="py-3 px-3 text-right tabular-nums">{e.parceiros}</td>
                       <td className={`py-3 px-3 text-right tabular-nums ${e.semEmail ? 'font-bold text-error' : 'text-on-surface-variant'}`}>{e.semEmail}</td>

@@ -102,7 +102,7 @@ router.put('/parceiros/:id', async (req, res) => {
   if (!parc) return res.status(404).json({ error: 'Parceiro não encontrado' })
   if (p.role !== 'owner' && parc.empresa_id !== p.empresa_id) return res.status(403).json({ error: 'Parceiro de outra empresa' })
 
-  const { nome, cnpj, teto, status, whatsapp, tipoDocumento, documento } = req.body || {}
+  const { nome, cnpj, teto, status, whatsapp, tipoDocumento, documento, formaRepasse } = req.body || {}
   const patch = {}
   if (typeof nome === 'string' && nome.trim()) patch.nome = nome.trim()
   if (cnpj !== undefined) patch.cnpj = cnpj || null
@@ -111,6 +111,14 @@ router.put('/parceiros/:id', async (req, res) => {
   if (whatsapp !== undefined) patch.whatsapp = String(whatsapp).replace(/\D/g, '') || null
   if (tipoDocumento !== undefined) patch.tipo_documento = ['cnpj', 'cpf'].includes(tipoDocumento) ? tipoDocumento : null
   if (documento !== undefined) patch.documento = documento ? String(documento).replace(/\D/g, '') : null
+  // Cláusula 8.1 do contrato de parceria: como o custo do exame chega ao
+  // paciente. Vive no parceiro porque varia parceiro a parceiro, e o modelo de
+  // contrato é por empresa. Valor fora da lista virou null de propósito — melhor
+  // o contrato recusar a ser gerado do que declarar a forma errada.
+  if (formaRepasse !== undefined) {
+    patch.forma_repasse = ['sem_repasse', 'repasse_integral', 'repasse_margem'].includes(formaRepasse)
+      ? formaRepasse : null
+  }
   if (!Object.keys(patch).length) return res.json({ ok: true })
 
   const { error } = await supabaseAdmin.from('parceiros').update(patch).eq('id', parc.id)
