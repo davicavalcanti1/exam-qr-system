@@ -4,16 +4,15 @@ import { useAuth } from '../../../auth/AuthContext'
 import { adminApi } from '../../../lib/adminApi'
 import { useToast } from '../../../components/ui'
 import ContratoModal from '../ContratoModal'
+import { CONTRATO_MODELO, CONTRATO_TITULO } from '../../../legal/contratoParceria'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const hojeBR = () => new Date().toLocaleDateString('pt-BR')
 
-const MODELO_PADRAO = `Pelo presente instrumento, {{empresa_nome}} e o parceiro {{parceiro_nome}} (CNPJ {{parceiro_cnpj}}) firmam parceria para a realização de exames.
-
-1. O parceiro custeia os exames de seus pacientes até o teto de {{teto}}.
-2. O valor de cada exame é debitado do teto somente após a confirmação da realização (leitura do QR).
-3. As cobranças são fechadas por lote, conforme período definido pela empresa.
-4. Este contrato passa a vigorar na data da assinatura eletrônica: {{data}}.`
+// Campos entre colchetes do modelo — comarca, prazo de pagamento, endereço — que
+// só a clínica sabe preencher. Diferente de `{{placeholder}}`, que a geração
+// resolve: colchete esquecido vai assim mesmo para o PDF que o parceiro assina.
+const colchetesPendentes = (txt) => String(txt || '').match(/\[[^\]\n]{1,120}\]/g) || []
 
 const ST = {
   pendente: { label: 'Aguardando assinatura', cls: 'bg-yellow-50 text-yellow-700' },
@@ -31,7 +30,7 @@ export default function ContratosArea() {
   const [zapsign, setZapsign] = useState({ ativo: false })
   const [enviando, setEnviando] = useState(null)
   const [empresa, setEmpresa] = useState(null)
-  const [modelo, setModelo] = useState({ titulo: 'Contrato de Parceria', conteudo: MODELO_PADRAO })
+  const [modelo, setModelo] = useState({ titulo: CONTRATO_TITULO, conteudo: CONTRATO_MODELO })
   const [savingModelo, setSavingModelo] = useState(false)
   const [modeloMsg, setModeloMsg] = useState('')
   const [parceiros, setParceiros] = useState([])
@@ -42,9 +41,9 @@ export default function ContratosArea() {
 
   async function load() {
     const [{ data: emp }, { data: mod }, { data: parc }, { data: cont }] = await Promise.all([
-      supabase.from('empresas').select('nome, cnpj').eq('id', empresaId).maybeSingle(),
+      supabase.from('empresas').select('nome, cnpj, endereco').eq('id', empresaId).maybeSingle(),
       supabase.from('contrato_modelos').select('titulo, conteudo').eq('empresa_id', empresaId).maybeSingle(),
-      supabase.from('parceiros').select('id, nome, cnpj, teto').order('nome'),
+      supabase.from('parceiros').select('id, nome, cnpj, teto, endereco').order('nome'),
       supabase.from('contratos').select('id, parceiro_id, titulo, conteudo, status, assinante_nome, assinado_at, created_at, provedor, sign_url, arquivo_path, signatario_email, enviado_at').order('created_at', { ascending: false }),
     ])
     setEmpresa(emp)
@@ -86,8 +85,10 @@ export default function ContratosArea() {
   async function gerar(parc) {
     setGerando(parc.id)
     const ctx = {
-      parceiro_nome: parc.nome, parceiro_cnpj: parc.cnpj || '—', teto: fmt(parc.teto),
-      empresa_nome: empresa?.nome || '', empresa_cnpj: empresa?.cnpj || '—', data: hojeBR(),
+      parceiro_nome: parc.nome, parceiro_cnpj: parc.cnpj || '—', parceiro_endereco: parc.endereco || '—',
+      teto: fmt(parc.teto),
+      empresa_nome: empresa?.nome || '', empresa_cnpj: empresa?.cnpj || '—', empresa_endereco: empresa?.endereco || '—',
+      data: hojeBR(),
     }
     const { error } = await supabase.from('contratos').insert({
       empresa_id: empresaId, parceiro_id: parc.id, titulo: modelo.titulo,
@@ -118,9 +119,15 @@ export default function ContratosArea() {
       {/* Modelo */}
       <section className="bg-surface-container-lowest p-6 rounded-2xl shadow-card space-y-3">
         <h3 className="text-lg font-semibold">Modelo do contrato</h3>
-        <p className="text-sm text-on-surface-variant">Use os campos entre chaves — eles são preenchidos ao gerar: <code className="text-xs bg-surface-container px-1 rounded">{'{{parceiro_nome}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{parceiro_cnpj}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{teto}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{empresa_nome}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{data}}'}</code></p>
+        <p className="text-sm text-on-surface-variant">Use os campos entre chaves — eles são preenchidos ao gerar: <code className="text-xs bg-surface-container px-1 rounded">{'{{parceiro_nome}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{parceiro_cnpj}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{teto}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{parceiro_endereco}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{empresa_nome}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{empresa_cnpj}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{empresa_endereco}}'}</code> <code className="text-xs bg-surface-container px-1 rounded">{'{{data}}'}</code></p>
         <div><label className={label}>Título</label><input className={input} value={modelo.titulo} onChange={e => setModelo(m => ({ ...m, titulo: e.target.value }))} /></div>
-        <div><label className={label}>Texto</label><textarea className={`${input} font-mono`} rows={10} value={modelo.conteudo} onChange={e => setModelo(m => ({ ...m, conteudo: e.target.value }))} /></div>
+        <div><label className={label}>Texto</label><textarea className={`${input} font-mono`} rows={24} value={modelo.conteudo} onChange={e => setModelo(m => ({ ...m, conteudo: e.target.value }))} /></div>
+        {colchetesPendentes(modelo.conteudo).length > 0 && (
+          <p className="text-sm text-on-error-container bg-error-container/40 rounded-lg px-3 py-2">
+            <strong>{colchetesPendentes(modelo.conteudo).length} campo(s) entre colchetes</strong> ainda por preencher — eles vão assim mesmo para o contrato que o parceiro assina:{' '}
+            <span className="font-mono text-xs">{colchetesPendentes(modelo.conteudo).slice(0, 6).join(' ')}{colchetesPendentes(modelo.conteudo).length > 6 ? ' …' : ''}</span>
+          </p>
+        )}
         <div className="flex items-center gap-3">
           <button disabled={savingModelo} onClick={salvarModelo} className="px-5 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingModelo ? 'Salvando…' : 'Salvar modelo'}</button>
           {modeloMsg && <span className="text-sm text-on-surface-variant">{modeloMsg}</span>}
