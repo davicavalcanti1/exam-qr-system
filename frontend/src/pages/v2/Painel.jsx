@@ -18,6 +18,7 @@ import VisaoGeralArea from './areas/VisaoGeralArea'
 import CobrancasArea from './areas/CobrancasArea'
 import AgendaArea from './areas/AgendaArea'
 import ContratosArea from './areas/ContratosArea'
+import ContratosPlataformaArea from './areas/ContratosPlataformaArea'
 import ContratoArea from './areas/ContratoArea'
 import AuditoriaArea from './areas/AuditoriaArea'
 import UsoArea from './areas/UsoArea'
@@ -79,6 +80,10 @@ const NAV = {
     { k: 'empresas', label: 'Empresas', icon: 'business' },
     { k: 'mapa', label: 'Mapa', icon: 'map' },
     { k: 'uso', label: 'Consumo', icon: 'monitoring' },
+    // Conformidade dos contratos de TODAS as empresas. É visão de plataforma:
+    // a clínica vê e assina os seus em 'contratos'; aqui o dono vê se eles se
+    // sustentam (provedor, hash, cláusulas obrigatórias).
+    { k: 'contratos_plataforma', label: 'Contratos', icon: 'gavel' },
     // Quem, de fora, entra aqui. Decisao de plataforma, nao de clinica — por
     // isso so aparece para owner.
     { k: 'sso', label: 'Acesso externo', icon: 'key' },
@@ -132,6 +137,7 @@ function renderArea(role, k, irPara) {
     agenda: <AgendaArea />,
     catalogo: <CatalogoArea />,
     contratos: <ContratosArea />,
+    contratos_plataforma: <ContratosPlataformaArea />,
     auditoria: <AuditoriaArea />,
     pacientes: <PacientesArea />,
     autorizacoes: <AutorizacoesArea />,
