@@ -109,11 +109,13 @@ export async function carregarTudo(fetchPage, chave) {
   return acc
 }
 
-// "João da Silva" -> "joao.silva"
+// "João da Silva Pereira" -> "joao.pereira": primeiro nome + ÚLTIMO sobrenome.
 export function sugerirUsername(nome) {
-  return String(nome || '')
+  const partes = String(nome || '')
     .toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9\s.]/g, '')
-    .trim().split(/\s+/).filter(Boolean).join('.')
+    .trim().split(/\s+/).filter(Boolean)
+  if (partes.length <= 1) return partes.join('')
+  return `${partes[0]}.${partes[partes.length - 1]}`
 }

@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     }
     // Usuário do parceiro carrega a marca do próprio parceiro.
     if (data?.parceiro_id) {
-      const { data: parc } = await supabase.from('parceiros').select('id, nome, nome_exibicao, logo_url').eq('id', data.parceiro_id).maybeSingle()
+      const { data: parc } = await supabase.from('parceiros').select('id, nome, nome_exibicao, logo_url, status').eq('id', data.parceiro_id).maybeSingle()
       setParceiro(parc || null)
     } else {
       setParceiro(null)

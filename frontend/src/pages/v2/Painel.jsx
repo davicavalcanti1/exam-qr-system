@@ -29,6 +29,26 @@ import ConfirmacoesArea from './areas/ConfirmacoesArea'
 import ComprovantesArea from './areas/ComprovantesArea'
 import MapaArea from './areas/MapaArea'
 
+// Parceiro bloqueado/suspenso pelo admin da clínica: o login continua válido,
+// mas o painel não abre. O trigger check_parceiro_ativo (banco) garante que,
+// mesmo por fora da UI, nenhum exame novo entra nem é autorizado.
+function ParceiroBloqueado({ status, nome, onSignOut }) {
+  const suspenso = status === 'suspenso'
+  return (
+    <div className="min-h-screen soft-bg-gradient flex items-center justify-center p-4">
+      <div className="bg-surface-container-lowest rounded-2xl shadow-card p-8 w-full max-w-sm text-center space-y-4">
+        <span className="material-symbols-outlined text-5xl text-error" style={{ fontVariationSettings: "'FILL' 1" }}>{suspenso ? 'pause_circle' : 'block'}</span>
+        <h2 className="font-display text-xl font-extrabold tracking-tight">Acesso {suspenso ? 'suspenso' : 'bloqueado'}</h2>
+        <p className="text-sm text-on-surface-variant">
+          {nome ? `${nome}, o` : 'O'} acesso da sua organização está {suspenso ? 'temporariamente suspenso' : 'bloqueado'} pela clínica.
+          Entre em contato com a clínica para regularizar.
+        </p>
+        <Button onClick={onSignOut} className="w-full">Sair</Button>
+      </div>
+    </div>
+  )
+}
+
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
   const [p1, setP1] = useState(''); const [p2, setP2] = useState('')
@@ -150,7 +170,7 @@ function renderArea(role, k, irPara) {
 }
 
 export default function Painel() {
-  const { ready, loading, session, profile, role, branding, signOut, reloadProfile } = useAuth()
+  const { ready, loading, session, profile, role, branding, parceiro, signOut, reloadProfile } = useAuth()
   const [secao, setSecao] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
   const [view, setView] = useState(null) // 'perfil' | null
@@ -178,6 +198,9 @@ export default function Painel() {
   if (!session) return <Navigate to="/entrar" replace />
   if (profile && !role) return <SemAcesso nome={profile.nome} onSignOut={signOut} />
   if (profile?.must_change_password) return <TrocarSenha onDone={reloadProfile} />
+  if (String(role || '').startsWith('parceiro') && parceiro?.status && parceiro.status !== 'ativo') {
+    return <ParceiroBloqueado status={parceiro.status} nome={(profile?.nome || '').split(' ')[0]} onSignOut={signOut} />
+  }
   if (role === 'empresa_admin' && dpaOk === null) return <div className="min-h-screen bg-surface"><Loading /></div>
   if (role === 'empresa_admin' && dpaOk === false) return <AceiteDPA onDone={() => setDpaOk(true)} />
 

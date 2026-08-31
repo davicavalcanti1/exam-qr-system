@@ -89,6 +89,9 @@ export default function VisaoGeralArea({ irPara }) {
   const barCor = pct >= 100 ? 'bg-error' : pct >= 70 ? 'bg-yellow-400' : 'bg-primary'
   const atalhos = ATALHOS[role] || []
   const nome = (profile?.nome || '').split(' ')[0]
+  // O mesmo card serve aos dois lados da mesma dívida: a cobrança aberta é
+  // "a receber" para a clínica e "a pagar" para o parceiro.
+  const ehParceiro = String(role || '').startsWith('parceiro')
 
   return (
     <div className="space-y-6">
@@ -154,11 +157,11 @@ export default function VisaoGeralArea({ irPara }) {
               <p className="text-lg font-extrabold tabular-nums text-yellow-600 sm:mt-0.5">{fmt(d.emAberto)}</p>
             </div>
             <div className="flex items-baseline justify-between py-2 sm:block sm:py-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">A receber</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{ehParceiro ? 'A pagar' : 'A receber'}</p>
               <p className="text-lg font-extrabold tabular-nums text-on-surface sm:mt-0.5">{fmt(d.aReceber)}</p>
             </div>
             <div className="flex items-baseline justify-between py-2 sm:block sm:py-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Recebido</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{ehParceiro ? 'Pago' : 'Recebido'}</p>
               <p className="text-lg font-extrabold tabular-nums text-primary sm:mt-0.5">{fmt(d.recebido)}</p>
             </div>
           </div>

@@ -79,12 +79,15 @@ router.post('/parceiros', async (req, res) => {
   if (!empresa_id) return res.status(400).json({ error: 'empresaId é obrigatório' })
   const tipoDoc = ['cnpj', 'cpf'].includes(tipoDocumento) ? tipoDocumento : null
 
+  // A coluna legada `cnpj` é a que o contrato e o recibo leem — mantida em
+  // sincronia com `documento` quando o tipo é CNPJ.
+  const docLimpo = documento ? String(documento).replace(/\D/g, '') : null
   const { data, error } = await supabaseAdmin.from('parceiros')
     .insert({
-      empresa_id, nome: String(nome).trim(), cnpj: cnpj || null, teto: teto || 2000,
+      empresa_id, nome: String(nome).trim(), cnpj: cnpj || (tipoDoc === 'cnpj' ? docLimpo : null), teto: teto || 2000,
       nome_fantasia: nomeFantasia || null, endereco: endereco || null, telefone: telefone || null, email: email || null,
       whatsapp: whatsapp ? String(whatsapp).replace(/\D/g, '') : null,
-      tipo_documento: tipoDoc, documento: documento ? String(documento).replace(/\D/g, '') : null,
+      tipo_documento: tipoDoc, documento: docLimpo,
     })
     .select('id').single()
   if (error) return res.status(400).json({ error: error.message })
@@ -98,19 +101,27 @@ router.put('/parceiros/:id', async (req, res) => {
   const p = c.profile
   if (!['owner', 'empresa_admin'].includes(p.role)) return res.status(403).json({ error: 'Sem permissão' })
 
-  const { data: parc } = await supabaseAdmin.from('parceiros').select('id, empresa_id').eq('id', req.params.id).maybeSingle()
+  const { data: parc } = await supabaseAdmin.from('parceiros').select('id, empresa_id, tipo_documento').eq('id', req.params.id).maybeSingle()
   if (!parc) return res.status(404).json({ error: 'Parceiro não encontrado' })
   if (p.role !== 'owner' && parc.empresa_id !== p.empresa_id) return res.status(403).json({ error: 'Parceiro de outra empresa' })
 
-  const { nome, cnpj, teto, status, whatsapp, tipoDocumento, documento, formaRepasse } = req.body || {}
+  const { nome, cnpj, teto, status, whatsapp, tipoDocumento, documento, formaRepasse, endereco } = req.body || {}
   const patch = {}
   if (typeof nome === 'string' && nome.trim()) patch.nome = nome.trim()
   if (cnpj !== undefined) patch.cnpj = cnpj || null
   if (teto !== undefined && teto !== '' && teto !== null) patch.teto = Number(teto)
   if (status && ['ativo', 'bloqueado', 'suspenso'].includes(status)) patch.status = status
   if (whatsapp !== undefined) patch.whatsapp = String(whatsapp).replace(/\D/g, '') || null
+  if (endereco !== undefined) patch.endereco = String(endereco).trim() || null
   if (tipoDocumento !== undefined) patch.tipo_documento = ['cnpj', 'cpf'].includes(tipoDocumento) ? tipoDocumento : null
-  if (documento !== undefined) patch.documento = documento ? String(documento).replace(/\D/g, '') : null
+  if (documento !== undefined) {
+    patch.documento = documento ? String(documento).replace(/\D/g, '') : null
+    // Sincroniza a coluna legada `cnpj`, que o contrato (ContratosArea) e o
+    // recibo (ReciboModal) leem. Antes o documento editado ia só para
+    // `documento` e o `cnpj` ficava nulo para sempre.
+    const tipoEfetivo = tipoDocumento !== undefined ? patch.tipo_documento : parc.tipo_documento
+    patch.cnpj = tipoEfetivo === 'cnpj' ? patch.documento : null
+  }
   // Cláusula 8.1 do contrato de parceria: como o custo do exame chega ao
   // paciente. Vive no parceiro porque varia parceiro a parceiro, e o modelo de
   // contrato é por empresa. Valor fora da lista virou null de propósito — melhor
