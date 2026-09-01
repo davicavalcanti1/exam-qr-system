@@ -4,25 +4,11 @@ import { netrisParaEmpresa } from './empresa.js'
 import { resolverContextoExame, agendarExameNoNetris } from './agendamento.js'
 import { SITUACAO, normalizePaciente, normalizeHorarios } from './client.js'
 import { logAudit } from '../../lib/audit.js'
-import { podeOperarExame, ehGestor } from '../../lib/permissoes.js'
+import { ehGestor } from '../../lib/permissoes.js'
+import { exameDoCaller } from '../../lib/exameGuard.js'
 
 const router = Router()
 
-// Carrega o exame e confere se quem chamou pode mexer nele.
-//
-// Estas rotas usam `service_role`, que ignora RLS: sem esta checagem o banco não
-// protege nada e basta conhecer o UUID de um exame para agir sobre ele. Devolve
-// { exame } ou { status, error } — 404 em vez de 403 quando o exame é de outro
-// tenant, para não confirmar a existência do UUID.
-async function exameDoCaller(exameId, profile) {
-  if (!exameId) return { status: 400, error: 'exameId é obrigatório' }
-  const { data: ex } = await supabaseAdmin
-    .from('exames').select('id, empresa_id, parceiro_id, status, netris_atendimento_id')
-    .eq('id', exameId).maybeSingle()
-  if (!ex) return { status: 404, error: 'Exame não encontrado' }
-  if (!podeOperarExame(profile, ex)) return { status: 404, error: 'Exame não encontrado' }
-  return { exame: ex }
-}
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const isoToBR = (iso) => { const [y, m, d] = String(iso).split('-'); return `${d}/${m}/${y}` }
 

@@ -69,6 +69,15 @@ export const adminApi = {
     req('GET', `/api/netris/horarios-catalogo?procedimentoId=${procedimentoId}&parceiroId=${parceiroId}&idPaciente=${idPaciente}&pesoPaciente=${pesoPaciente || 70}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
   netrisAgendarExame: (exameId, slot) => post('/api/netris/agendar-exame', { exameId, slot }),
   netrisCancelarExame: (exameId) => post('/api/netris/cancelar-exame', { exameId }),
+  // console Feegow — mesmo contrato do NetRis (Fase 4)
+  feegowStatus: (empresaId) => req('GET', `/api/feegow/status${empresaId ? `?empresaId=${empresaId}` : ''}`),
+
+  // Dispatch agnóstico de provider para o AgendarModal — 'netris' ou 'feegow'
+  // conforme a integração ativa da empresa (ver netrisStatus/feegowStatus).
+  horariosExame: (provider, exameId, dataInicial, dataFinal) =>
+    req('GET', `/api/${provider}/horarios-exame?exameId=${exameId}&dataInicial=${dataInicial}&dataFinal=${dataFinal}`),
+  agendarExameAgenda: (provider, exameId, slot) => post(`/api/${provider}/agendar-exame`, { exameId, slot }),
+  cancelarExameAgenda: (provider, exameId) => post(`/api/${provider}/cancelar-exame`, { exameId }),
 
   // ── ZapSign: assinatura eletrônica de contrato e DPA ──────────────────────
   // empresaId é opcional e só o owner usa (ele configura por empresa). O token
@@ -84,6 +93,15 @@ export const adminApi = {
     req('GET', `/api/zapsign/status/${tipo}/${id}${empresaId ? `?empresaId=${empresaId}` : ''}`),
   // devolve { url } — assinada e válida por 5 minutos (o bucket é privado)
   zapsignArquivo: (tipo, id) => req('GET', `/api/zapsign/arquivo/${tipo}/${id}`),
+
+  // ── Asaas: cobrança automática do lote (PIX/boleto) ───────────────────────
+  // Mesmo contrato do ZapSign — empresaId opcional (só o owner usa), token
+  // nunca trafega de volta.
+  asaasConfig: (empresaId) => req('GET', `/api/asaas/config${empresaId ? `?empresaId=${empresaId}` : ''}`),
+  asaasSalvarConfig: (payload) => req('PUT', '/api/asaas/config', payload),
+  asaasTestar: (payload) => post('/api/asaas/testar', payload || {}),
+  asaasGerarPagamento: (cobrancaId) => post(`/api/asaas/cobrancas/${cobrancaId}/gerar-pagamento`, {}),
+  asaasStatusCobranca: (cobrancaId) => req('GET', `/api/asaas/cobrancas/${cobrancaId}/status`),
 }
 
 // carrega todas as páginas de uma listagem NetRis (planos/procedimentos)

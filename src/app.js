@@ -10,6 +10,7 @@ import qrRouter from './routes/qr.js'
 import integracaoRouter from './routes/integracao.js'
 import autorizacaoRouter from './routes/autorizacao.js'
 import zapsignRouter from './integrations/zapsign/routes.js'
+import asaasRouter from './integrations/asaas/routes.js'
 
 // ── Rotas legadas do MVP (SQLite) desativadas ────────────────────────────────
 // O sistema v2 usa Supabase Auth + RLS direto no frontend e apenas os endpoints
@@ -31,6 +32,7 @@ app.use(express.json())
 // log do EasyPanel, que muita gente enxerga.
 const SEGREDO_NO_PATH = [
   /^\/api\/zapsign\/webhook\//,
+  /^\/api\/asaas\/webhook\//,
   /^\/api\/autorizacao\/(?!lotes)[^/]+/,
 ]
 function caminhoSeguro(p) {
@@ -53,6 +55,7 @@ app.use('/api/netris', netrisRouter) // integração NetRis (agendamento futuro)
 app.use('/api/feegow', feegowRouter) // integração Feegow (mesma interface do NetRis)
 app.use('/api/autorizacao', autorizacaoRouter) // lote de autorização por link público
 app.use('/api/zapsign', zapsignRouter) // assinatura eletrônica de contrato e DPA
+app.use('/api/asaas', asaasRouter)   // cobrança automática do lote (PIX/boleto)
 
 const frontendDist = path.join(__dirname, '../frontend/dist')
 const frontendBuilt = fs.existsSync(path.join(frontendDist, 'index.html'))

@@ -4,6 +4,7 @@ import AparenciaControls from '../AparenciaControls'
 import ConfiguracoesEmpresa from './ConfiguracoesEmpresa'
 import UsuariosEmpresa from './UsuariosEmpresa'
 import IntegracaoZapsign from './IntegracaoZapsign'
+import IntegracaoAsaas from './IntegracaoAsaas'
 
 function Preferencias() {
   return (
@@ -35,6 +36,7 @@ export default function ConfiguracoesArea() {
       {/* Configuração permanente: fica aqui, e não dentro de Contratos, para não
           repetir o erro de esconder integração em tela operacional. */}
       <IntegracaoZapsign />
+      <IntegracaoAsaas />
       <UsuariosEmpresa />
     </div>
   )

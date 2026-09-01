@@ -1,13 +1,33 @@
 import { Router } from 'express'
-import { getCaller } from '../../lib/supabaseAdmin.js'
+import { getCaller, supabaseAdmin } from '../../lib/supabaseAdmin.js'
 import { feegowParaEmpresa } from './empresa.js'
 import { normalizePaciente, normalizeHorarios } from './client.js'
+import { resolverContextoExame, agendarExameNoFeegow, cancelarExameNoFeegow } from './agendamento.js'
 import { ehGestor } from '../../lib/permissoes.js'
+import { exameDoCaller } from '../../lib/exameGuard.js'
+import { logAudit } from '../../lib/audit.js'
 
 // Rotas do Feegow — espelham as operacionais do NetRis (mesmos caminhos relativos),
 // só que sob /api/feegow. Trocar de provedor = mudar a config da empresa e apontar
 // o frontend para o namespace do provedor ativo (ou usar um dispatcher).
 const router = Router()
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+const isoToBRHifen = (iso) => { const [y, m, d] = String(iso).split('-'); return `${d}-${m}-${y}` }
+
+// Marca os slots já ocupados por algum exame da empresa (chave: data+hora+médico
+// — Feegow não tem conceito de sala) para o frontend desabilitar/acinzentar.
+async function marcarReservados(slots, empresaId) {
+  if (!Array.isArray(slots) || !slots.length || !empresaId) return slots
+  const { data } = await supabaseAdmin
+    .from('exames').select('feegow_slot').eq('empresa_id', empresaId).not('feegow_slot', 'is', null).neq('status', 'cancelado')
+  const key = (d, h, m) => `${d}|${h}|${m}`
+  const ocupados = new Set((data || []).map(e => {
+    const s = e.feegow_slot || {}
+    return key(s.dataString, s.horarioString, s.idMedico)
+  }))
+  for (const s of slots) s.reservado = ocupados.has(key(s.dataString, s.horaInicial, s.idMedico))
+  return slots
+}
 
 async function comFeegow(req, res) {
   const c = await getCaller(req)
@@ -81,6 +101,61 @@ router.post('/cancelar', async (req, res) => {
     if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'Feegow recusou o cancelamento', upstream: r.body })
     res.json({ ok: true, body: r.body })
   } catch (err) { res.status(502).json({ error: 'Erro ao cancelar no Feegow', detail: err.message }) }
+})
+
+// ── Fase 4 — Agendamento online a partir de um exame do ExameQR ──────────────
+// Mesma estrutura das rotas equivalentes do NetRis (netris/routes.js).
+
+// Horários disponíveis para um exame (resolve procedimento/especialidade/convênio/paciente).
+router.get('/horarios-exame', async (req, res) => {
+  const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
+  const { exameId, dataInicial, dataFinal } = req.query
+  if (!DATE_RE.test(dataInicial || '')) return res.status(400).json({ error: 'dataInicial em YYYY-MM-DD' })
+  const dono = await exameDoCaller(exameId, c.profile)
+  if (dono.error) return res.status(dono.status).json({ error: dono.error })
+  const ctx = await resolverContextoExame(exameId)
+  if (ctx.error) return res.status(ctx.status).json({ error: ctx.error })
+  try {
+    const params = {
+      tipo: 'P', procedimento_id: ctx.idProcedimento,
+      data_start: isoToBRHifen(dataInicial), data_end: isoToBRHifen(dataFinal || dataInicial),
+      unidade_id: ctx.localId,
+      ...(ctx.idConvenio ? { convenio_id: ctx.idConvenio } : {}),
+    }
+    const r = await ctx.client.horariosAgrupados(params)
+    if (!r.ok) return res.status(r.status >= 500 ? 502 : r.status).json({ error: 'Feegow recusou os horários', upstream: String(r.body).slice(0, 300) })
+    const slots = await marcarReservados(normalizeHorarios(JSON.parse(r.body || '{}')), ctx.exame.empresa_id)
+    res.json({ exame: ctx.exame.nome, paciente: ctx.exame.pacientes?.nome, total: slots.length, slots })
+  } catch (err) {
+    res.status(502).json({ error: 'Erro ao consultar horários no Feegow', detail: err.message })
+  }
+})
+
+// Agenda de fato um exame num slot escolhido e grava o retorno no exame.
+router.post('/agendar-exame', async (req, res) => {
+  const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
+  const { exameId, slot } = req.body || {}
+  if (!exameId || !slot?.dataString || !slot?.horarioString || !slot?.idMedico) {
+    return res.status(400).json({ error: 'exameId e slot {dataString, horarioString, idMedico} são obrigatórios' })
+  }
+  const dono = await exameDoCaller(exameId, c.profile)
+  if (dono.error) return res.status(dono.status).json({ error: dono.error })
+  const result = await agendarExameNoFeegow(exameId, slot)
+  if (!result.ok) return res.status(result.status || 502).json({ error: result.error, upstream: result.upstream })
+  logAudit({ empresaId: result.empresaId, atorId: c.profile.id, atorNome: c.profile.nome || c.profile.role, acao: 'feegow.agendado', entidade: 'exame', entidadeId: exameId, detalhe: { protocolo: result.agId, slot } })
+  res.json({ ok: true, agendamentoId: result.agId, upstream: result.parsed })
+})
+
+// Cancela o agendamento do exame no Feegow e limpa o vínculo.
+router.post('/cancelar-exame', async (req, res) => {
+  const c = await getCaller(req); if (c.error) return res.status(c.status).json({ error: c.error })
+  const { exameId } = req.body || {}
+  const dono = await exameDoCaller(exameId, c.profile)
+  if (dono.error) return res.status(dono.status).json({ error: dono.error })
+  const result = await cancelarExameNoFeegow(exameId)
+  if (!result.ok) return res.status(result.status || 502).json({ error: result.error, upstream: result.upstream })
+  logAudit({ empresaId: dono.exame.empresa_id, atorId: c.profile.id, atorNome: c.profile.nome || c.profile.role, acao: 'feegow.cancelado', entidade: 'exame', entidadeId: exameId })
+  res.json({ ok: true })
 })
 
 // Proxy genérico — qualquer endpoint sob api/, com o token da clínica.

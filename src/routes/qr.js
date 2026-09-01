@@ -4,7 +4,7 @@ import crypto from 'crypto'
 import { supabaseAdmin, supabaseConfigured, getCaller } from '../lib/supabaseAdmin.js'
 import { podeVerExame } from '../lib/permissoes.js'
 import { agendaParaEmpresa } from '../integrations/agenda.js'
-import { SITUACAO } from '../integrations/netris/client.js'
+import { SITUACAO as NETRIS_SITUACAO } from '../integrations/netris/client.js'
 import { logAudit } from '../lib/audit.js'
 import { gerarKitPdf } from '../utils/qrKitPdf.js'
 import { enviarDocumentoWhatsapp, uazapiConfigurado } from '../integrations/uazapi/client.js'
@@ -236,12 +236,17 @@ router.post('/validar', async (req, res) => {
 
   // Best-effort: no scan o paciente vai para "ATENDIMENTO RECEPÇÃO" (id 11) no NetRis.
   // "Exame realizado" (18) é uma etapa posterior, não acontece aqui.
+  //
+  // Só chama a transição quando o provider realmente é NetRis: o Feegow não tem
+  // essa transição via API pública (só cancelamento tem equivalente direto — ver
+  // feegow/client.js alterarSituacao), então chamar aqui uma constante do NetRis
+  // num cliente Feegow reportaria "confirmado" sem nada acontecer de fato.
   let netris = null
   if (exame.netris_atendimento_id) {
     try {
-      const client = await agendaParaEmpresa(exame.empresa_id)
-      if (client) {
-        const r = await client.alterarSituacao(exame.netris_atendimento_id, SITUACAO.ATENDIMENTO_RECEPCAO)
+      const resolved = await agendaParaEmpresa(exame.empresa_id)
+      if (resolved?.provider === 'netris') {
+        const r = await resolved.client.alterarSituacao(exame.netris_atendimento_id, NETRIS_SITUACAO.ATENDIMENTO_RECEPCAO)
         netris = r.ok ? 'confirmado' : 'falhou'
       }
     } catch { netris = 'falhou' }

@@ -16,7 +16,12 @@ export async function feegowParaEmpresa(empresaId) {
   const c = subConfig(data.config, 'feegow')
   if (!c.token) return null
   try {
-    return createFeegowClient({ baseUrl: c.baseUrl || 'https://api.feegow.com/v1', token: c.token })
+    return createFeegowClient({
+      baseUrl: c.baseUrl || 'https://api.feegow.com/v1',
+      token: c.token,
+      localId: c.localId || '',
+      motivoCancelamentoId: c.motivoCancelamentoId || '',
+    })
   } catch {
     return null
   }

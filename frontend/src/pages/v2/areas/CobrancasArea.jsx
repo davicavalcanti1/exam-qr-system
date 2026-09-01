@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../auth/AuthContext'
 import { logAudit } from '../../../lib/audit'
+import { adminApi } from '../../../lib/adminApi'
 import ReciboModal from '../ReciboModal'
 
 const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -27,15 +28,26 @@ export default function CobrancasArea({ somenteLeitura = false }) {
   const [lista, setLista] = useState([])
   const [loading, setLoading] = useState(true)
   const [recibo, setRecibo] = useState(null)
+  const [asaasAtivo, setAsaasAtivo] = useState(false)
+  const [gerando, setGerando] = useState(null) // id da cobrança em geração
+  const [erroLinha, setErroLinha] = useState({}) // id -> mensagem
 
   useEffect(() => {
     supabase.from('parceiros').select('id, nome').order('nome').then(({ data }) => setParceiros(data || []))
   }, [])
 
+  // Só quem administra a empresa (gestor) configura/vê o Asaas — mesmo recorte
+  // do backend (comEmpresa gestor:true). O parceiro (somenteLeitura) não chama
+  // isso; ele só enxerga o link/PIX já gerados, que vêm junto do lote.
+  useEffect(() => {
+    if (somenteLeitura) return
+    adminApi.asaasConfig().then(r => setAsaasAtivo(!!r.ativo)).catch(() => setAsaasAtivo(false))
+  }, [somenteLeitura])
+
   async function load() {
     const { data } = await supabase
       .from('cobrancas')
-      .select('id, periodo_inicio, periodo_fim, valor_total, qtd_exames, status, created_at, parceiros(nome)')
+      .select('id, periodo_inicio, periodo_fim, valor_total, qtd_exames, status, created_at, gateway, gateway_id, link_pagamento, pix_copia_cola, parceiros(nome)')
       .order('created_at', { ascending: false })
     setLista(data || []); setLoading(false)
   }
@@ -75,6 +87,25 @@ export default function CobrancasArea({ somenteLeitura = false }) {
       logAudit({ empresaId, atorId: user?.id, atorNome: profile?.nome, acao: 'cobranca.fechada', entidade: 'cobranca', entidadeId: cob.id, detalhe: { total: preview.total, qtd: preview.itens.length, periodo: `${ini}..${fim}` } })
       setPreview(null); setParceiroSel(''); await load()
     } catch (e) { setErr(e.message) } finally { setBusy(false) }
+  }
+
+  async function gerarPagamento(id) {
+    setGerando(id); setErroLinha(e => ({ ...e, [id]: '' }))
+    try {
+      await adminApi.asaasGerarPagamento(id)
+      logAudit({ empresaId, atorId: user?.id, atorNome: profile?.nome, acao: 'cobranca.pagamento_gerado_ui', entidade: 'cobranca', entidadeId: id })
+      await load()
+    } catch (e) { setErroLinha(er => ({ ...er, [id]: e.message })) } finally { setGerando(null) }
+  }
+
+  async function verificarPagamento(id) {
+    setGerando(id); setErroLinha(e => ({ ...e, [id]: '' }))
+    try { await adminApi.asaasStatusCobranca(id); await load() }
+    catch (e) { setErroLinha(er => ({ ...er, [id]: e.message })) } finally { setGerando(null) }
+  }
+
+  async function copiar(texto) {
+    try { await navigator.clipboard.writeText(texto) } catch { /* sem clipboard, sem drama */ }
   }
 
   async function marcarPaga(id) {
@@ -143,24 +174,54 @@ export default function CobrancasArea({ somenteLeitura = false }) {
           : <div className="divide-y divide-outline-variant/10">
               {lista.map(c => {
                 const st = ST[c.status] || ST.aberta
+                const emGeracao = gerando === c.id
                 return (
-                  <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-black/[.02] transition">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(c.parceiros?.nome || '?').charAt(0).toUpperCase()}</span>
-                      <div className="min-w-0">
-                        <p className="font-semibold truncate">{c.parceiros?.nome || '—'}</p>
-                        <p className="text-[11px] text-on-surface-variant tabular-nums">{c.periodo_inicio} → {c.periodo_fim} · {c.qtd_exames} exame(s)</p>
+                  <div key={c.id} className="px-4 sm:px-6 py-4 hover:bg-black/[.02] transition">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-none">{(c.parceiros?.nome || '?').charAt(0).toUpperCase()}</span>
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{c.parceiros?.nome || '—'}</p>
+                          <p className="text-[11px] text-on-surface-variant tabular-nums">{c.periodo_inicio} → {c.periodo_fim} · {c.qtd_exames} exame(s)</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap pl-12 sm:pl-0">
+                        <span className="tabular-nums font-semibold">{fmt(c.valor_total)}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
+                        <button onClick={() => setRecibo(c.id)} className="p-2 text-on-surface-variant hover:text-primary" title="Recibo"><span className="material-symbols-outlined">receipt_long</span></button>
+                        {!somenteLeitura && c.status === 'aberta' && !c.gateway_id && <>
+                          {asaasAtivo && (
+                            <button disabled={emGeracao} onClick={() => gerarPagamento(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-on-primary rounded-md hover:bg-primary-container transition disabled:opacity-50">
+                              {emGeracao ? 'Gerando…' : 'Gerar cobrança'}
+                            </button>
+                          )}
+                          <button onClick={() => marcarPaga(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-surface-container text-on-surface rounded-md hover:bg-surface-container-high transition">Marcar paga</button>
+                          <button onClick={() => cancelar(c.id)} className="p-2 text-on-surface-variant hover:text-error" title="Cancelar lote"><span className="material-symbols-outlined">close</span></button>
+                        </>}
+                        {!somenteLeitura && c.status === 'aberta' && c.gateway_id && <>
+                          <button disabled={emGeracao} onClick={() => verificarPagamento(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-surface-container text-on-surface rounded-md hover:bg-surface-container-high transition disabled:opacity-50">
+                            {emGeracao ? 'Verificando…' : 'Verificar pagamento'}
+                          </button>
+                          <button onClick={() => cancelar(c.id)} className="p-2 text-on-surface-variant hover:text-error" title="Cancelar lote"><span className="material-symbols-outlined">close</span></button>
+                        </>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap pl-12 sm:pl-0">
-                      <span className="tabular-nums font-semibold">{fmt(c.valor_total)}</span>
-                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${st.cls}`}>{st.label}</span>
-                      <button onClick={() => setRecibo(c.id)} className="p-2 text-on-surface-variant hover:text-primary" title="Recibo"><span className="material-symbols-outlined">receipt_long</span></button>
-                      {!somenteLeitura && c.status === 'aberta' && <>
-                        <button onClick={() => marcarPaga(c.id)} className="px-3 py-1.5 text-[11px] font-bold bg-primary text-on-primary rounded-md hover:bg-primary-container transition">Marcar paga</button>
-                        <button onClick={() => cancelar(c.id)} className="p-2 text-on-surface-variant hover:text-error" title="Cancelar lote"><span className="material-symbols-outlined">close</span></button>
-                      </>}
-                    </div>
+
+                    {erroLinha[c.id] && (
+                      <p className="mt-2 text-[11px] text-on-error-container bg-error-container/40 rounded-lg px-3 py-1.5">{erroLinha[c.id]}</p>
+                    )}
+
+                    {/* Link/PIX — visível pro parceiro também (é ele quem paga), não só pro gestor. */}
+                    {c.status === 'aberta' && c.gateway === 'asaas' && (c.link_pagamento || c.pix_copia_cola) && (
+                      <div className="mt-3 ml-0 sm:ml-12 flex flex-wrap items-center gap-2 text-[11px]">
+                        {c.link_pagamento && (
+                          <a href={c.link_pagamento} target="_blank" rel="noreferrer" className="px-3 py-1.5 font-bold bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition">Abrir cobrança</a>
+                        )}
+                        {c.pix_copia_cola && (
+                          <button onClick={() => copiar(c.pix_copia_cola)} className="px-3 py-1.5 font-bold bg-surface-container text-on-surface rounded-md hover:bg-surface-container-high transition">Copiar PIX copia-e-cola</button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )
               })}

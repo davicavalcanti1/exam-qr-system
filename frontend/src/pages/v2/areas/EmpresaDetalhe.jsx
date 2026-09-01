@@ -7,6 +7,7 @@ import ConvidarModal from '../ConvidarModal'
 import EditarUsuarioModal from '../EditarUsuarioModal'
 import DesenvolvedorArea from './DesenvolvedorArea'
 import IntegracaoZapsign from './IntegracaoZapsign'
+import IntegracaoAsaas from './IntegracaoAsaas'
 import ConsumoEmpresa from './ConsumoEmpresa'
 import ConfiguracoesEmpresa from './ConfiguracoesEmpresa'
 import { geocodificar } from '../../../integrations/nominatim/geocode'
@@ -283,6 +284,7 @@ export default function EmpresaDetalhe({ empresa, onBack, onChange }) {
       {aba === 'integracao' && (
         <div className="space-y-6">
           <IntegracaoZapsign empresaId={emp.id} />
+          <IntegracaoAsaas empresaId={emp.id} />
           <DesenvolvedorArea empresaId={emp.id} empresaNome={emp.nome} />
         </div>
       )}

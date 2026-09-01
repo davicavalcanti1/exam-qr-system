@@ -2,7 +2,7 @@ import { Router } from 'express'
 import crypto from 'crypto'
 import { supabaseAdmin, supabaseConfigured, getCaller } from '../lib/supabaseAdmin.js'
 import { enviarTextoWhatsapp, uazapiConfigurado } from '../integrations/uazapi/client.js'
-import { agendarExameNoNetris } from '../integrations/netris/agendamento.js'
+import { agendarExameNaAgenda } from '../integrations/agenda.js'
 import { logAudit } from '../lib/audit.js'
 
 const router = Router()
@@ -85,10 +85,15 @@ router.get('/:token', async (req, res) => {
   })
 })
 
-// Agenda no NetRis os exames de um lote JÁ confirmado pelo parceiro (chamado logo
-// após a confirmação). Best-effort: agenda o que der e reporta as falhas — a
-// autorização em si não depende disto. Sem esta etapa, o lote autorizado pelo link
-// não ia pro NetRis (só o fluxo exame-a-exame agendava).
+// Agenda na agenda (NetRis OU Feegow, conforme o provider ativo da empresa) os
+// exames de um lote JÁ confirmado pelo parceiro (chamado logo após a
+// confirmação). Best-effort: agenda o que der e reporta as falhas — a
+// autorização em si não depende disto. Sem esta etapa, o lote autorizado pelo
+// link não ia para a agenda (só o fluxo exame-a-exame agendava).
+//
+// URL mantida como "/agendar-netris" por compatibilidade com o frontend
+// existente, mas a lógica não é mais NetRis-only — despacha por
+// agendarExameNaAgenda() conforme o provider configurado da empresa.
 router.post('/:token/agendar-netris', async (req, res) => {
   const c = await getCaller(req)
   if (c.error) return res.status(c.status).json({ error: c.error })
@@ -104,20 +109,24 @@ router.post('/:token/agendar-netris', async (req, res) => {
     || (p.role === 'parceiro_coordenador' && p.parceiro_id === lote.parceiro_id)
   if (!pode) return res.status(403).json({ error: 'Sem permissão' })
 
-  // exames do lote já autorizados, com horário pendente e ainda não agendados no NetRis
+  // exames do lote já autorizados, com horário pendente e ainda não agendados
+  // (em qualquer dos dois providers — quem já tem netris_slot preenchido segue
+  // para o NetRis, quem tem feegow_slot segue para o Feegow)
   const { data: exames } = await supabaseAdmin
-    .from('exames').select('id, status, netris_slot, netris_atendimento_id, pacientes(nome)')
+    .from('exames').select('id, status, netris_slot, netris_atendimento_id, feegow_slot, feegow_agendamento_id, pacientes(nome)')
     .eq('autorizacao_lote_id', lote.id)
-  const alvo = (exames || []).filter(e => e.status === 'autorizado' && e.netris_slot && !e.netris_atendimento_id)
+  const alvo = (exames || [])
+    .filter(e => e.status === 'autorizado' && ((e.netris_slot && !e.netris_atendimento_id) || (e.feegow_slot && !e.feegow_agendamento_id)))
+    .map(e => ({ id: e.id, slot: e.netris_slot || e.feegow_slot, paciente: e.pacientes?.nome }))
 
   let agendados = 0
   const falhas = []
   for (const e of alvo) {
-    const r = await agendarExameNoNetris(e.id, e.netris_slot)
+    const r = await agendarExameNaAgenda(e.id, e.slot)
     if (r.ok) agendados++
-    else falhas.push({ paciente: e.pacientes?.nome || '—', motivo: r.error })
+    else falhas.push({ paciente: e.paciente || '—', motivo: r.error })
   }
-  logAudit({ empresaId: lote.empresa_id, atorId: p.id, atorNome: p.nome || p.role, acao: 'netris.agendado_lote', entidade: 'lote', entidadeId: lote.id, detalhe: { total: alvo.length, agendados, falhas: falhas.length } })
+  logAudit({ empresaId: lote.empresa_id, atorId: p.id, atorNome: p.nome || p.role, acao: 'agenda.agendado_lote', entidade: 'lote', entidadeId: lote.id, detalhe: { total: alvo.length, agendados, falhas: falhas.length } })
   res.json({ ok: true, total: alvo.length, agendados, falhas })
 })
 

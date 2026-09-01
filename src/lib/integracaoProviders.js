@@ -25,6 +25,8 @@ export const PROVIDERS = {
     fields: [
       { key: 'baseUrl', label: 'URL base da API', type: 'text', placeholder: 'https://api.feegow.com/v1' },
       { key: 'token', label: 'x-access-token', type: 'password', secret: true },
+      { key: 'localId', label: 'ID da unidade (local_id)', type: 'text' },
+      { key: 'motivoCancelamentoId', label: 'ID do motivo de cancelamento padrão (motivo_id)', type: 'text' },
     ],
   },
 }
@@ -36,7 +38,7 @@ export const MASK = '••••••••'
 // ZapSign para assinatura ao mesmo tempo). Elas não entram em PROVIDERS porque
 // não devem aparecer como opção de "como esta clínica marca exame", mas precisam
 // ser conhecidas aqui para que ninguém as trate como config solta.
-export const CHAVES_NAO_AGENDA = ['zapsign']
+export const CHAVES_NAO_AGENDA = ['zapsign', 'asaas']
 
 export const CHAVES_CONHECIDAS = [...Object.keys(PROVIDERS), ...CHAVES_NAO_AGENDA]
 

@@ -78,7 +78,7 @@ export default function PacientesArea({ escolherParceiro = false }) {
   async function load() {
     const { data } = await supabase
       .from('pacientes')
-      .select('id, nome, cpf, created_at, anonimizado, exames(id, nome, valor, status, indicacao, scheduled_at, netris_atendimento_id)')
+      .select('id, nome, cpf, created_at, anonimizado, exames(id, nome, valor, status, indicacao, scheduled_at, netris_atendimento_id, feegow_agendamento_id)')
       .order('created_at', { ascending: false })
     setLista(data || []); setLoading(false)
   }

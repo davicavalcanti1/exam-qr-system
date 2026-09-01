@@ -61,33 +61,42 @@ function unwrapList(data) {
 }
 
 // Achata a resposta de horários disponíveis do Feegow em slots — MESMO shape do NetRis.
-// OBS: o shape exato de available-schedule precisa ser confirmado com token real;
-// este normalizador é tolerante a variações de nome de campo.
+//
+// Formato real de GET /appoints/available-schedule (confirmado na doc oficial,
+// docs.feegow.com), bem diferente da lista plana do NetRis:
+//   { success, content: { profissional_id: { "<id>": { local_id: [ { "YYYY-MM-DD": ["HH:MM:SS", ...] }, ... ], age_restriction } } } }
+// Não há sala nem nome do médico nesse endpoint — só o id do profissional e os
+// horários crus (string HH:MM:SS). nomeMedico/idSala ficam null de propósito.
 export function normalizeHorarios(raw) {
-  const list = unwrapList(raw)
+  const porProfissional = raw?.content?.profissional_id
+  if (!porProfissional || typeof porProfissional !== 'object') return []
   const slots = []
-  for (const it of list) {
-    const data = pick(it, ['data', 'date', 'dia'])
-    const hora = pick(it, ['hora', 'horario', 'time', 'horaInicial', 'start'])
-    slots.push({
-      data, dataString: normalizarData(data),
-      horaInicial: hora, horarioString: hora,
-      idUnidade: pick(it, ['unidade_id', 'idUnidade', 'unit_id']),
-      idMedico: pick(it, ['profissional_id', 'idMedico', 'professional_id', 'medico_id']),
-      nomeMedico: pick(it, ['profissional', 'nomeMedico', 'professional', 'medico']),
-      idSala: pick(it, ['sala_id', 'idSala', 'room_id']),
-      procedimento: pick(it, ['procedimento', 'procedimento_id', 'procedure']),
-      _raw: it,
-    })
+  for (const [idMedico, entry] of Object.entries(porProfissional)) {
+    const locais = Array.isArray(entry?.local_id) ? entry.local_id : []
+    for (const porData of locais) {
+      if (!porData || typeof porData !== 'object') continue
+      for (const [data, horarios] of Object.entries(porData)) {
+        for (const hora of Array.isArray(horarios) ? horarios : []) {
+          slots.push({
+            data, dataString: normalizarData(data),
+            horaInicial: hora, horarioString: hora,
+            idUnidade: null,
+            idMedico, nomeMedico: null, idSala: null,
+            procedimento: null,
+          })
+        }
+      }
+    }
   }
   return slots
 }
 
 // Cria um cliente Feegow a partir da config de UMA empresa.
-export function createFeegowClient({ baseUrl = 'https://api.feegow.com/v1', token } = {}) {
+export function createFeegowClient({ baseUrl = 'https://api.feegow.com/v1', token, localId = '', motivoCancelamentoId = '' } = {}) {
   const BASE = String(baseUrl || 'https://api.feegow.com/v1').trim().replace(/\/$/, '').replace(/^http:\/\//i, 'https://')
   if (!token) throw new Error('Feegow: token (x-access-token) é obrigatório')
   const headers = { 'Content-Type': 'application/json', 'x-access-token': token }
+  const cfg = { localId, motivoCancelamentoId }
 
   async function get(path) {
     const res = await fetch(`${BASE}${path.startsWith('/') ? '' : '/'}${path}`, { headers })
@@ -151,8 +160,10 @@ export function createFeegowClient({ baseUrl = 'https://api.feegow.com/v1', toke
     return request({ method: 'POST', path: 'api/appoints/new-appoint', body: model })
   }
 
-  // Cancela um agendamento (motivo obrigatório no Feegow).
-  async function cancelarAgendamento(agendamentoId, motivoId) {
+  // Cancela um agendamento (motivo obrigatório no Feegow). Sem motivoId explícito,
+  // usa o motivo padrão configurado para a empresa (motivoCancelamentoId) — o
+  // Feegow não tem um id de motivo universal, cada clínica cadastra o seu.
+  async function cancelarAgendamento(agendamentoId, motivoId = motivoCancelamentoId) {
     const r = await request({ method: 'POST', path: 'api/appoints/cancel-appoint', body: { agendamento_id: agendamentoId, motivo_id: motivoId } })
     let parsed = null; if (r.body) { try { parsed = JSON.parse(r.body) } catch { parsed = r.body } }
     return { status: r.status, ok: r.ok, body: parsed }
@@ -165,5 +176,5 @@ export function createFeegowClient({ baseUrl = 'https://api.feegow.com/v1', toke
     return { status: 200, ok: true, body: { skipped: true, motivo: 'Feegow não altera situação por API; ignorado.' } }
   }
 
-  return { config: {}, get, request, status, searchPacienteByCpf, criarPaciente, horariosAgrupados, criarEncaixe, cancelarAgendamento, alterarSituacao }
+  return { config: cfg, get, request, status, searchPacienteByCpf, criarPaciente, horariosAgrupados, criarEncaixe, cancelarAgendamento, alterarSituacao }
 }
