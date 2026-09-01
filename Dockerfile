@@ -36,8 +36,12 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 RUN mkdir -p /app/data
 
 ENV NODE_ENV=production
-ENV PORT=3000
+# 3001 e a porta em que o nginx do Controle Operacional procura os modulos: a
+# regra dele monta o destino como projetos_davi_<slug>:3001. Este app nasceu com
+# 3000, antes dessa convencao existir — daqui em diante o container escuta 3001.
+# Continua respeitando PORT, entao dev local e outros usos nao mudam.
+ENV PORT=3001
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "src/app.js"]

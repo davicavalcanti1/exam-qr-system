@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import { API_BASE } from '../../lib/apiBase'
 
 export default function ScanPage() {
   const [scanning, setScanning] = useState(false)
@@ -30,7 +31,7 @@ export default function ScanPage() {
           await stop()
           setInfo('')
           try {
-            const r = await fetch('/api/qr/validar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+            const r = await fetch(`${API_BASE}/qr/validar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
             const d = await r.json()
             if (d.valid) { navigator.vibrate?.(120); setResult({ ok: true, ...d }) }
             else { navigator.vibrate?.([60, 40, 60]); setResult({ ok: false, error: d.error || 'QR inválido' }) }

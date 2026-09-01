@@ -25,7 +25,7 @@ export default function EmpresaArea() {
   const [savingP, setSavingP] = useState(null)
 
   async function load() {
-    const { data } = await supabase.from('parceiros').select('id, nome, cnpj, teto, status, contrato_status, whatsapp, tipo_documento, documento').order('created_at', { ascending: false })
+    const { data } = await supabase.from('parceiros').select('id, nome, cnpj, teto, status, contrato_status, whatsapp, tipo_documento, documento, endereco').order('created_at', { ascending: false })
     setParceiros(data || []); setLoading(false)
   }
   useEffect(() => { load() }, [])
@@ -40,7 +40,7 @@ export default function EmpresaArea() {
     if (next) {
       if (!users[next]) loadUsers(next)
       const p = parceiros.find(x => x.id === next)
-      setEdit(e => ({ ...e, [next]: { teto: p?.teto ?? 0, status: p?.status || 'ativo', whatsapp: p?.whatsapp || '', tipoDocumento: p?.tipo_documento || 'cnpj', documento: p?.documento || '' } }))
+      setEdit(e => ({ ...e, [next]: { teto: p?.teto ?? 0, status: p?.status || 'ativo', whatsapp: p?.whatsapp || '', tipoDocumento: p?.tipo_documento || 'cnpj', documento: p?.documento || '', endereco: p?.endereco || '' } }))
     }
   }
 
@@ -125,6 +125,7 @@ export default function EmpresaArea() {
                           </select>
                         </div>
                         <div><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{(edit[p.id]?.tipoDocumento || 'cnpj') === 'cpf' ? 'CPF' : 'CNPJ'}</label><input className="w-44 px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.documento ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], documento: e.target.value } }))} /></div>
+                        <div className="min-w-[16rem] flex-1"><label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Endereço</label><input placeholder="Endereço completo" className="w-full px-3 py-2 text-sm rounded-lg bg-white ring-1 ring-outline-variant/30 outline-none focus:ring-2 focus:ring-primary" value={edit[p.id]?.endereco ?? ''} onChange={e => setEdit(x => ({ ...x, [p.id]: { ...x[p.id], endereco: e.target.value } }))} /></div>
                         <button onClick={() => salvarParceiro(p)} disabled={savingP === p.id} className="px-4 py-2 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary-container transition disabled:opacity-50">{savingP === p.id ? 'Salvando…' : 'Salvar'}</button>
                       </div>
                       <div className="flex items-center justify-between py-3">

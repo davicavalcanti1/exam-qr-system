@@ -8,6 +8,7 @@ import PerfilMenu from './PerfilMenu'
 import AceiteDPA from './AceiteDPA'
 import { DPA_VERSAO } from '../../legal/dpa'
 import OwnerArea from './areas/OwnerArea'
+import SsoArea from './areas/SsoArea'
 import EmpresaArea from './areas/EmpresaArea'
 import ParceiroArea from './areas/ParceiroArea'
 import PacientesArea from './areas/PacientesArea'
@@ -17,6 +18,7 @@ import VisaoGeralArea from './areas/VisaoGeralArea'
 import CobrancasArea from './areas/CobrancasArea'
 import AgendaArea from './areas/AgendaArea'
 import ContratosArea from './areas/ContratosArea'
+import ContratosPlataformaArea from './areas/ContratosPlataformaArea'
 import ContratoArea from './areas/ContratoArea'
 import AuditoriaArea from './areas/AuditoriaArea'
 import UsoArea from './areas/UsoArea'
@@ -26,6 +28,26 @@ import PerfilArea from './areas/PerfilArea'
 import ConfirmacoesArea from './areas/ConfirmacoesArea'
 import ComprovantesArea from './areas/ComprovantesArea'
 import MapaArea from './areas/MapaArea'
+
+// Parceiro bloqueado/suspenso pelo admin da clínica: o login continua válido,
+// mas o painel não abre. O trigger check_parceiro_ativo (banco) garante que,
+// mesmo por fora da UI, nenhum exame novo entra nem é autorizado.
+function ParceiroBloqueado({ status, nome, onSignOut }) {
+  const suspenso = status === 'suspenso'
+  return (
+    <div className="min-h-screen soft-bg-gradient flex items-center justify-center p-4">
+      <div className="bg-surface-container-lowest rounded-2xl shadow-card p-8 w-full max-w-sm text-center space-y-4">
+        <span className="material-symbols-outlined text-5xl text-error" style={{ fontVariationSettings: "'FILL' 1" }}>{suspenso ? 'pause_circle' : 'block'}</span>
+        <h2 className="font-display text-xl font-extrabold tracking-tight">Acesso {suspenso ? 'suspenso' : 'bloqueado'}</h2>
+        <p className="text-sm text-on-surface-variant">
+          {nome ? `${nome}, o` : 'O'} acesso da sua organização está {suspenso ? 'temporariamente suspenso' : 'bloqueado'} pela clínica.
+          Entre em contato com a clínica para regularizar.
+        </p>
+        <Button onClick={onSignOut} className="w-full">Sair</Button>
+      </div>
+    </div>
+  )
+}
 
 // Troca de senha obrigatória no primeiro acesso.
 function TrocarSenha({ onDone }) {
@@ -78,6 +100,13 @@ const NAV = {
     { k: 'empresas', label: 'Empresas', icon: 'business' },
     { k: 'mapa', label: 'Mapa', icon: 'map' },
     { k: 'uso', label: 'Consumo', icon: 'monitoring' },
+    // Conformidade dos contratos de TODAS as empresas. É visão de plataforma:
+    // a clínica vê e assina os seus em 'contratos'; aqui o dono vê se eles se
+    // sustentam (provedor, hash, cláusulas obrigatórias).
+    { k: 'contratos_plataforma', label: 'Contratos', icon: 'gavel' },
+    // Quem, de fora, entra aqui. Decisao de plataforma, nao de clinica — por
+    // isso so aparece para owner.
+    { k: 'sso', label: 'Acesso externo', icon: 'key' },
   ],
   empresa_admin: [
     { k: 'visao', label: 'Visão geral', icon: 'dashboard' },
@@ -116,6 +145,7 @@ const ROLE_LABEL = { owner: 'Dono', empresa_admin: 'Empresa', empresa_operador: 
 function renderArea(role, k, irPara) {
   const map = {
     empresas: <OwnerArea />,
+    sso: <SsoArea />,
     uso: <UsoArea />,
     mapa: <MapaArea />,
     config: <ConfiguracoesArea />,
@@ -127,6 +157,7 @@ function renderArea(role, k, irPara) {
     agenda: <AgendaArea />,
     catalogo: <CatalogoArea />,
     contratos: <ContratosArea />,
+    contratos_plataforma: <ContratosPlataformaArea />,
     auditoria: <AuditoriaArea />,
     pacientes: <PacientesArea />,
     autorizacoes: <AutorizacoesArea />,
@@ -139,10 +170,16 @@ function renderArea(role, k, irPara) {
 }
 
 export default function Painel() {
-  const { ready, loading, session, profile, role, branding, signOut, reloadProfile } = useAuth()
+  const { ready, loading, session, profile, role, branding, parceiro, signOut, reloadProfile } = useAuth()
   const [secao, setSecao] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
   const [view, setView] = useState(null) // 'perfil' | null
+
+  // Embutido = exibido dentro do Controle Operacional. Calculado no render:
+  // uma página não deixa de estar em iframe no meio da vida. try/catch por
+  // segurança. Ver ADR 0003 em imago-platform/docs/adr.
+  let embutido = false
+  try { embutido = window.self !== window.top } catch { embutido = true }
   const [dpaOk, setDpaOk] = useState(null) // null=carregando; true=aceito/não aplicável; false=pendente
 
   useEffect(() => {
@@ -161,6 +198,9 @@ export default function Painel() {
   if (!session) return <Navigate to="/entrar" replace />
   if (profile && !role) return <SemAcesso nome={profile.nome} onSignOut={signOut} />
   if (profile?.must_change_password) return <TrocarSenha onDone={reloadProfile} />
+  if (String(role || '').startsWith('parceiro') && parceiro?.status && parceiro.status !== 'ativo') {
+    return <ParceiroBloqueado status={parceiro.status} nome={(profile?.nome || '').split(' ')[0]} onSignOut={signOut} />
+  }
   if (role === 'empresa_admin' && dpaOk === null) return <div className="min-h-screen bg-surface"><Loading /></div>
   if (role === 'empresa_admin' && dpaOk === false) return <AceiteDPA onDone={() => setDpaOk(true)} />
 
@@ -176,7 +216,17 @@ export default function Painel() {
       {menuAberto && <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setMenuAberto(false)} />}
 
       {/* Sidebar */}
+      {/* ── Casca em modo embutido ──────────────────────────────────────────
+          Exibido dentro do Controle Operacional, este painel some com o que a
+          casca de lá já oferece — marca e menu de perfil — e mantém o que é só
+          dele: a navegação entre as áreas. São níveis diferentes de navegação;
+          esconder a lateral inteira deixaria o módulo sem como circular.
+
+          O "Sair" some por um motivo além da duplicação: sair daqui sem sair do
+          sistema faria o SSO entrar de novo no carregamento seguinte. O botão
+          existiria para não funcionar. */}
       <aside className={`fixed z-40 inset-y-0 left-0 w-64 bg-surface-container-lowest border-r border-outline-variant/15 flex flex-col transition-transform lg:translate-x-0 ${menuAberto ? 'translate-x-0' : '-translate-x-full'}`}>
+        {!embutido && (
         <div className="px-5 py-5 border-b border-outline-variant/10">
           {branding.tenant && branding.logo
             ? <img src={branding.logo} alt={branding.nome} className="h-14 max-w-full object-contain object-left" />
@@ -190,6 +240,7 @@ export default function Painel() {
                   </div>
                 </div>}
         </div>
+        )}
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {nav.map(n => {
@@ -205,7 +256,29 @@ export default function Painel() {
           })}
         </nav>
 
-        <PerfilMenu profile={profile} role={role} signOut={signOut} onPerfil={() => { setView('perfil'); setMenuAberto(false) }} />
+        {embutido ? (
+          /* Embutido, "Sair" nao faz sentido — a casca de fora e que manda na
+             sessao do sistema. Mas ALGUMA acao precisa existir: o SSO so decide
+             quem voce e quando NAO ha sessao, entao mudanca de papel, de empresa
+             ou de vinculo so chega na proxima entrada. Sem isto a pessoa fica
+             presa na identidade da primeira vez, sem nada na tela para
+             explicar. Aconteceu em 26/ago: o vinculo foi criado e o painel
+             continuou mostrando a conta antiga.
+
+             Encerra a sessao daqui e recarrega; o SSO reentra sozinho, agora com
+             os dados atuais. */
+          <button
+            type="button"
+            onClick={async () => { await signOut(); window.location.reload() }}
+            className="m-3 flex items-center justify-center gap-2 rounded-xl border border-outline-variant/20 px-3 py-2 text-xs font-bold text-on-surface-variant transition hover:bg-black/[.04]"
+            title="Reentra pelo sistema com papel e empresa atualizados"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
+            Atualizar acesso
+          </button>
+        ) : (
+          <PerfilMenu profile={profile} role={role} signOut={signOut} onPerfil={() => { setView('perfil'); setMenuAberto(false) }} />
+        )}
       </aside>
 
       {/* Conteúdo */}

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { API_BASE } from '../../lib/apiBase'
 
 const PASSOS = [
   { icon: 'tune', titulo: 'Configurar e mapear', txt: 'Na aba Desenvolvedor, a empresa ativa o NetRis (URL + token, guardados só no servidor) e mapeia cada parceiro a um plano-convênio e cada exame a um idProcedimento.' },
@@ -10,13 +11,13 @@ const PASSOS = [
 ]
 
 const ENDPOINTS = [
-  ['GET', '/api/netris/status', 'Se a integração está ativa para a empresa'],
-  ['GET', '/api/netris/pacientes/cpf/:cpf', 'Busca paciente (normalizado)'],
-  ['POST', '/api/netris/pacientes', 'Cria paciente no NetRis'],
-  ['GET', '/api/netris/planos · /procedimentos', 'Listas para o mapeamento'],
-  ['GET', '/api/netris/horarios-exame', 'Horários reais para um exame'],
-  ['POST', '/api/netris/agendar-exame', 'Cria o agendamento (encaixe)'],
-  ['POST', '/api/qr/validar', 'Confirma o exame → reflete no NetRis'],
+  ['GET', `${API_BASE}/netris/status`, 'Se a integração está ativa para a empresa'],
+  ['GET', `${API_BASE}/netris/pacientes/cpf/:cpf`, 'Busca paciente (normalizado)'],
+  ['POST', `${API_BASE}/netris/pacientes`, 'Cria paciente no NetRis'],
+  ['GET', `${API_BASE}/netris/planos · /procedimentos`, 'Listas para o mapeamento'],
+  ['GET', `${API_BASE}/netris/horarios-exame`, 'Horários reais para um exame'],
+  ['POST', `${API_BASE}/netris/agendar-exame`, 'Cria o agendamento (encaixe)'],
+  ['POST', `${API_BASE}/qr/validar`, 'Confirma o exame → reflete no NetRis'],
 ]
 
 export default function IntegracaoNetris() {
